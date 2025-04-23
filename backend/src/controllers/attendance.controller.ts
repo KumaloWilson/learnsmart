@@ -6,6 +6,7 @@ import type {
   BulkCreateAttendanceDto,
   AttendanceFilterDto,
   AttendanceStatisticsDto,
+  AttendanceStatisticsParamsDto,
 } from "../dto/attendance.dto"
 
 export class AttendanceController {
@@ -82,14 +83,10 @@ export class AttendanceController {
   // Statistics methods
   async getAttendanceStatistics(req: Request, res: Response) {
     try {
-      const params: AttendanceStatisticsDto = {
+      const params: AttendanceStatisticsParamsDto = {
         courseId: req.params.courseId,
         semesterId: req.params.semesterId,
         studentProfileId: req.query.studentProfileId as string,
-        totalClasses: 0,
-        presentCount: 0,
-        absentCount: 0,
-        attendancePercentage: 0
       }
       const statistics = await this.attendanceService.getAttendanceStatistics(params)
       return res.status(200).json(statistics)
