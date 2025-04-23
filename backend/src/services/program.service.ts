@@ -22,7 +22,7 @@ export class ProgramService {
   }
 
   async create(data: CreateProgramDto) {
-    return Program.create(data)
+    return Program.create(data as any)
   }
 
   async update(id: string, data: UpdateProgramDto) {

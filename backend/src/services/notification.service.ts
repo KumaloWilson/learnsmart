@@ -95,7 +95,7 @@ export class NotificationService {
   }
 
   async create(data: CreateNotificationDto) {
-    return Notification.create(data)
+    return Notification.create(data as any)
   }
 
   async bulkCreate(data: BulkCreateNotificationDto) {
