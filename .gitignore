@@ -1,0 +1,64 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# === Node dependencies ===
+/backend/node_modules/
+/student/node_modules/
+/lecturer/node_modules/
+/admin/node_modules/
+/node_modules/
+
+# === Next.js ===
+/.next/
+/out/
+/.next/
+/.next/cache/
+
+# === Express.js build artifacts ===
+/dist/
+/build/
+/tmp/
+/coverage/
+/logs/
+/*.log
+
+# === TypeScript ===
+*.tsbuildinfo
+next-env.d.ts
+
+# === Environment Files ===
+.env
+.env.*
+!.env.example
+
+# === Vercel ===
+.vercel/
+
+# === Logs ===
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# === IDEs & editors ===
+.vscode/
+.idea/
+.DS_Store
+
+# === Test & coverage outputs ===
+coverage/
+.nyc_output/
+jest-*.json
+
+# === OS generated files ===
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# === Other ===
+*.local
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.bak
+*.orig
