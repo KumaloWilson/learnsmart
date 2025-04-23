@@ -1,17 +1,5 @@
 import type { Request, Response } from "express"
 import { AIRecommendationService } from "../services/ai-recommendation.service"
-import type {
-  CreateLearningResourceDto,
-  UpdateLearningResourceDto,
-  LearningResourceFilterDto,
-} from "../dto/learning-resource.dto"
-import type {
-  CreateLearningRecommendationDto,
-  UpdateLearningRecommendationDto,
-  ResourceInteractionDto,
-  GenerateRecommendationsDto,
-  RecommendationFeedbackDto,
-} from "../dto/learning-recommendation.dto"
 
 export class AIRecommendationController {
   private aiRecommendationService: AIRecommendationService
@@ -20,35 +8,44 @@ export class AIRecommendationController {
     this.aiRecommendationService = new AIRecommendationService()
   }
 
-  // Learning Resource endpoints
+  // Learning Resource methods
   createLearningResource = async (req: Request, res: Response) => {
     try {
-      const data: CreateLearningResourceDto = req.body
-      const resource = await this.aiRecommendationService.createLearningResource(data)
+      const resourceData = req.body
+      const resource = await this.aiRecommendationService.createLearningResource(resourceData)
       return res.status(201).json(resource)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error creating learning resource", error: error.message })
+    } catch (error) {
+      console.error("Error creating learning resource:", error)
+      return res.status(500).json({ message: "Failed to create learning resource", error: error })
     }
   }
 
   updateLearningResource = async (req: Request, res: Response) => {
     try {
       const { id } = req.params
-      const data: UpdateLearningResourceDto = req.body
-      const resource = await this.aiRecommendationService.updateLearningResource(id, data)
+      const resourceData = req.body
+      const resource = await this.aiRecommendationService.updateLearningResource(id, resourceData)
+      if (!resource) {
+        return res.status(404).json({ message: "Learning resource not found" })
+      }
       return res.status(200).json(resource)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error updating learning resource", error: error.message })
+    } catch (error) {
+      console.error("Error updating learning resource:", error)
+      return res.status(500).json({ message: "Failed to update learning resource", error: error })
     }
   }
 
   deleteLearningResource = async (req: Request, res: Response) => {
     try {
       const { id } = req.params
-      const result = await this.aiRecommendationService.deleteLearningResource(id)
-      return res.status(200).json(result)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error deleting learning resource", error: error.message })
+      const deleted = await this.aiRecommendationService.deleteLearningResource(id)
+      if (!deleted) {
+        return res.status(404).json({ message: "Learning resource not found" })
+      }
+      return res.status(200).json({ message: "Learning resource deleted successfully" })
+    } catch (error) {
+      console.error("Error deleting learning resource:", error)
+      return res.status(500).json({ message: "Failed to delete learning resource", error: error })
     }
   }
 
@@ -60,75 +57,61 @@ export class AIRecommendationController {
         return res.status(404).json({ message: "Learning resource not found" })
       }
       return res.status(200).json(resource)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error fetching learning resource", error: error.message })
+    } catch (error) {
+      console.error("Error getting learning resource by ID:", error)
+      return res.status(500).json({ message: "Failed to get learning resource", error: error })
     }
   }
 
   getLearningResources = async (req: Request, res: Response) => {
     try {
-      const filters: LearningResourceFilterDto = {}
-
-      if (req.query.courseId) {
-        filters.courseId = req.query.courseId as string
-      }
-
-      if (req.query.semesterId) {
-        filters.semesterId = req.query.semesterId as string
-      }
-
-      if (req.query.type) {
-        filters.type = req.query.type as string
-      }
-
-      if (req.query.difficulty) {
-        filters.difficulty = Number.parseInt(req.query.difficulty as string)
-      }
-
-      if (req.query.tags) {
-        filters.tags = (req.query.tags as string).split(",")
-      }
-
-      if (req.query.search) {
-        filters.search = req.query.search as string
-      }
-
+      const filters = req.query
       const resources = await this.aiRecommendationService.getLearningResources(filters)
       return res.status(200).json(resources)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error fetching learning resources", error: error.message })
+    } catch (error) {
+      console.error("Error getting learning resources:", error)
+      return res.status(500).json({ message: "Failed to get learning resources", error: error })
     }
   }
 
-  // Learning Recommendation endpoints
+  // Learning Recommendation methods
   createLearningRecommendation = async (req: Request, res: Response) => {
     try {
-      const data: CreateLearningRecommendationDto = req.body
-      const recommendation = await this.aiRecommendationService.createLearningRecommendation(data)
+      const recommendationData = req.body
+      const recommendation = await this.aiRecommendationService.createLearningRecommendation(recommendationData)
       return res.status(201).json(recommendation)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error creating learning recommendation", error: error.message })
+    } catch (error) {
+      console.error("Error creating learning recommendation:", error)
+      return res.status(500).json({ message: "Failed to create learning recommendation", error: error })
     }
   }
 
   updateLearningRecommendation = async (req: Request, res: Response) => {
     try {
       const { id } = req.params
-      const data: UpdateLearningRecommendationDto = req.body
-      const recommendation = await this.aiRecommendationService.updateLearningRecommendation(id, data)
+      const recommendationData = req.body
+      const recommendation = await this.aiRecommendationService.updateLearningRecommendation(id, recommendationData)
+      if (!recommendation) {
+        return res.status(404).json({ message: "Learning recommendation not found" })
+      }
       return res.status(200).json(recommendation)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error updating learning recommendation", error: error.message })
+    } catch (error) {
+      console.error("Error updating learning recommendation:", error)
+      return res.status(500).json({ message: "Failed to update learning recommendation", error: error })
     }
   }
 
   deleteLearningRecommendation = async (req: Request, res: Response) => {
     try {
       const { id } = req.params
-      const result = await this.aiRecommendationService.deleteLearningRecommendation(id)
-      return res.status(200).json(result)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error deleting learning recommendation", error: error.message })
+      const deleted = await this.aiRecommendationService.deleteLearningRecommendation(id)
+      if (!deleted) {
+        return res.status(404).json({ message: "Learning recommendation not found" })
+      }
+      return res.status(200).json({ message: "Learning recommendation deleted successfully" })
+    } catch (error) {
+      console.error("Error deleting learning recommendation:", error)
+      return res.status(500).json({ message: "Failed to delete learning recommendation", error: error })
     }
   }
 
@@ -140,33 +123,32 @@ export class AIRecommendationController {
         return res.status(404).json({ message: "Learning recommendation not found" })
       }
       return res.status(200).json(recommendation)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error fetching learning recommendation", error: error.message })
+    } catch (error) {
+      console.error("Error getting learning recommendation by ID:", error)
+      return res.status(500).json({ message: "Failed to get learning recommendation", error: error })
     }
   }
 
   getStudentRecommendations = async (req: Request, res: Response) => {
     try {
       const { studentId } = req.params
-      const { courseId } = req.query
-      const recommendations = await this.aiRecommendationService.getStudentRecommendations(
-        studentId,
-        courseId as string | undefined,
-      )
+      const recommendations = await this.aiRecommendationService.getStudentRecommendations(studentId)
       return res.status(200).json(recommendations)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error fetching student recommendations", error: error.message })
+    } catch (error) {
+      console.error("Error getting student recommendations:", error)
+      return res.status(500).json({ message: "Failed to get student recommendations", error: error })
     }
   }
 
-  // Resource Interaction endpoints
+  // Resource Interaction methods
   recordInteraction = async (req: Request, res: Response) => {
     try {
-      const data: ResourceInteractionDto = req.body
-      const interaction = await this.aiRecommendationService.recordInteraction(data)
+      const interactionData = req.body
+      const interaction = await this.aiRecommendationService.recordInteraction(interactionData)
       return res.status(201).json(interaction)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error recording resource interaction", error: error.message })
+    } catch (error) {
+      console.error("Error recording interaction:", error)
+      return res.status(500).json({ message: "Failed to record interaction", error: error })
     }
   }
 
@@ -175,8 +157,9 @@ export class AIRecommendationController {
       const { resourceId } = req.params
       const interactions = await this.aiRecommendationService.getResourceInteractions(resourceId)
       return res.status(200).json(interactions)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error fetching resource interactions", error: error.message })
+    } catch (error) {
+      console.error("Error getting resource interactions:", error)
+      return res.status(500).json({ message: "Failed to get resource interactions", error: error })
     }
   }
 
@@ -185,30 +168,44 @@ export class AIRecommendationController {
       const { studentId } = req.params
       const interactions = await this.aiRecommendationService.getStudentInteractions(studentId)
       return res.status(200).json(interactions)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error fetching student interactions", error: error.message })
+    } catch (error) {
+      console.error("Error getting student interactions:", error)
+      return res.status(500).json({ message: "Failed to get student interactions", error: error })
     }
   }
 
   // AI Recommendation Generation
   generateRecommendations = async (req: Request, res: Response) => {
     try {
-      const data: GenerateRecommendationsDto = req.body
-      const recommendations = await this.aiRecommendationService.generateRecommendations(data)
-      return res.status(200).json(recommendations)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error generating recommendations", error: error.message })
+      const { studentProfileId, courseId, count } = req.body
+      const recommendations = await this.aiRecommendationService.generateRecommendations({
+        studentProfileId,
+        courseId,
+        count,
+      })
+      return res.status(201).json(recommendations)
+    } catch (error) {
+      console.error("Error generating recommendations:", error)
+      return res.status(500).json({ message: "Failed to generate recommendations", error: error })
     }
   }
 
   // Recommendation Feedback
   provideFeedback = async (req: Request, res: Response) => {
     try {
-      const data: RecommendationFeedbackDto = req.body
-      const result = await this.aiRecommendationService.provideFeedback(data)
-      return res.status(200).json(result)
-    } catch (error: any) {
-      return res.status(500).json({ message: "Error providing feedback", error: error.message })
+      const { recommendationId, isHelpful, feedback } = req.body
+      const recommendation = await this.aiRecommendationService.provideFeedback({
+        recommendationId,
+        isHelpful,
+        feedback,
+      })
+      if (!recommendation) {
+        return res.status(404).json({ message: "Learning recommendation not found" })
+      }
+      return res.status(200).json(recommendation)
+    } catch (error) {
+      console.error("Error providing feedback:", error)
+      return res.status(500).json({ message: "Failed to provide feedback", error: error })
     }
   }
 
