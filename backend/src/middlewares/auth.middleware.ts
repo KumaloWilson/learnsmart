@@ -13,7 +13,9 @@ declare global {
       user?: {
         id: string
         role: string
-      }
+      },
+      file?: Express.Multer.File
+      files?: { [fieldname: string]: Express.Multer.File[] }
     }
   }
 }
