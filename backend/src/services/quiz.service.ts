@@ -100,7 +100,7 @@ export class QuizService {
 
   async create(data: CreateQuizDto) {
     // Create the quiz
-    const quiz = await Quiz.create(data)
+    const quiz = await Quiz.create(data as any)
 
     // Notify enrolled students
     try {

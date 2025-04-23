@@ -26,7 +26,7 @@ export class SemesterService {
     if (data.isActive) {
       await Semester.update({ isActive: false }, { where: {} })
     }
-    return Semester.create(data)
+    return Semester.create(data as any)
   }
 
   async update(id: string, data: UpdateSemesterDto) {
