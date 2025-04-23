@@ -133,9 +133,7 @@ export class LecturerDashboardService {
     let averagePerformance = 0
     if (courseIds.length > 0 && semesterId) {
       const performances = await this.studentPerformanceService.findAll({
-        courseId: {
-          [Op.in]: courseIds
-        },
+        courseId: courseIds[0],
         semesterId,
       })
       const totalPerformance = performances.reduce((sum, perf) => sum + perf.overallPerformance, 0)
