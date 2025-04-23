@@ -53,7 +53,7 @@ export class CreateStudentProfileDto {
   @Expose()
   address?: string
 
-  @IsPhoneNumber(null)
+  @IsPhoneNumber(undefined)
   @IsOptional()
   @Expose()
   phoneNumber?: string
@@ -92,7 +92,7 @@ export class UpdateStudentProfileDto {
   @Expose()
   address?: string
 
-  @IsPhoneNumber(null)
+  @IsPhoneNumber(undefined)
   @IsOptional()
   @Expose()
   phoneNumber?: string
