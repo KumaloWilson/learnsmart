@@ -251,8 +251,15 @@ export class StudentPerformanceService {
     let recommendations = ""
     let aiAnalysis = {}
 
+    interface AnalysisResult {
+      strengths: string;
+      weaknesses: string;
+      recommendations: string;
+      fullAnalysis: Record<string, any>;
+    }
+
     try {
-      const analysisResult = await this.generateAIAnalysis({
+      const analysisResult = (await this.generateAIAnalysis({
         studentName: `${student.user?.firstName} ${student.user?.lastName}`,
         courseName: course.name,
         attendancePercentage: attendanceStats.attendancePercentage,
@@ -262,7 +269,7 @@ export class StudentPerformanceService {
         performanceCategory,
         assignmentDetails: assignmentPerformance.assignments,
         quizDetails: quizPerformance.quizzes,
-      })
+      })) as AnalysisResult;
 
       strengths = analysisResult.strengths
       weaknesses = analysisResult.weaknesses
@@ -356,28 +363,30 @@ export class StudentPerformanceService {
     // Calculate class averages
     const attendanceAverage =
       studentAnalyses.length > 0
-        ? studentAnalyses.reduce((sum, analysis) => sum + analysis.attendancePercentage, 0) / studentAnalyses.length
+        ? studentAnalyses.filter((analysis): analysis is NonNullable<typeof analysis> => analysis !== null)
+            .reduce((sum, analysis) => sum + analysis.attendancePercentage, 0) / studentAnalyses.length
         : 0
+    const validAnalyses = studentAnalyses.filter((analysis): analysis is NonNullable<typeof analysis> => analysis !== null)
     const assignmentAverage =
-      studentAnalyses.length > 0
-        ? studentAnalyses.reduce((sum, analysis) => sum + analysis.assignmentAverage, 0) / studentAnalyses.length
+      validAnalyses.length > 0
+        ? validAnalyses.reduce((sum, analysis) => sum + analysis.assignmentAverage, 0) / validAnalyses.length
         : 0
     const quizAverage =
-      studentAnalyses.length > 0
-        ? studentAnalyses.reduce((sum, analysis) => sum + analysis.quizAverage, 0) / studentAnalyses.length
+      validAnalyses.length > 0
+        ? validAnalyses.reduce((sum, analysis) => sum + analysis.quizAverage, 0) / validAnalyses.length
         : 0
     const overallAverage =
-      studentAnalyses.length > 0
-        ? studentAnalyses.reduce((sum, analysis) => sum + analysis.overallPerformance, 0) / studentAnalyses.length
+      validAnalyses.length > 0
+        ? validAnalyses.reduce((sum, analysis) => sum + analysis.overallPerformance, 0) / validAnalyses.length
         : 0
 
     // Count students in each performance category
     const categoryCounts = {
-      excellent: studentAnalyses.filter((a) => a.performanceCategory === "excellent").length,
-      good: studentAnalyses.filter((a) => a.performanceCategory === "good").length,
-      average: studentAnalyses.filter((a) => a.performanceCategory === "average").length,
-      below_average: studentAnalyses.filter((a) => a.performanceCategory === "below_average").length,
-      poor: studentAnalyses.filter((a) => a.performanceCategory === "poor").length,
+      excellent: studentAnalyses.filter((a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "excellent").length,
+      good: studentAnalyses.filter((a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "good").length,
+      average: studentAnalyses.filter((a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "average").length,
+      below_average: studentAnalyses.filter((a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "below_average").length,
+      poor: studentAnalyses.filter((a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "poor").length,
     }
 
     // Generate class-level recommendations

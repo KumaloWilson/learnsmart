@@ -250,12 +250,15 @@ export class StudentService {
       throw new Error("Enrollment not found")
     }
 
+    // Create update data object
+    const updateData: any = { ...data }
+
     // If grade is provided, calculate letter grade
     if (data.grade !== undefined) {
-      data.letterGrade = this.calculateLetterGrade(data.grade)
+      updateData.letterGrade = this.calculateLetterGrade(data.grade)
     }
 
-    await enrollment.update(data)
+    await enrollment.update(updateData)
     return CourseEnrollment.findByPk(id, {
       include: [
         {
@@ -336,7 +339,7 @@ export class StudentService {
       throw new Error("Academic record already exists for this student and semester")
     }
 
-    return AcademicRecord.create(data)
+    return AcademicRecord.create(data as any)
   }
 
   async updateAcademicRecord(id: string, data: UpdateAcademicRecordDto) {

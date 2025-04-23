@@ -68,7 +68,7 @@ export class LecturerService {
   }
 
   async createTeachingMaterial(data: CreateTeachingMaterialDto) {
-    return TeachingMaterial.create(data)
+    return TeachingMaterial.create(data as any)
   }
 
   async updateTeachingMaterial(id: string, data: UpdateTeachingMaterialDto) {

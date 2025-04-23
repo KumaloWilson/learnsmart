@@ -15,6 +15,7 @@
   "author": "Wilson Kumalo",
   "license": "MIT",
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",

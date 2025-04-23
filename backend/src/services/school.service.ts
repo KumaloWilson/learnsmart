@@ -15,7 +15,7 @@ export class SchoolService {
   }
 
   async create(data: CreateSchoolDto) {
-    return School.create(data)
+    return School.create(data as any)
   }
 
   async update(id: string, data: UpdateSchoolDto) {

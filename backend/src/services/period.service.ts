@@ -21,7 +21,7 @@ export class PeriodService {
   }
 
   async create(data: CreatePeriodDto) {
-    return Period.create(data)
+    return Period.create(data as any)
   }
 
   async update(id: string, data: UpdatePeriodDto) {
