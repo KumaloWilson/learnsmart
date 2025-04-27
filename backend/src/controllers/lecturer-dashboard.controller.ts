@@ -98,14 +98,14 @@ export class LecturerDashboardController {
       const { lecturerProfileId, courseId, semesterId } = req.params
       const { attendanceThreshold, performanceThreshold, engagementThreshold } = req.body
 
-      const atRiskStudents = await this.atRiskStudentService.identifyAtRiskStudents({
-        lecturerProfileId,
+      const atRiskStudents = await this.atRiskStudentService.identifyAtRiskStudents(
         courseId,
         semesterId,
-        attendanceThreshold,
-        performanceThreshold,
-        engagementThreshold,
-      })
+        {
+          attendanceThreshold,
+          performanceThreshold
+        }
+      )
 
       return res.status(200).json({
         success: true,

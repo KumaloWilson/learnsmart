@@ -13,6 +13,7 @@ import { NotificationService } from "./notification.service"
 import type { CreateAtRiskStudentDto, ResolveAtRiskStudentDto } from "../dto/at-risk-student.dto"
 import { Quiz } from "../models/Quiz"
 import { Assessment } from "../models/Assessment"
+import { CourseAssignment } from "../models/CourseAssignment"
 
 export class AtRiskStudentService {
   private notificationService: NotificationService
@@ -239,6 +240,64 @@ export class AtRiskStudentService {
     }
 
     return atRiskStudents
+  }
+
+  /**
+   * Get at-risk students by lecturer
+   */
+  async getAtRiskStudentsByLecturer(
+    lecturerProfileId: string,
+    options: { includeResolved?: boolean } = {},
+  ): Promise<AtRiskStudent[]> {
+    // Get course assignments for this lecturer
+    const courseAssignments = await CourseAssignment.findAll({
+      where: {
+        lecturerProfileId,
+        isActive: true,
+      },
+    })
+
+    if (courseAssignments.length === 0) {
+      return []
+    }
+
+    // Extract course and semester IDs
+    const courseIds = courseAssignments.map((ca) => ca.courseId)
+    const semesterIds = courseAssignments.map((ca) => ca.semesterId)
+
+    // Find at-risk students for these courses
+    return AtRiskStudent.findAll({
+      where: {
+        courseId: {
+          [Op.in]: courseIds,
+        },
+        semesterId: {
+          [Op.in]: semesterIds,
+        },
+        isResolved: options.includeResolved ? undefined : false,
+      },
+      include: [
+        {
+          model: StudentProfile,
+          include: [
+            {
+              model: User,
+              attributes: ["id", "firstName", "lastName", "email"],
+            },
+          ],
+        },
+        {
+          model: Course,
+        },
+        {
+          model: Semester,
+        },
+      ],
+      order: [
+        ["riskLevel", "DESC"],
+        ["lastUpdated", "DESC"],
+      ],
+    })
   }
 
   /**

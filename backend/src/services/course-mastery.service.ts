@@ -9,6 +9,7 @@ import { AssessmentSubmission } from "../models/AssessmentSubmission"
 import { Assessment } from "../models/Assessment"
 import { QuizAttempt } from "../models/QuizAttempt"
 import { Quiz } from "../models/Quiz"
+import { User } from "../models/User"
 
 export class CourseMasteryService {
   /**
@@ -93,25 +94,25 @@ export class CourseMasteryService {
       },
     })
 
-    // Calculate assignment average
-    const totalAssignmentScore = assignmentSubmissions.reduce((sum, submission) => sum + (submission.marks ?? 0), 0) || 0
+    // Calculate assignment average (using marks instead of score)
+    const totalAssignmentScore = assignmentSubmissions.reduce((sum, submission) => sum + (submission.marks || 0), 0)
     const assignmentAverage = assignmentSubmissions.length > 0 ? totalAssignmentScore / assignmentSubmissions.length : 0
 
     // Find or create course mastery record
     const [courseMastery, created] = await CourseMastery.findOrCreate({
       where: {
-        studentProfileId,
-        courseId,
-        semesterId,
+      studentProfileId,
+      courseId,
+      semesterId,
       },
       defaults: {
-        masteryLevel: averageMasteryLevel,
-        quizAverage,
-        assignmentAverage,
-        topicCompletionPercentage,
-        totalTopicsCompleted: completedTopics,
-        totalTopics,
-        lastUpdated: new Date(),
+      masteryLevel: averageMasteryLevel,
+      quizAverage,
+      assignmentAverage,
+      topicCompletionPercentage,
+      totalTopicsCompleted: completedTopics,
+      totalTopics,
+      lastUpdated: new Date(),
       },
     })
 
@@ -183,6 +184,89 @@ export class CourseMasteryService {
   }
 
   /**
+   * Get course mastery distribution for a course
+   */
+  async getCourseMasteryDistribution(
+    courseId: string,
+    semesterId: string,
+  ): Promise<{
+    courseId: string
+    semesterId: string
+    totalStudents: number
+    distribution: Array<{
+      range: string
+      count: number
+      percentage: number
+    }>
+    averageMastery: number
+    averageQuizScore: number
+    averageAssignmentScore: number
+    averageTopicCompletion: number
+  }> {
+    // Get all masteries for this course
+    const masteries = await CourseMastery.findAll({
+      where: {
+        courseId,
+        semesterId,
+      },
+      include: [
+        {
+          model: StudentProfile,
+          include: [
+            {
+              model: User,
+              attributes: ["firstName", "lastName", "email"],
+            },
+          ],
+        },
+      ],
+    })
+
+    // Define mastery level ranges
+    const ranges = [
+      { min: 0, max: 20, label: "Very Low" },
+      { min: 20, max: 40, label: "Low" },
+      { min: 40, max: 60, label: "Medium" },
+      { min: 60, max: 80, label: "High" },
+      { min: 80, max: 100, label: "Very High" },
+    ]
+
+    // Calculate distribution
+    const distribution = ranges.map((range) => {
+      const count = masteries.filter((m) => m.masteryLevel >= range.min && m.masteryLevel < range.max).length
+      return {
+        range: range.label,
+        count,
+        percentage: masteries.length > 0 ? (count / masteries.length) * 100 : 0,
+      }
+    })
+
+    // Calculate averages
+    const averageMastery =
+      masteries.length > 0 ? masteries.reduce((sum, m) => sum + m.masteryLevel, 0) / masteries.length : 0
+
+    const averageQuizScore =
+      masteries.length > 0 ? masteries.reduce((sum, m) => sum + m.quizAverage, 0) / masteries.length : 0
+
+    const averageAssignmentScore =
+      masteries.length > 0 ? masteries.reduce((sum, m) => sum + m.assignmentAverage, 0) / masteries.length : 0
+
+    const averageTopicCompletion =
+      masteries.length > 0 ? masteries.reduce((sum, m) => sum + m.topicCompletionPercentage, 0) / masteries.length : 0
+
+    return {
+      courseId,
+      semesterId,
+      totalStudents: masteries.length,
+      distribution,
+      averageMastery,
+      averageQuizScore,
+      averageAssignmentScore,
+      averageTopicCompletion,
+    }
+  }
+
+  /**
    * Get all course masteries for a course
    */
   async getCourseStudentMasteries(courseId: string, semesterId: string): Promise<CourseMastery[]> {
@@ -196,11 +280,8 @@ export class CourseMasteryService {
           model: StudentProfile,
           include: [
             {
-              model: Course,
-              through: { attributes: [] },
-              where: {
-                id: courseId,
-              },
+              model: User,
+              attributes: ["firstName", "lastName", "email"],
             },
           ],
         },

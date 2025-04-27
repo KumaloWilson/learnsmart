@@ -5,6 +5,7 @@ import { Semester } from "../models/Semester"
 import { TopicProgress } from "../models/TopicProgress"
 import { TeachingMaterial } from "../models/TeachingMaterial"
 import { LearningResource } from "../models/LearningResource"
+import { StudentProfile } from "../models/StudentProfile"
 
 export class CourseTopicService {
   /**
@@ -52,6 +53,110 @@ export class CourseTopicService {
       },
       order: [["orderIndex", "ASC"]],
     })
+  }
+
+  /**
+   * Get course topic progress for all students
+   */
+  async getCourseTopicProgress(
+    courseId: string,
+    semesterId: string,
+  ): Promise<{
+    courseId: string
+    semesterId: string
+    topics: Array<{
+      id: string
+      title: string
+      orderIndex: number
+      difficulty: string
+      completionRate: number
+      averageMasteryLevel: number
+    }>
+    overallCompletionRate: number
+    totalStudents: number
+  }> {
+    // Get all topics for the course
+    const topics = await CourseTopic.findAll({
+      where: {
+        courseId,
+        semesterId,
+        isActive: true,
+      },
+      order: [["orderIndex", "ASC"]],
+    })
+
+    // Get all students enrolled in the course
+    const { CourseEnrollment } = require("../models")
+    const enrollments = await CourseEnrollment.findAll({
+      where: {
+        courseId,
+        semesterId,
+        status: "enrolled",
+      },
+      include: [
+        {
+          model: StudentProfile,
+          as: "studentProfile",
+        },
+      ],
+    })
+
+    const studentIds = enrollments.map((e: { studentProfileId: any }) => e.studentProfileId)
+    const totalStudents = studentIds.length
+
+    // Calculate progress for each topic
+    const topicsWithProgress = await Promise.all(
+      topics.map(async (topic) => {
+        const progress = await TopicProgress.findAll({
+          where: {
+            courseTopicId: topic.id,
+            studentProfileId: {
+              [Op.in]: studentIds,
+            },
+          },
+        })
+
+        const completedCount = progress.filter((p) => p.isCompleted).length
+        const completionRate = totalStudents > 0 ? (completedCount / totalStudents) * 100 : 0
+
+        const totalMasteryLevel = progress.reduce((sum, p) => sum + p.masteryLevel, 0)
+        const averageMasteryLevel = progress.length > 0 ? totalMasteryLevel / progress.length : 0
+
+        return {
+          id: topic.id,
+          title: topic.title,
+          orderIndex: topic.orderIndex,
+          difficulty: topic.difficulty,
+          completionRate,
+          averageMasteryLevel,
+        }
+      }),
+    )
+
+    // Calculate overall completion rate
+    const totalCompletedTopics = await TopicProgress.count({
+      where: {
+        courseTopicId: {
+          [Op.in]: topics.map((t) => t.id),
+        },
+        studentProfileId: {
+          [Op.in]: studentIds,
+        },
+        isCompleted: true,
+      },
+    })
+
+    const totalPossibleCompletions = topics.length * totalStudents
+    const overallCompletionRate =
+      totalPossibleCompletions > 0 ? (totalCompletedTopics / totalPossibleCompletions) * 100 : 0
+
+    return {
+      courseId,
+      semesterId,
+      topics: topicsWithProgress,
+      overallCompletionRate,
+      totalStudents,
+    }
   }
 
   /**
