@@ -12,10 +12,11 @@ import {
 import type {
   CreatePhysicalAttendanceDto,
   UpdatePhysicalAttendanceDto,
-  BulkCreateAttendanceDto,
+  BulkCreatePhysicalAttendanceDto,
   AttendanceFilterDto,
   AttendanceStatisticsDto,
   AttendanceStatisticsParamsDto,
+  UpdateAttendanceRecordDto,
 } from "../dto/attendance.dto"
 
 export class AttendanceService {
@@ -118,27 +119,47 @@ export class AttendanceService {
   }
 
   async create(data: CreatePhysicalAttendanceDto) {
-    // Check if attendance record already exists
-    const existingAttendance = await PhysicalAttendance.findOne({
+    // Check if attendance records already exist for this date, course, and semester
+    const existingAttendances = await PhysicalAttendance.findAll({
       where: {
-        date: data.date,
-        courseId: data.courseId,
-        semesterId: data.semesterId,
-        studentProfileId: data.studentProfileId,
+      date: data.date,
+      courseId: data.courseId,
+      semesterId: data.semesterId,
+      studentProfileId: {
+        [Op.in]: data.attendanceRecords.map(record => record.studentProfileId)
+      }
       },
     })
 
-    if (existingAttendance) {
-      // Update existing record
-      return this.update(existingAttendance.id, {
+    if (existingAttendances.length > 0) {
+      // Update existing records
+      const results = []
+      for (const record of data.attendanceRecords) {
+      const existing = existingAttendances.find(a => a.studentProfileId === record.studentProfileId)
+      if (existing) {
+        const updated = await this.update(existing.id, {
         topic: data.topic,
         notes: data.notes,
-        isPresent: data.isPresent,
-      })
+        })
+        results.push(updated)
+      }
+      }
+      return results
     }
 
-    // Create new attendance record
-    return PhysicalAttendance.create(data as any)
+    // Create new attendance records
+    const attendances = data.attendanceRecords.map(record => ({
+      date: data.date,
+      topic: data.topic,
+      notes: data.notes,
+      lecturerProfileId: data.lecturerProfileId,
+      courseId: data.courseId,
+      semesterId: data.semesterId,
+      studentProfileId: record.studentProfileId,
+      isPresent: record.isPresent
+    }))
+
+    return PhysicalAttendance.bulkCreate(attendances)
   }
 
   async update(id: string, data: UpdatePhysicalAttendanceDto) {
@@ -151,20 +172,19 @@ export class AttendanceService {
     return this.findById(id)
   }
 
-  async bulkCreate(data: BulkCreateAttendanceDto) {
+  async bulkCreate(data: BulkCreatePhysicalAttendanceDto) {
     const results = []
-    for (const attendance of data.attendances) {
+    for (const item of data.attendances) {
       const result = await this.create({
-        date: data.date,
-        topic: data.topic,
-        notes: data.notes,
-        lecturerProfileId: data.lecturerProfileId,
-        courseId: data.courseId,
-        semesterId: data.semesterId,
-        studentProfileId: attendance.studentProfileId,
-        isPresent: attendance.isPresent,
+        date: item.date,
+        topic: item.topic,
+        notes: item.notes,
+        lecturerProfileId: item.lecturerProfileId, 
+        courseId: item.courseId,
+        semesterId: item.semesterId,
+        attendanceRecords: item.attendanceRecords
       })
-      results.push(result)
+      results.push(...result)
     }
     return results
   }

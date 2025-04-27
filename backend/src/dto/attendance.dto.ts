@@ -37,6 +37,50 @@ export class CreatePhysicalAttendanceDto {
   }[]
 }
 
+export class BulkCreatePhysicalAttendanceItemDto {
+  @IsUUID(4)
+  @Expose()
+  courseId: string
+
+  @IsUUID(4)
+  @Expose()
+  semesterId: string
+
+  @IsDate()
+  @Type(() => Date)
+  @Expose()
+  date: Date
+
+  @IsString()
+  @Expose()
+  topic: string
+
+  @IsString()
+  @IsOptional()
+  @Expose()
+  notes?: string
+
+  @IsUUID(4)
+  @Expose()
+  lecturerProfileId: string
+
+  @IsArray()
+  @Expose()
+  attendanceRecords: {
+    studentProfileId: string
+    isPresent: boolean
+    notes?: string
+  }[]
+}
+
+export class BulkCreatePhysicalAttendanceDto {
+  @IsArray()
+  @Type(() => BulkCreatePhysicalAttendanceItemDto)
+  @Expose()
+  attendances: BulkCreatePhysicalAttendanceItemDto[]
+}
+
+
 export class UpdatePhysicalAttendanceDto {
   @IsString()
   @IsOptional()
@@ -56,6 +100,7 @@ export class UpdatePhysicalAttendanceDto {
 }
 
 export class UpdateAttendanceRecordDto {
+  @IsBoolean()
   @IsBoolean()
   @IsOptional()
   @Expose()
@@ -82,6 +127,11 @@ export class AttendanceFilterDto {
   @IsOptional()
   @Expose()
   studentProfileId?: string
+
+  @IsBoolean()
+  @IsOptional()
+  @Expose()
+  isPresent?: boolean
 
   @IsUUID(4)
   @IsOptional()

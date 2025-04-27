@@ -540,21 +540,22 @@ export class LecturerDashboardService {
         }
       }
 
-      coursePerformance[key].totalScore += record.score
+      coursePerformance[key].totalScore += record.overallPerformance
       coursePerformance[key].recordCount++
-      coursePerformance[key].highestScore = Math.max(coursePerformance[key].highestScore, record.score)
-      coursePerformance[key].lowestScore = Math.min(coursePerformance[key].lowestScore, record.score)
+      coursePerformance[key].highestScore = Math.max(coursePerformance[key].highestScore, record.overallPerformance)
+      coursePerformance[key].lowestScore = Math.min(coursePerformance[key].lowestScore, record.overallPerformance)
 
       // Track performance by type
-      if (!coursePerformance[key].performanceByType[record.performanceType]) {
-        coursePerformance[key].performanceByType[record.performanceType] = {
+      const performanceType = record.assessmentId ? 'assignment' : (record.quizId ? 'quiz' : 'attendance');
+      if (!coursePerformance[key].performanceByType[performanceType]) {
+        coursePerformance[key].performanceByType[performanceType] = {
           total: 0,
           count: 0,
         }
       }
 
-      coursePerformance[key].performanceByType[record.performanceType].total += record.score
-      coursePerformance[key].performanceByType[record.performanceType].count++
+      coursePerformance[key].performanceByType[performanceType].total += record.overallPerformance
+      coursePerformance[key].performanceByType[performanceType].count++
     })
 
     // Calculate averages and format results
@@ -631,10 +632,10 @@ export class LecturerDashboardService {
       if (!courseQuizzes[key]) {
         courseQuizzes[key] = {
           courseId: quiz.courseId,
-          courseName: quiz.course.name,
-          courseCode: quiz.course.code,
+          courseName: quiz.course?.name,
+          courseCode: quiz.course?.code,
           semesterId: quiz.semesterId,
-          semesterName: quiz.semester.name,
+          semesterName: quiz.semester?.name,
           quizCount: 0,
           quizzes: [],
         }
@@ -644,8 +645,8 @@ export class LecturerDashboardService {
       courseQuizzes[key].quizzes.push({
         id: quiz.id,
         title: quiz.title,
-        dueDate: quiz.dueDate,
-        totalPoints: quiz.totalPoints,
+        dueDate: quiz.endDate,
+        totalPoints: quiz.totalMarks,
         timeLimit: quiz.timeLimit,
       })
     })
@@ -755,10 +756,10 @@ export class LecturerDashboardService {
       if (!courseAssessments[key]) {
         courseAssessments[key] = {
           courseId: assessment.courseId,
-          courseName: assessment.course.name,
-          courseCode: assessment.course.code,
+          courseName: assessment.course?.name,
+          courseCode: assessment.course?.code,
           semesterId: assessment.semesterId,
-          semesterName: assessment.semester.name,
+          semesterName: assessment.semester?.name,
           assessmentCount: 0,
           assessments: [],
         }
@@ -770,8 +771,8 @@ export class LecturerDashboardService {
         title: assessment.title,
         description: assessment.description,
         dueDate: assessment.dueDate,
-        totalPoints: assessment.totalPoints,
-        assessmentType: assessment.assessmentType,
+        totalPoints: assessment.totalMarks,
+        assessmentType: assessment.type,
       })
     })
 
@@ -949,7 +950,7 @@ export class LecturerDashboardService {
 
       const quizCompletionRate =
         studentQuizAttempts.length > 0
-          ? (studentQuizAttempts.filter((attempt) => attempt.isSubmitted).length / studentQuizAttempts.length) * 100
+          ? (studentQuizAttempts.filter((attempt) => attempt.status === "completed" || attempt.status === "submitted").length / studentQuizAttempts.length) * 100
           : 0
 
       // Calculate assessment engagement
@@ -959,9 +960,9 @@ export class LecturerDashboardService {
 
       const assessmentSubmissionRate =
         studentAssessmentSubmissions.length > 0
-          ? (studentAssessmentSubmissions.filter((submission) => submission.submittedAt !== null).length /
-              studentAssessmentSubmissions.length) *
-            100
+          ? (studentAssessmentSubmissions.filter((submission) => submission.submissionDate !== null).length /
+          studentAssessmentSubmissions.length) *
+        100
           : 0
 
       // Calculate overall engagement score (weighted average)
@@ -976,8 +977,8 @@ export class LecturerDashboardService {
 
       return {
         studentProfileId: studentId,
-        studentName: enrollment.studentProfile.user.fullName,
-        studentEmail: enrollment.studentProfile.user.email,
+        studentName: enrollment.studentProfile?.user?.firstName + " " + enrollment.studentProfile?.user?.lastName,
+        studentEmail: enrollment.studentProfile?.user?.email,
         physicalAttendanceRate,
         virtualAttendanceRate,
         overallAttendanceRate: (physicalAttendanceRate + virtualAttendanceRate) / 2,
