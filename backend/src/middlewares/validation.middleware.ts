@@ -216,6 +216,15 @@ export const studentValidation = {
     semesterId: Joi.string().uuid().required(),
     studentIds: Joi.array().items(Joi.string().uuid()).min(1).required(),
   }),
+
+  studentIdParam: Joi.object({
+    studentId: Joi.string().uuid().required(),
+  }),
+
+  courseAndSemesterQuery: Joi.object({
+    courseId: Joi.string().uuid().optional(),
+    semesterId: Joi.string().uuid().optional(),
+  }),
 }
 
 // Lecturer validation schemas
@@ -322,6 +331,38 @@ export const lecturerValidation = {
     courseIds: Joi.array().items(Joi.string().uuid()).min(1).required(),
     semesterId: Joi.string().uuid().required(),
     role: Joi.string().valid("primary", "assistant", "guest").optional(),
+  }),
+
+  addYoutubeVideo: Joi.object({
+    title: Joi.string().required(),
+    description: Joi.string().optional(),
+    youtubeUrl: Joi.string().required(),
+    courseId: Joi.string().uuid().required(),
+    semesterId: Joi.string().uuid().required(),
+    lecturerProfileId: Joi.string().uuid().required(),
+  }),
+
+  lecturerIdParam: Joi.object({
+    id: Joi.string().uuid().required(),
+    lecturerId: Joi.string().uuid().required(),
+  }),
+
+  materialIdParam: Joi.object({
+    id: Joi.string().uuid().required(),
+  }),
+
+  assignmentIdParam: Joi.object({
+    id: Joi.string().uuid().required(),
+  }),
+
+  getLecturersQuery: Joi.object({
+    departmentId: Joi.string().uuid().optional(),
+    status: Joi.string().optional(),
+    search: Joi.string().optional(),
+  }),
+
+  semesterQuery: Joi.object({
+    semesterId: Joi.string().uuid().optional(),
   }),
 }
 
@@ -578,4 +619,401 @@ export const atRiskStudentValidation = {
     semesterId: Joi.string().uuid().required(),
     lecturerProfileId: Joi.string().uuid(),
   }),
+}
+
+// Attendance validation schemas
+export const attendanceValidation = {
+  idParam: Joi.object({
+    id: Joi.string().uuid().required(),
+  }),
+
+  courseAndSemesterParams: Joi.object({
+    courseId: Joi.string().uuid().required(),
+    semesterId: Joi.string().uuid().required(),
+  }),
+
+  studentCourseParams: Joi.object({
+    studentProfileId: Joi.string().uuid().required(),
+    courseId: Joi.string().uuid().required(),
+    semesterId: Joi.string().uuid().required(),
+  }),
+
+  attendanceFilters: Joi.object({
+    courseId: Joi.string().uuid(),
+    semesterId: Joi.string().uuid(),
+    studentProfileId: Joi.string().uuid(),
+    date: Joi.date().iso(),
+    isPresent: Joi.boolean(),
+    periodId: Joi.string().uuid(),
+    page: Joi.number().integer().min(1),
+    limit: Joi.number().integer().min(1).max(100),
+  }).unknown(true),
+
+  statisticsQuery: Joi.object({
+    studentProfileId: Joi.string().uuid(),
+  }).unknown(true),
+
+  createAttendance: Joi.object({
+    studentProfileId: Joi.string().uuid().required(),
+    courseId: Joi.string().uuid().required(),
+    semesterId: Joi.string().uuid().required(),
+    periodId: Joi.string().uuid().required(),
+    date: Joi.date().iso().required(),
+    isPresent: Joi.boolean().required(),
+    notes: Joi.string().allow("", null),
+  }),
+
+  updateAttendance: Joi.object({
+    isPresent: Joi.boolean(),
+    notes: Joi.string().allow("", null),
+  }).min(1),
+
+  bulkCreateAttendance: Joi.object({
+    attendances: Joi.array()
+      .items(
+        Joi.object({
+          studentProfileId: Joi.string().uuid().required(),
+          courseId: Joi.string().uuid().required(),
+          semesterId: Joi.string().uuid().required(),
+          periodId: Joi.string().uuid().required(),
+          date: Joi.date().iso().required(),
+          isPresent: Joi.boolean().required(),
+          notes: Joi.string().allow("", null),
+        }),
+      )
+      .min(1)
+      .required(),
+  }),
+  recordPhysicalAttendance: Joi.object({
+    studentProfileId: Joi.string().uuid().required(),
+    courseId: Joi.string().uuid().required(),
+    semesterId: Joi.string().uuid().required(),
+    periodId: Joi.string().uuid().required(),
+    date: Joi.date().required(),
+    isPresent: Joi.boolean().required(),
+    notes: Joi.string().optional(),
+  }),
+
+  bulkRecordPhysicalAttendance: Joi.object({
+    attendances: Joi.array()
+      .items(
+        Joi.object({
+          studentProfileId: Joi.string().uuid().required(),
+          courseId: Joi.string().uuid().required(),
+          semesterId: Joi.string().uuid().required(),
+          periodId: Joi.string().uuid().required(),
+          date: Joi.date().required(),
+          isPresent: Joi.boolean().required(),
+          notes: Joi.string().optional(),
+        }),
+      )
+      .min(1)
+      .required(),
+  }),
+
+  updatePhysicalAttendance: Joi.object({
+    isPresent: Joi.boolean().optional(),
+    notes: Joi.string().optional(),
+  }),
+
+  recordVirtualAttendance: Joi.object({
+    studentProfileId: Joi.string().uuid().required(),
+    virtualClassId: Joi.string().uuid().required(),
+    joinTime: Joi.date().optional(),
+    leaveTime: Joi.date().optional(),
+    durationMinutes: Joi.number().integer().min(0).optional(),
+    isPresent: Joi.boolean().required(),
+    notes: Joi.string().optional(),
+  }),
+
+  bulkRecordVirtualAttendance: Joi.object({
+    attendances: Joi.array()
+      .items(
+        Joi.object({
+          studentProfileId: Joi.string().uuid().required(),
+          virtualClassId: Joi.string().uuid().required(),
+          isPresent: Joi.boolean().required(),
+          joinTime: Joi.date().optional(),
+          leaveTime: Joi.date().optional(),
+          durationMinutes: Joi.number().integer().min(0).optional(),
+          notes: Joi.string().optional(),
+        }),
+      )
+      .min(1)
+      .required(),
+  }),
+
+  updateVirtualAttendance: Joi.object({
+    joinTime: Joi.date().optional(),
+    leaveTime: Joi.date().optional(),
+    durationMinutes: Joi.number().integer().min(0).optional(),
+    isPresent: Joi.boolean().optional(),
+    notes: Joi.string().optional(),
+  }),
+
+  attendanceIdParam: Joi.object({
+    id: Joi.string().uuid().required(),
+  }),
+
+  studentIdParam: Joi.object({
+    studentId: Joi.string().uuid().required(),
+  }),
+
+  periodIdParam: Joi.object({
+    periodId: Joi.string().uuid().required(),
+  }),
+
+  virtualClassIdParam: Joi.object({
+    virtualClassId: Joi.string().uuid().required(),
+  }),
+
+  courseAndSemesterQuery: Joi.object({
+    courseId: Joi.string().uuid().optional(),
+    semesterId: Joi.string().uuid().optional(),
+  }),
+}
+
+// Quiz validation schemas
+export const quizValidation = {
+  createQuiz: Joi.object({
+    title: Joi.string().required(),
+    description: Joi.string().optional(),
+    topic: Joi.string().required(),
+    numberOfQuestions: Joi.number().integer().min(1).required(),
+    timeLimit: Joi.number().integer().min(1).required(),
+    startDate: Joi.date().required(),
+    endDate: Joi.date().required(),
+    totalMarks: Joi.number().min(0).optional(),
+    passingMarks: Joi.number().min(0).optional(),
+    isActive: Joi.boolean().optional(),
+    isRandomized: Joi.boolean().optional(),
+    aiPrompt: Joi.object().optional(),
+    questionType: Joi.string().valid("multiple_choice", "true_false", "short_answer", "mixed").required(),
+    instructions: Joi.string().optional(),
+    lecturerProfileId: Joi.string().uuid().required(),
+    courseId: Joi.string().uuid().required(),
+    semesterId: Joi.string().uuid().required(),
+  }),
+
+  updateQuiz: Joi.object({
+    title: Joi.string().optional(),
+    description: Joi.string().optional(),
+    topic: Joi.string().optional(),
+    numberOfQuestions: Joi.number().integer().min(1).optional(),
+    timeLimit: Joi.number().integer().min(1).optional(),
+    startDate: Joi.date().optional(),
+    endDate: Joi.date().optional(),
+    totalMarks: Joi.number().min(0).optional(),
+    passingMarks: Joi.number().min(0).optional(),
+    isActive: Joi.boolean().optional(),
+    isRandomized: Joi.boolean().optional(),
+    aiPrompt: Joi.object().optional(),
+    questionType: Joi.string().valid("multiple_choice", "true_false", "short_answer", "mixed").optional(),
+    instructions: Joi.string().optional(),
+  }),
+
+  startQuizAttempt: Joi.object({
+    quizId: Joi.string().uuid().required(),
+    studentProfileId: Joi.string().uuid().required(),
+  }),
+
+  submitQuizAttempt: Joi.object({
+    answers: Joi.array()
+      .items(
+        Joi.object({
+          questionId: Joi.string().uuid().required(),
+          answer: Joi.alternatives()
+            .try(Joi.string(), Joi.number(), Joi.boolean(), Joi.array().items(Joi.string()))
+            .required(),
+        }),
+      )
+      .required(),
+  }),
+
+  manualGradeQuizAttempt: Joi.object({
+    score: Joi.number().min(0).required(),
+    isPassed: Joi.boolean().required(),
+    feedback: Joi.string().optional(),
+    aiAnalysis: Joi.object().optional(),
+  }),
+
+  generateQuizQuestions: Joi.object({
+    topic: Joi.string().required(),
+    numberOfQuestions: Joi.number().integer().min(1).required(),
+    questionType: Joi.string().valid("multiple_choice", "true_false", "short_answer", "mixed").required(),
+    courseId: Joi.string().uuid().required(),
+    additionalContext: Joi.string().optional(),
+  }),
+
+  quizIdParam: Joi.object({
+    id: Joi.string().uuid().required(),
+    quizId: Joi.string().uuid().required(),
+  }),
+
+  attemptIdParam: Joi.object({
+    id: Joi.string().uuid().required(),
+  }),
+
+  studentPerformanceParams: Joi.object({
+    studentProfileId: Joi.string().uuid().required(),
+    courseId: Joi.string().uuid().required(),
+    semesterId: Joi.string().uuid().required(),
+  }),
+
+  courseAndSemesterParams: Joi.object({
+    courseId: Joi.string().uuid().required(),
+    semesterId: Joi.string().uuid().required(),
+  }),
+
+  getQuizzesQuery: Joi.object({
+    lecturerProfileId: Joi.string().uuid().optional(),
+    courseId: Joi.string().uuid().optional(),
+    semesterId: Joi.string().uuid().optional(),
+    isActive: Joi.boolean().optional(),
+    startDate: Joi.date().optional(),
+    endDate: Joi.date().optional(),
+  }),
+
+  getQuizAttemptsQuery: Joi.object({
+    quizId: Joi.string().uuid().optional(),
+    studentProfileId: Joi.string().uuid().optional(),
+    status: Joi.string().optional(),
+    startDate: Joi.date().optional(),
+    endDate: Joi.date().optional(),
+  }),
+}
+
+// Virtual Class validation schemas
+export const virtualClassValidation = {
+  createVirtualClass: Joi.object({
+    title: Joi.string().required(),
+    description: Joi.string().optional(),
+    scheduledStartTime: Joi.date().required(),
+    scheduledEndTime: Joi.date().required(),
+    isRecorded: Joi.boolean().required(),
+    lecturerProfileId: Joi.string().uuid().required(),
+    courseId: Joi.string().uuid().required(),
+    semesterId: Joi.string().uuid().required(),
+    meetingConfig: Joi.object().optional(),
+  }),
+
+  updateVirtualClass: Joi.object({
+    title: Joi.string().optional(),
+    description: Joi.string().optional(),
+    scheduledStartTime: Joi.date().optional(),
+    scheduledEndTime: Joi.date().optional(),
+    status: Joi.string().valid("scheduled", "in_progress", "completed", "cancelled").optional(),
+    actualStartTime: Joi.date().optional(),
+    actualEndTime: Joi.date().optional(),
+    duration: Joi.number().integer().min(0).optional(),
+    isRecorded: Joi.boolean().optional(),
+    recordingUrl: Joi.string().uri().optional(),
+    meetingId: Joi.string().optional(),
+    meetingLink: Joi.string().optional(),
+    meetingConfig: Joi.object().optional(),
+  }),
+
+  recordAttendance: Joi.object({
+    virtualClassId: Joi.string().uuid().required(),
+    studentProfileId: Joi.string().uuid().required(),
+    joinTime: Joi.date().optional(),
+    leaveTime: Joi.date().optional(),
+    durationMinutes: Joi.number().integer().min(0).optional(),
+    isPresent: Joi.boolean().required(),
+    notes: Joi.string().optional(),
+  }),
+
+  updateAttendance: Joi.object({
+    joinTime: Joi.date().optional(),
+    leaveTime: Joi.date().optional(),
+    durationMinutes: Joi.number().integer().min(0).optional(),
+    isPresent: Joi.boolean().optional(),
+    notes: Joi.string().optional(),
+  }),
+
+  bulkRecordAttendance: Joi.object({
+    attendances: Joi.array()
+      .items(
+        Joi.object({
+          studentProfileId: Joi.string().uuid().required(),
+          isPresent: Joi.boolean().required(),
+          joinTime: Joi.date().optional(),
+          leaveTime: Joi.date().optional(),
+          durationMinutes: Joi.number().integer().min(0).optional(),
+          notes: Joi.string().optional(),
+        }),
+      )
+      .min(1)
+      .required(),
+  }),
+
+  virtualClassIdParam: Joi.object({
+    id: Joi.string().uuid().required(),
+    virtualClassId: Joi.string().uuid().required(),
+  }),
+
+  lecturerIdParam: Joi.object({
+    lecturerProfileId: Joi.string().uuid().required(),
+  }),
+
+  attendanceIdParam: Joi.object({
+    id: Joi.string().uuid().required(),
+  }),
+
+  courseAndSemesterParams: Joi.object({
+    courseId: Joi.string().uuid().required(),
+    semesterId: Joi.string().uuid().required(),
+  }),
+
+  getVirtualClassesQuery: Joi.object({
+    lecturerProfileId: Joi.string().uuid().optional(),
+    courseId: Joi.string().uuid().optional(),
+    semesterId: Joi.string().uuid().optional(),
+    status: Joi.string().optional(),
+    startDate: Joi.date().optional(),
+    endDate: Joi.date().optional(),
+  }),
+
+  limitQuery: Joi.object({
+    limit: Joi.number().integer().min(1).max(50).optional(),
+  }),
+}
+
+const validateSchema = (schema: Joi.ObjectSchema) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const { error } = schema.validate(req.body)
+    if (error) {
+      return res.status(400).json({
+        message: "Validation error",
+        details: error.details.map((detail) => detail.message),
+      })
+    }
+    next()
+  }
+}
+
+const validateQuerySchema = (schema: Joi.ObjectSchema) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const { error } = schema.validate(req.query)
+    if (error) {
+      return res.status(400).json({
+        message: "Validation error",
+        details: error.details.map((detail) => detail.message),
+      })
+    }
+    next()
+  }
+}
+
+const validateParamsSchema = (schema: Joi.ObjectSchema) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const { error } = schema.validate(req.params)
+    if (error) {
+      return res.status(400).json({
+        message: "Validation error",
+        details: error.details.map((detail) => detail.message),
+      })
+    }
+    next()
+  }
 }

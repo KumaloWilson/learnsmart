@@ -252,10 +252,10 @@ export class StudentPerformanceService {
     let aiAnalysis = {}
 
     interface AnalysisResult {
-      strengths: string;
-      weaknesses: string;
-      recommendations: string;
-      fullAnalysis: Record<string, any>;
+      strengths: string
+      weaknesses: string
+      recommendations: string
+      fullAnalysis: Record<string, any>
     }
 
     try {
@@ -269,7 +269,7 @@ export class StudentPerformanceService {
         performanceCategory,
         assignmentDetails: assignmentPerformance.assignments,
         quizDetails: quizPerformance.quizzes,
-      })) as AnalysisResult;
+      })) as AnalysisResult
 
       strengths = analysisResult.strengths
       weaknesses = analysisResult.weaknesses
@@ -321,9 +321,6 @@ export class StudentPerformanceService {
   async generateClassPerformanceAnalysis(data: ClassPerformanceAnalysisDto) {
     const { courseId, semesterId } = data
 
-    // Get all students enrolled in the  {
-    //const { courseId, semesterId } = data
-
     // Get all students enrolled in the course
     const { CourseEnrollment, StudentProfile } = require("../models")
     const enrollments = await CourseEnrollment.findAll({
@@ -363,10 +360,13 @@ export class StudentPerformanceService {
     // Calculate class averages
     const attendanceAverage =
       studentAnalyses.length > 0
-        ? studentAnalyses.filter((analysis): analysis is NonNullable<typeof analysis> => analysis !== null)
+        ? studentAnalyses
+            .filter((analysis): analysis is NonNullable<typeof analysis> => analysis !== null)
             .reduce((sum, analysis) => sum + analysis.attendancePercentage, 0) / studentAnalyses.length
         : 0
-    const validAnalyses = studentAnalyses.filter((analysis): analysis is NonNullable<typeof analysis> => analysis !== null)
+    const validAnalyses = studentAnalyses.filter(
+      (analysis): analysis is NonNullable<typeof analysis> => analysis !== null,
+    )
     const assignmentAverage =
       validAnalyses.length > 0
         ? validAnalyses.reduce((sum, analysis) => sum + analysis.assignmentAverage, 0) / validAnalyses.length
@@ -382,11 +382,19 @@ export class StudentPerformanceService {
 
     // Count students in each performance category
     const categoryCounts = {
-      excellent: studentAnalyses.filter((a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "excellent").length,
-      good: studentAnalyses.filter((a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "good").length,
-      average: studentAnalyses.filter((a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "average").length,
-      below_average: studentAnalyses.filter((a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "below_average").length,
-      poor: studentAnalyses.filter((a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "poor").length,
+      excellent: studentAnalyses.filter(
+        (a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "excellent",
+      ).length,
+      good: studentAnalyses.filter((a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "good")
+        .length,
+      average: studentAnalyses.filter(
+        (a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "average",
+      ).length,
+      below_average: studentAnalyses.filter(
+        (a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "below_average",
+      ).length,
+      poor: studentAnalyses.filter((a): a is NonNullable<typeof a> => a !== null && a.performanceCategory === "poor")
+        .length,
     }
 
     // Generate class-level recommendations
@@ -423,6 +431,15 @@ export class StudentPerformanceService {
       classRecommendations,
       studentAnalyses,
     }
+  }
+
+  // Add the missing method for lecturer dashboard controller
+  async getCoursePerformanceAnalytics(courseId: string, semesterId: string) {
+    // This is a wrapper around generateClassPerformanceAnalysis
+    return this.generateClassPerformanceAnalysis({
+      courseId,
+      semesterId,
+    })
   }
 
   // Helper methods

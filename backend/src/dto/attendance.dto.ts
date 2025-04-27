@@ -28,13 +28,13 @@ export class CreatePhysicalAttendanceDto {
   @Expose()
   lecturerProfileId: string
 
-  @IsUUID(4)
+  @IsArray()
   @Expose()
-  studentProfileId: string
-
-  @IsBoolean()
-  @Expose()
-  isPresent: boolean
+  attendanceRecords: {
+    studentProfileId: string
+    isPresent: boolean
+    notes?: string
+  }[]
 }
 
 export class UpdatePhysicalAttendanceDto {
@@ -48,11 +48,6 @@ export class UpdatePhysicalAttendanceDto {
   @Expose()
   notes?: string
 
-  @IsBoolean()
-  @IsOptional()
-  @Expose()
-  isPresent?: boolean
-
   @IsDate()
   @Type(() => Date)
   @IsOptional()
@@ -60,40 +55,16 @@ export class UpdatePhysicalAttendanceDto {
   date?: Date
 }
 
-export class BulkCreateAttendanceDto {
-  @IsUUID(4)
+export class UpdateAttendanceRecordDto {
+  @IsBoolean()
+  @IsOptional()
   @Expose()
-  courseId: string
-
-  @IsUUID(4)
-  @Expose()
-  semesterId: string
-
-  @IsDate()
-  @Type(() => Date)
-  @Expose()
-  date: Date
-
-  @IsString()
-  @Expose()
-  topic: string
+  isPresent?: boolean
 
   @IsString()
   @IsOptional()
   @Expose()
   notes?: string
-
-  @IsUUID(4)
-  @Expose()
-  lecturerProfileId: string
-
-  @IsArray()
-  @Expose()
-  attendances: {
-    studentProfileId: string
-    isPresent: boolean
-    notes?: string
-  }[]
 }
 
 export class AttendanceFilterDto {
@@ -128,11 +99,6 @@ export class AttendanceFilterDto {
   @IsOptional()
   @Expose()
   endDate?: Date
-
-  @IsBoolean()
-  @IsOptional()
-  @Expose()
-  isPresent?: boolean
 }
 
 export class AttendanceStatisticsParamsDto {

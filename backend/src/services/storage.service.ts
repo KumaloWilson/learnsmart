@@ -8,9 +8,22 @@ export class StorageService {
     this.supabase = createClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_SERVICE_KEY || "")
   }
 
-  async uploadFile(bucketName: string, filePath: string, fileBuffer: Buffer, contentType: string): Promise<string> {
+  async uploadFile(fileBuffer: Buffer, fileName: string, contentType: string): Promise<string> {
     try {
-      const { data, error } = await this.supabase.storage.from(bucketName).upload(filePath, fileBuffer, {
+      // Define the bucket name
+      const bucketName = "teaching-materials"
+
+      // Create the bucket if it doesn't exist
+      const { data: bucketData, error: bucketError } = await this.supabase.storage.getBucket(bucketName)
+
+      if (bucketError && bucketError.message.includes("not found")) {
+        await this.supabase.storage.createBucket(bucketName, {
+          public: true,
+        })
+      }
+
+      // Upload the file
+      const { data, error } = await this.supabase.storage.from(bucketName).upload(`uploads/${fileName}`, fileBuffer, {
         contentType,
         upsert: true,
       })
@@ -19,30 +32,47 @@ export class StorageService {
         throw new Error(`Error uploading file: ${error.message}`)
       }
 
-      // Get public URL
-      const { data: urlData } = this.supabase.storage.from(bucketName).getPublicUrl(filePath)
+      // Get the public URL
+      const { data: urlData } = this.supabase.storage.from(bucketName).getPublicUrl(`uploads/${fileName}`)
 
       return urlData.publicUrl
-    } catch (error: any) {
-      throw new Error(`Failed to upload file: ${error.message}`)
+    } catch (error) {
+      console.error("Error in uploadFile:", error)
+      throw error
     }
   }
 
-  async deleteFile(bucketName: string, filePath: string): Promise<void> {
+  async deleteFile(fileUrl: string): Promise<boolean> {
     try {
+      // Extract the path from the URL
+      const url = new URL(fileUrl)
+      const pathParts = url.pathname.split("/")
+      const bucketName = pathParts[1] // Assuming URL format is /bucket-name/...
+      const filePath = pathParts.slice(2).join("/")
+
+      // Delete the file
       const { error } = await this.supabase.storage.from(bucketName).remove([filePath])
 
       if (error) {
         throw new Error(`Error deleting file: ${error.message}`)
       }
-    } catch (error: any) {
-      throw new Error(`Failed to delete file: ${error.message}`)
+
+      return true
+    } catch (error) {
+      console.error("Error in deleteFile:", error)
+      throw error
     }
   }
 
-  getPublicUrl(bucketName: string, filePath: string): string {
-    const { data } = this.supabase.storage.from(bucketName).getPublicUrl(filePath)
+  async getFileUrl(filePath: string, bucketName = "teaching-materials"): Promise<string> {
+    try {
+      // Get the public URL
+      const { data } = this.supabase.storage.from(bucketName).getPublicUrl(filePath)
 
-    return data.publicUrl
+      return data.publicUrl
+    } catch (error) {
+      console.error("Error in getFileUrl:", error)
+      throw error
+    }
   }
 }

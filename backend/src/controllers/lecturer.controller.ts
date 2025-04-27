@@ -21,7 +21,7 @@ export class LecturerController {
       return res.status(200).json(lecturers)
     } catch (error) {
       console.error("Error getting all lecturers:", error)
-      return res.status(500).json({ message: "Failed to get lecturers", error: error.message })
+      return res.status(500).json({ message: "Failed to get lecturers", error: error })
     }
   }
 
@@ -35,7 +35,7 @@ export class LecturerController {
       return res.status(200).json(lecturer)
     } catch (error) {
       console.error("Error getting lecturer by ID:", error)
-      return res.status(500).json({ message: "Failed to get lecturer", error: error.message })
+      return res.status(500).json({ message: "Failed to get lecturer", error: error })
     }
   }
 
@@ -49,7 +49,7 @@ export class LecturerController {
       return res.status(200).json(lecturer)
     } catch (error) {
       console.error("Error getting lecturer by user ID:", error)
-      return res.status(500).json({ message: "Failed to get lecturer", error: error.message })
+      return res.status(500).json({ message: "Failed to get lecturer", error: error })
     }
   }
 
@@ -60,7 +60,7 @@ export class LecturerController {
       return res.status(201).json(lecturer)
     } catch (error) {
       console.error("Error creating lecturer:", error)
-      return res.status(500).json({ message: "Failed to create lecturer", error: error.message })
+      return res.status(500).json({ message: "Failed to create lecturer", error: error })
     }
   }
 
@@ -75,7 +75,7 @@ export class LecturerController {
       return res.status(200).json(lecturer)
     } catch (error) {
       console.error("Error updating lecturer:", error)
-      return res.status(500).json({ message: "Failed to update lecturer", error: error.message })
+      return res.status(500).json({ message: "Failed to update lecturer", error: error })
     }
   }
 
@@ -89,7 +89,7 @@ export class LecturerController {
       return res.status(200).json({ message: "Lecturer deleted successfully" })
     } catch (error) {
       console.error("Error deleting lecturer:", error)
-      return res.status(500).json({ message: "Failed to delete lecturer", error: error.message })
+      return res.status(500).json({ message: "Failed to delete lecturer", error: error })
     }
   }
 
@@ -101,7 +101,7 @@ export class LecturerController {
       return res.status(200).json(assignments)
     } catch (error) {
       console.error("Error getting lecturer course assignments:", error)
-      return res.status(500).json({ message: "Failed to get course assignments", error: error.message })
+      return res.status(500).json({ message: "Failed to get course assignments", error: error })
     }
   }
 
@@ -120,7 +120,7 @@ export class LecturerController {
       return res.status(201).json(assignment)
     } catch (error) {
       console.error("Error assigning course to lecturer:", error)
-      return res.status(500).json({ message: "Failed to assign course", error: error.message })
+      return res.status(500).json({ message: "Failed to assign course", error: error })
     }
   }
 
@@ -135,7 +135,7 @@ export class LecturerController {
       return res.status(200).json(assignment)
     } catch (error) {
       console.error("Error updating course assignment:", error)
-      return res.status(500).json({ message: "Failed to update course assignment", error: error.message })
+      return res.status(500).json({ message: "Failed to update course assignment", error: error })
     }
   }
 
@@ -149,7 +149,7 @@ export class LecturerController {
       return res.status(200).json({ message: "Course assignment removed successfully" })
     } catch (error) {
       console.error("Error removing course assignment:", error)
-      return res.status(500).json({ message: "Failed to remove course assignment", error: error.message })
+      return res.status(500).json({ message: "Failed to remove course assignment", error: error })
     }
   }
 
@@ -161,7 +161,7 @@ export class LecturerController {
       return res.status(200).json(assessments)
     } catch (error) {
       console.error("Error getting lecturer assessments:", error)
-      return res.status(500).json({ message: "Failed to get assessments", error: error.message })
+      return res.status(500).json({ message: "Failed to get assessments", error: error })
     }
   }
 
@@ -182,7 +182,7 @@ export class LecturerController {
       return res.status(201).json(assessment)
     } catch (error) {
       console.error("Error creating assessment:", error)
-      return res.status(500).json({ message: "Failed to create assessment", error: error.message })
+      return res.status(500).json({ message: "Failed to create assessment", error: error })
     }
   }
 
@@ -197,7 +197,7 @@ export class LecturerController {
       return res.status(200).json(assessment)
     } catch (error) {
       console.error("Error updating assessment:", error)
-      return res.status(500).json({ message: "Failed to update assessment", error: error.message })
+      return res.status(500).json({ message: "Failed to update assessment", error: error })
     }
   }
 
@@ -211,7 +211,7 @@ export class LecturerController {
       return res.status(200).json({ message: "Assessment deleted successfully" })
     } catch (error) {
       console.error("Error deleting assessment:", error)
-      return res.status(500).json({ message: "Failed to delete assessment", error: error.message })
+      return res.status(500).json({ message: "Failed to delete assessment", error: error })
     }
   }
 
@@ -223,7 +223,7 @@ export class LecturerController {
       return res.status(200).json(submissions)
     } catch (error) {
       console.error("Error getting assessment submissions:", error)
-      return res.status(500).json({ message: "Failed to get submissions", error: error.message })
+      return res.status(500).json({ message: "Failed to get submissions", error: error })
     }
   }
 
@@ -246,7 +246,7 @@ export class LecturerController {
       return res.status(200).json(submission)
     } catch (error) {
       console.error("Error grading submission:", error)
-      return res.status(500).json({ message: "Failed to grade submission", error: error.message })
+      return res.status(500).json({ message: "Failed to grade submission", error: error })
     }
   }
 
@@ -258,7 +258,7 @@ export class LecturerController {
       return res.status(200).json(materials)
     } catch (error) {
       console.error("Error getting teaching materials:", error)
-      return res.status(500).json({ message: "Failed to get teaching materials", error: error.message })
+      return res.status(500).json({ message: "Failed to get teaching materials", error: error })
     }
   }
 
@@ -272,7 +272,7 @@ export class LecturerController {
       return res.status(200).json(material)
     } catch (error) {
       console.error("Error getting teaching material by ID:", error)
-      return res.status(500).json({ message: "Failed to get teaching material", error: error.message })
+      return res.status(500).json({ message: "Failed to get teaching material", error: error })
     }
   }
 
@@ -292,7 +292,7 @@ export class LecturerController {
       return res.status(201).json(material)
     } catch (error) {
       console.error("Error creating teaching material:", error)
-      return res.status(500).json({ message: "Failed to create teaching material", error: error.message })
+      return res.status(500).json({ message: "Failed to create teaching material", error: error })
     }
   }
 
@@ -307,7 +307,7 @@ export class LecturerController {
       return res.status(200).json(material)
     } catch (error) {
       console.error("Error updating teaching material:", error)
-      return res.status(500).json({ message: "Failed to update teaching material", error: error.message })
+      return res.status(500).json({ message: "Failed to update teaching material", error: error })
     }
   }
 
@@ -321,7 +321,7 @@ export class LecturerController {
       return res.status(200).json({ message: "Teaching material deleted successfully" })
     } catch (error) {
       console.error("Error deleting teaching material:", error)
-      return res.status(500).json({ message: "Failed to delete teaching material", error: error.message })
+      return res.status(500).json({ message: "Failed to delete teaching material", error: error })
     }
   }
 
@@ -363,7 +363,7 @@ export class LecturerController {
       return res.status(201).json(material)
     } catch (error) {
       console.error("Error uploading video:", error)
-      return res.status(500).json({ message: "Failed to upload video", error: error.message })
+      return res.status(500).json({ message: "Failed to upload video", error: error })
     }
   }
 
@@ -395,7 +395,7 @@ export class LecturerController {
       return res.status(201).json(material)
     } catch (error) {
       console.error("Error adding YouTube video:", error)
-      return res.status(500).json({ message: "Failed to add YouTube video", error: error.message })
+      return res.status(500).json({ message: "Failed to add YouTube video", error: error })
     }
   }
 }

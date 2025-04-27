@@ -713,14 +713,14 @@ export class QuizService {
     const userIds = enrollments.map((enrollment: any) => enrollment.studentProfile?.user?.id).filter((id: string) => id)
 
     if (userIds.length > 0) {
-      await this.notificationService.notifyNewAnnouncement(
-        "New Quiz Available",
-        `A new quiz "${quiz.title}" for ${quiz.course.name} is now available. It will be open until ${new Date(
+      await this.notificationService.notifyNewAnnouncement({
+        courseId: quiz.courseId,
+        semesterId: quiz.semesterId,
+        title: "New Quiz Available",
+        message: `A new quiz "${quiz.title}" for ${quiz.course.name} is now available. It will be open until ${new Date(
           quiz.endDate,
-        ).toLocaleString()}.`,
-        userIds,
-        quiz.lecturerProfileId,
-      )
+        ).toLocaleString()}.`
+      })
     }
   }
 
@@ -735,7 +735,7 @@ export class QuizService {
     const score = attempt.score
     const totalMarks = attempt.quiz.totalMarks
 
-    await this.notificationService.create({
+    await this.notificationService.createNotification({
       title: `Quiz Result: ${attempt.quiz.title}`,
       message: `You ${isPassed ? "passed" : "did not pass"} the quiz with a score of ${score}/${totalMarks}.`,
       type: "grade",

@@ -12,24 +12,32 @@ import {
   VirtualClass,
   TeachingMaterial,
   User,
+  AtRiskStudent,
+  PhysicalAttendance,
+  VirtualClassAttendance,
+  StudentPerformance,
 } from "../models"
 import { AttendanceService } from "./attendance.service"
 import { StudentPerformanceService } from "./student-performance.service"
-import type {
-  LecturerDashboardStatsDto,
-  CourseStatisticsDto,
-  StudentProgressDto,
-  TeachingLoadDto,
-  UpcomingScheduleDto,
-} from "../dto/lecturer-dashboard.dto"
+import { AtRiskStudentService } from "./at-risk-student.service"
+import { CourseTopicService } from "./course-topic.service"
+import { CourseMasteryService } from "./course-mastery.service"
+import type { LecturerDashboardStatsDto } from "../dto/lecturer-dashboard.dto"
+import { LecturerProfile } from "../models/LecturerProfile"
 
 export class LecturerDashboardService {
   private attendanceService: AttendanceService
   private studentPerformanceService: StudentPerformanceService
+  private atRiskStudentService: AtRiskStudentService
+  private courseTopicService: CourseTopicService
+  private courseMasteryService: CourseMasteryService
 
   constructor() {
     this.attendanceService = new AttendanceService()
     this.studentPerformanceService = new StudentPerformanceService()
+    this.atRiskStudentService = new AtRiskStudentService()
+    this.courseTopicService = new CourseTopicService()
+    this.courseMasteryService = new CourseMasteryService()
   }
 
   async getDashboardStats(lecturerProfileId: string): Promise<LecturerDashboardStatsDto> {
@@ -133,12 +141,37 @@ export class LecturerDashboardService {
     let averagePerformance = 0
     if (courseIds.length > 0 && semesterId) {
       const performances = await this.studentPerformanceService.findAll({
-        courseId: courseIds[0],
+        courseId: {
+          [Op.in]: courseIds,
+        },
         semesterId,
       })
       const totalPerformance = performances.reduce((sum, perf) => sum + perf.overallPerformance, 0)
       averagePerformance = performances.length > 0 ? totalPerformance / performances.length : 0
     }
+
+    // Get at-risk students count
+    const atRiskStudentsCount = await AtRiskStudent.count({
+      where: {
+        courseId: {
+          [Op.in]: courseIds,
+        },
+        ...(semesterId ? { semesterId } : {}),
+        isResolved: false,
+      },
+    })
+
+    // Get critical at-risk students count
+    const criticalAtRiskStudentsCount = await AtRiskStudent.count({
+      where: {
+        courseId: {
+          [Op.in]: courseIds,
+        },
+        ...(semesterId ? { semesterId } : {}),
+        isResolved: false,
+        riskLevel: "critical",
+      },
+    })
 
     return {
       totalCourses,
@@ -148,432 +181,908 @@ export class LecturerDashboardService {
       recentQuizzes,
       averageAttendance,
       averagePerformance,
+      atRiskStudentsCount,
+      criticalAtRiskStudentsCount,
     }
   }
 
-  async getCourseStatistics(data: CourseStatisticsDto) {
-    const { courseId, semesterId } = data
+  async getDashboardOverview(lecturerProfileId: string, options: any = {}) {
+    const {
+      startDate,
+      endDate,
+      includeAttendance = true,
+      includePerformance = true,
+      includeQuizzes = true,
+      includeAssessments = true,
+    } = options
 
-    // Get course details
-    const course = await Course.findByPk(courseId, {
-      include: ["program"],
+    // Get lecturer profile with user details
+    const lecturerProfile = await LecturerProfile.findByPk(lecturerProfileId, {
+      include: [{ model: User, as: "user" }],
     })
 
-    if (!course) {
-      throw new Error("Course not found")
+    if (!lecturerProfile) {
+      throw new Error("Lecturer profile not found")
     }
 
-    // Get enrollment statistics
-    const totalEnrollments = await CourseEnrollment.count({
-      where: {
-        courseId,
-        semesterId,
-      },
-    })
-
-    const activeEnrollments = await CourseEnrollment.count({
-      where: {
-        courseId,
-        semesterId,
-        status: "enrolled",
-      },
-    })
-
-    // Get assignment statistics
-    const assignments = await Assessment.findAll({
-      where: {
-        courseId,
-        semesterId,
-      },
+    // Get assigned courses for the lecturer
+    const courseAssignments = await CourseAssignment.findAll({
+      where: { lecturerProfileId },
       include: [
-        {
-          model: AssessmentSubmission,
-          required: false,
-        },
+        { model: Course, as: "course" },
+        { model: Semester, as: "semester" },
       ],
     })
 
-    const totalAssignments = assignments.length
-    const totalSubmissions = assignments.reduce((sum, assignment) => sum + (assignment.submissions?.length || 0), 0)
-    const submissionRate = totalAssignments > 0 ? (totalSubmissions / (totalAssignments * activeEnrollments)) * 100 : 0
+    const courseIds = courseAssignments.map((assignment) => assignment.courseId)
+    const semesterIds = courseAssignments.map((assignment) => assignment.semesterId)
 
-    // Get quiz statistics
-    const quizzes = await Quiz.findAll({
+    // Prepare date filters
+    const dateFilter: any = {}
+    if (startDate || endDate) {
+      if (startDate) dateFilter[Op.gte] = startDate
+      if (endDate) dateFilter[Op.lte] = endDate
+    }
+
+    // Get student counts for each course
+    const enrollmentCounts = await CourseEnrollment.findAll({
+      attributes: [
+        "courseId",
+        "semesterId",
+        [CourseEnrollment.sequelize!.fn("COUNT", CourseEnrollment.sequelize!.col("studentProfileId")), "studentCount"],
+      ],
       where: {
-        courseId,
-        semesterId,
+        courseId: { [Op.in]: courseIds },
+        semesterId: { [Op.in]: semesterIds },
+      },
+      group: ["courseId", "semesterId"],
+    })
+
+    // Build enrollment map for easy access
+    const enrollmentMap: Record<string, number> = {}
+    enrollmentCounts.forEach((count: any) => {
+      const key = `${count.courseId}-${count.semesterId}`
+      enrollmentMap[key] = count.get("studentCount")
+    })
+
+    // Get upcoming classes
+    const now = new Date()
+    const upcomingClasses = await VirtualClass.findAll({
+      where: {
+        lecturerProfileId,
+        scheduledStartTime: { [Op.gt]: now },
       },
       include: [
-        {
-          model: QuizAttempt,
-          required: false,
-        },
+        { model: Course, as: "course" },
+        { model: Semester, as: "semester" },
+      ],
+      order: [["scheduledStartTime", "ASC"]],
+      limit: 5,
+    })
+
+    // Prepare result object
+    const result: any = {
+      lecturer: {
+        id: lecturerProfile.id,
+        name: lecturerProfile.user.fullName,
+        email: lecturerProfile.user.email,
+        department: lecturerProfile.department,
+        specialization: lecturerProfile.specialization,
+      },
+      courses: courseAssignments.map((assignment) => ({
+        id: assignment.courseId,
+        name: assignment.course.name,
+        code: assignment.course.code,
+        semesterId: assignment.semesterId,
+        semesterName: assignment.semester.name,
+        studentCount: enrollmentMap[`${assignment.courseId}-${assignment.semesterId}`] || 0,
+      })),
+      upcomingClasses: upcomingClasses.map((virtualClass) => ({
+        id: virtualClass.id,
+        title: virtualClass.title,
+        courseId: virtualClass.courseId,
+        courseName: virtualClass.course.name,
+        courseCode: virtualClass.course.code,
+        startTime: virtualClass.scheduledStartTime,
+        endTime: virtualClass.scheduledEndTime,
+        meetingLink: virtualClass.meetingLink,
+      })),
+      summary: {
+        totalCourses: courseAssignments.length,
+        totalStudents: Object.values(enrollmentMap).reduce((sum, count) => sum + count, 0),
+        upcomingClassesCount: upcomingClasses.length,
+      },
+    }
+
+    // Add attendance data if requested
+    if (includeAttendance) {
+      // Get attendance statistics
+      const attendanceData = await this.getAttendanceOverview(courseIds, semesterIds, dateFilter)
+      result.attendance = attendanceData
+    }
+
+    // Add performance data if requested
+    if (includePerformance) {
+      // Get performance statistics
+      const performanceData = await this.getPerformanceOverview(courseIds, semesterIds, dateFilter)
+      result.performance = performanceData
+    }
+
+    // Add quiz data if requested
+    if (includeQuizzes) {
+      // Get quiz statistics
+      const quizData = await this.getQuizOverview(courseIds, semesterIds, dateFilter)
+      result.quizzes = quizData
+    }
+
+    // Add assessment data if requested
+    if (includeAssessments) {
+      // Get assessment statistics
+      const assessmentData = await this.getAssessmentOverview(courseIds, semesterIds, dateFilter)
+      result.assessments = assessmentData
+    }
+
+    return result
+  }
+
+  async getLecturerCourses(lecturerProfileId: string) {
+    const courseAssignments = await CourseAssignment.findAll({
+      where: { lecturerProfileId },
+      include: [
+        { model: Course, as: "course" },
+        { model: Semester, as: "semester" },
       ],
     })
 
-    const totalQuizzes = quizzes.length
-    const totalAttempts = quizzes.reduce((sum, quiz) => sum + (quiz.attempts?.length || 0), 0)
-    const attemptRate = totalQuizzes > 0 ? (totalAttempts / (totalQuizzes * activeEnrollments)) * 100 : 0
+    const courseIds = courseAssignments.map((assignment) => assignment.courseId)
+    const semesterIds = courseAssignments.map((assignment) => assignment.semesterId)
 
-    // Get attendance statistics
-    const attendanceStats = await this.attendanceService.getAttendanceStatistics({
-      courseId,
-      semesterId,
-    })
-
-    // Get performance statistics
-    const performances = await this.studentPerformanceService.findAll({
-      courseId,
-      semesterId,
-    })
-
-    const averagePerformance =
-      performances.length > 0
-        ? performances.reduce((sum, perf) => sum + perf.overallPerformance, 0) / performances.length
-        : 0
-
-    // Get teaching materials
-    const teachingMaterials = await TeachingMaterial.count({
+    // Get student counts for each course
+    const enrollmentCounts = await CourseEnrollment.findAll({
+      attributes: [
+        "courseId",
+        "semesterId",
+        [CourseEnrollment.sequelize!.fn("COUNT", CourseEnrollment.sequelize!.col("studentProfileId")), "studentCount"],
+      ],
       where: {
-        courseId,
-        semesterId,
+        courseId: { [Op.in]: courseIds },
+        semesterId: { [Op.in]: semesterIds },
       },
+      group: ["courseId", "semesterId"],
+    })
+
+    // Build enrollment map for easy access
+    const enrollmentMap: Record<string, number> = {}
+    enrollmentCounts.forEach((count: any) => {
+      const key = `${count.courseId}-${count.semesterId}`
+      enrollmentMap[key] = count.get("studentCount")
+    })
+
+    return courseAssignments.map((assignment) => ({
+      id: assignment.id,
+      courseId: assignment.courseId,
+      courseName: assignment.course.name,
+      courseCode: assignment.course.code,
+      courseDescription: assignment.course.description,
+      semesterId: assignment.semesterId,
+      semesterName: assignment.semester.name,
+      studentCount: enrollmentMap[`${assignment.courseId}-${assignment.semesterId}`] || 0,
+      assignedDate: assignment.createdAt,
+    }))
+  }
+
+  private async getAttendanceOverview(courseIds: string[], semesterIds: string[], dateFilter: any) {
+    // Get physical attendance records
+    const physicalAttendanceQuery: any = {
+      courseId: { [Op.in]: courseIds },
+      semesterId: { [Op.in]: semesterIds },
+    }
+
+    if (Object.keys(dateFilter).length > 0) {
+      physicalAttendanceQuery.date = dateFilter
+    }
+
+    const physicalAttendance = await PhysicalAttendance.findAll({
+      where: physicalAttendanceQuery,
+      include: [
+        { model: StudentProfile, as: "studentProfile", include: [{ association: "user" }] },
+        { model: Course, as: "course" },
+        { model: Semester, as: "semester" },
+      ],
+    })
+
+    // Get virtual attendance records
+    const virtualAttendanceQuery: any = {
+      "$virtualClass.courseId$": { [Op.in]: courseIds },
+      "$virtualClass.semesterId$": { [Op.in]: semesterIds },
+    }
+
+    if (Object.keys(dateFilter).length > 0) {
+      virtualAttendanceQuery["$virtualClass.startTime$"] = dateFilter
+    }
+
+    const virtualAttendance = await VirtualClassAttendance.findAll({
+      where: virtualAttendanceQuery,
+      include: [
+        {
+          model: VirtualClass,
+          as: "virtualClass",
+          include: [
+            { model: Course, as: "course" },
+            { model: Semester, as: "semester" },
+          ],
+        },
+        { model: StudentProfile, as: "studentProfile", include: [{ association: "user" }] },
+      ],
+    })
+
+    // Calculate attendance statistics
+    const courseAttendance: Record<string, any> = {}
+
+    // Process physical attendance
+    physicalAttendance.forEach((record) => {
+      const key = `${record.courseId}-${record.semesterId}`
+      if (!courseAttendance[key]) {
+        courseAttendance[key] = {
+          courseId: record.courseId,
+          courseName: record.course.name,
+          courseCode: record.course.code,
+          semesterId: record.semesterId,
+          semesterName: record.semester.name,
+          physicalSessions: new Set(),
+          physicalAttendance: 0,
+          virtualSessions: new Set(),
+          virtualAttendance: 0,
+        }
+      }
+
+      courseAttendance[key].physicalSessions.add(record.periodId)
+      if (record.isPresent) {
+        courseAttendance[key].physicalAttendance++
+      }
+    })
+
+    // Process virtual attendance
+    virtualAttendance.forEach((record) => {
+      const key = `${record.virtualClass.courseId}-${record.virtualClass.semesterId}`
+      if (!courseAttendance[key]) {
+        courseAttendance[key] = {
+          courseId: record.virtualClass.courseId,
+          courseName: record.virtualClass.course.name,
+          courseCode: record.virtualClass.course.code,
+          semesterId: record.virtualClass.semesterId,
+          semesterName: record.virtualClass.semester.name,
+          physicalSessions: new Set(),
+          physicalAttendance: 0,
+          virtualSessions: new Set(),
+          virtualAttendance: 0,
+        }
+      }
+
+      courseAttendance[key].virtualSessions.add(record.virtualClassId)
+      if (record.isPresent) {
+        courseAttendance[key].virtualAttendance++
+      }
+    })
+
+    // Convert sets to counts and calculate rates
+    const attendanceStats = Object.values(courseAttendance).map((stats: any) => {
+      const physicalSessionCount = stats.physicalSessions.size
+      const virtualSessionCount = stats.virtualSessions.size
+
+      return {
+        courseId: stats.courseId,
+        courseName: stats.courseName,
+        courseCode: stats.courseCode,
+        semesterId: stats.semesterId,
+        semesterName: stats.semesterName,
+        physicalSessionCount,
+        physicalAttendanceCount: stats.physicalAttendance,
+        physicalAttendanceRate: physicalSessionCount > 0 ? (stats.physicalAttendance / physicalSessionCount) * 100 : 0,
+        virtualSessionCount,
+        virtualAttendanceCount: stats.virtualAttendance,
+        virtualAttendanceRate: virtualSessionCount > 0 ? (stats.virtualAttendance / virtualSessionCount) * 100 : 0,
+        totalSessionCount: physicalSessionCount + virtualSessionCount,
+        totalAttendanceCount: stats.physicalAttendance + stats.virtualAttendance,
+        overallAttendanceRate:
+          physicalSessionCount + virtualSessionCount > 0
+            ? ((stats.physicalAttendance + stats.virtualAttendance) / (physicalSessionCount + virtualSessionCount)) *
+              100
+            : 0,
+      }
     })
 
     return {
-      course: {
-        id: course.id,
-        name: course.name,
-        code: course.code,
-        program: course.program?.name,
-      },
-      enrollments: {
-        total: totalEnrollments,
-        active: activeEnrollments,
-      },
-      assignments: {
-        total: totalAssignments,
-        submissions: totalSubmissions,
-        submissionRate,
-      },
-      quizzes: {
-        total: totalQuizzes,
-        attempts: totalAttempts,
-        attemptRate,
-      },
-      attendance: attendanceStats,
-      performance: {
-        averagePerformance,
-        categoryDistribution: {
-          excellent: performances.filter((p) => p.performanceCategory === "excellent").length,
-          good: performances.filter((p) => p.performanceCategory === "good").length,
-          average: performances.filter((p) => p.performanceCategory === "average").length,
-          below_average: performances.filter((p) => p.performanceCategory === "below_average").length,
-          poor: performances.filter((p) => p.performanceCategory === "poor").length,
-        },
-      },
-      teachingMaterials,
+      courseAttendance: attendanceStats,
+      totalPhysicalSessions: attendanceStats.reduce((sum, stat) => sum + stat.physicalSessionCount, 0),
+      totalVirtualSessions: attendanceStats.reduce((sum, stat) => sum + stat.virtualSessionCount, 0),
+      averageAttendanceRate:
+        attendanceStats.length > 0
+          ? attendanceStats.reduce((sum, stat) => sum + stat.overallAttendanceRate, 0) / attendanceStats.length
+          : 0,
     }
   }
 
-  async getStudentProgress(data: StudentProgressDto) {
-    const { studentProfileId, courseId, semesterId } = data
+  private async getPerformanceOverview(courseIds: string[], semesterIds: string[], dateFilter: any) {
+    // Prepare query
+    const performanceQuery: any = {
+      courseId: { [Op.in]: courseIds },
+      semesterId: { [Op.in]: semesterIds },
+    }
 
-    // Get student details
-    const student = await StudentProfile.findByPk(studentProfileId, {
+    if (Object.keys(dateFilter).length > 0) {
+      performanceQuery.performanceDate = dateFilter
+    }
+
+    // Get performance records
+    const performanceRecords = await StudentPerformance.findAll({
+      where: performanceQuery,
+      include: [
+        { model: StudentProfile, as: "studentProfile", include: [{ association: "user" }] },
+        { model: Course, as: "course" },
+        { model: Semester, as: "semester" },
+      ],
+    })
+
+    // Group by course and semester
+    const coursePerformance: Record<string, any> = {}
+
+    performanceRecords.forEach((record) => {
+      const key = `${record.courseId}-${record.semesterId}`
+      if (!coursePerformance[key]) {
+        coursePerformance[key] = {
+          courseId: record.courseId,
+          courseName: record.course.name,
+          courseCode: record.course.code,
+          semesterId: record.semesterId,
+          semesterName: record.semester.name,
+          totalScore: 0,
+          recordCount: 0,
+          highestScore: 0,
+          lowestScore: 100,
+          performanceByType: {},
+        }
+      }
+
+      coursePerformance[key].totalScore += record.score
+      coursePerformance[key].recordCount++
+      coursePerformance[key].highestScore = Math.max(coursePerformance[key].highestScore, record.score)
+      coursePerformance[key].lowestScore = Math.min(coursePerformance[key].lowestScore, record.score)
+
+      // Track performance by type
+      if (!coursePerformance[key].performanceByType[record.performanceType]) {
+        coursePerformance[key].performanceByType[record.performanceType] = {
+          total: 0,
+          count: 0,
+        }
+      }
+
+      coursePerformance[key].performanceByType[record.performanceType].total += record.score
+      coursePerformance[key].performanceByType[record.performanceType].count++
+    })
+
+    // Calculate averages and format results
+    const performanceStats = Object.values(coursePerformance).map((stats: any) => {
+      // Calculate average for each performance type
+      const performanceByType: Record<string, number> = {}
+      Object.keys(stats.performanceByType).forEach((type) => {
+        const { total, count } = stats.performanceByType[type]
+        performanceByType[type] = count > 0 ? total / count : 0
+      })
+
+      return {
+        courseId: stats.courseId,
+        courseName: stats.courseName,
+        courseCode: stats.courseCode,
+        semesterId: stats.semesterId,
+        semesterName: stats.semesterName,
+        averageScore: stats.recordCount > 0 ? stats.totalScore / stats.recordCount : 0,
+        highestScore: stats.highestScore,
+        lowestScore: stats.lowestScore,
+        assessmentCount: stats.recordCount,
+        performanceByType,
+      }
+    })
+
+    return {
+      coursePerformance: performanceStats,
+      totalAssessments: performanceStats.reduce((sum, stat) => sum + stat.assessmentCount, 0),
+      averageScore:
+        performanceStats.length > 0
+          ? performanceStats.reduce((sum, stat) => sum + stat.averageScore, 0) / performanceStats.length
+          : 0,
+    }
+  }
+
+  private async getQuizOverview(courseIds: string[], semesterIds: string[], dateFilter: any) {
+    // Prepare quiz query
+    const quizQuery: any = {
+      courseId: { [Op.in]: courseIds },
+      semesterId: { [Op.in]: semesterIds },
+    }
+
+    if (Object.keys(dateFilter).length > 0) {
+      quizQuery.dueDate = dateFilter
+    }
+
+    // Get quizzes
+    const quizzes = await Quiz.findAll({
+      where: quizQuery,
+      include: [
+        { model: Course, as: "course" },
+        { model: Semester, as: "semester" },
+      ],
+    })
+
+    const quizIds = quizzes.map((quiz) => quiz.id)
+
+    // Get quiz attempts
+    const quizAttempts = await QuizAttempt.findAll({
+      where: {
+        quizId: { [Op.in]: quizIds },
+      },
+      include: [
+        { model: StudentProfile, as: "studentProfile", include: [{ association: "user" }] },
+        { model: Quiz, as: "quiz" },
+      ],
+    })
+
+    // Group by course and semester
+    const courseQuizzes: Record<string, any> = {}
+
+    quizzes.forEach((quiz) => {
+      const key = `${quiz.courseId}-${quiz.semesterId}`
+      if (!courseQuizzes[key]) {
+        courseQuizzes[key] = {
+          courseId: quiz.courseId,
+          courseName: quiz.course.name,
+          courseCode: quiz.course.code,
+          semesterId: quiz.semesterId,
+          semesterName: quiz.semester.name,
+          quizCount: 0,
+          quizzes: [],
+        }
+      }
+
+      courseQuizzes[key].quizCount++
+      courseQuizzes[key].quizzes.push({
+        id: quiz.id,
+        title: quiz.title,
+        dueDate: quiz.dueDate,
+        totalPoints: quiz.totalPoints,
+        timeLimit: quiz.timeLimit,
+      })
+    })
+
+    // Process quiz attempts
+    const quizAttemptMap: Record<string, any[]> = {}
+    quizAttempts.forEach((attempt) => {
+      if (!quizAttemptMap[attempt.quizId]) {
+        quizAttemptMap[attempt.quizId] = []
+      }
+      quizAttemptMap[attempt.quizId].push(attempt)
+    })
+
+    // Calculate quiz statistics
+    const quizStats = Object.values(courseQuizzes).map((stats: any) => {
+      // Calculate attempt statistics for each quiz
+      stats.quizzes = stats.quizzes.map((quiz: any) => {
+        const attempts = quizAttemptMap[quiz.id] || []
+        const attemptCount = attempts.length
+        const completedAttempts = attempts.filter((attempt) => attempt.isSubmitted)
+        const completedCount = completedAttempts.length
+        const totalScore = completedAttempts.reduce((sum, attempt) => sum + attempt.score, 0)
+
+        return {
+          ...quiz,
+          attemptCount,
+          completedCount,
+          averageScore: completedCount > 0 ? totalScore / completedCount : 0,
+          completionRate: attemptCount > 0 ? (completedCount / attemptCount) * 100 : 0,
+        }
+      })
+
+      // Calculate overall statistics for the course
+      const totalAttempts = stats.quizzes.reduce((sum: number, quiz: any) => sum + quiz.attemptCount, 0)
+      const totalCompleted = stats.quizzes.reduce((sum: number, quiz: any) => sum + quiz.completedCount, 0)
+      const totalAverageScore = stats.quizzes.reduce((sum: number, quiz: any) => sum + quiz.averageScore, 0)
+
+      return {
+        courseId: stats.courseId,
+        courseName: stats.courseName,
+        courseCode: stats.courseCode,
+        semesterId: stats.semesterId,
+        semesterName: stats.semesterName,
+        quizCount: stats.quizCount,
+        totalAttempts,
+        totalCompleted,
+        completionRate: totalAttempts > 0 ? (totalCompleted / totalAttempts) * 100 : 0,
+        averageScore: stats.quizCount > 0 ? totalAverageScore / stats.quizCount : 0,
+        quizzes: stats.quizzes,
+      }
+    })
+
+    return {
+      courseQuizzes: quizStats,
+      totalQuizzes: quizStats.reduce((sum, stat) => sum + stat.quizCount, 0),
+      totalAttempts: quizStats.reduce((sum, stat) => sum + stat.totalAttempts, 0),
+      totalCompleted: quizStats.reduce((sum, stat) => sum + stat.totalCompleted, 0),
+      overallCompletionRate:
+        quizStats.reduce((sum, stat) => sum + stat.totalAttempts, 0) > 0
+          ? (quizStats.reduce((sum, stat) => sum + stat.totalCompleted, 0) /
+              quizStats.reduce((sum, stat) => sum + stat.totalAttempts, 0)) *
+            100
+          : 0,
+      overallAverageScore:
+        quizStats.length > 0 ? quizStats.reduce((sum, stat) => sum + stat.averageScore, 0) / quizStats.length : 0,
+    }
+  }
+
+  private async getAssessmentOverview(courseIds: string[], semesterIds: string[], dateFilter: any) {
+    // Prepare assessment query
+    const assessmentQuery: any = {
+      courseId: { [Op.in]: courseIds },
+      semesterId: { [Op.in]: semesterIds },
+    }
+
+    if (Object.keys(dateFilter).length > 0) {
+      assessmentQuery.dueDate = dateFilter
+    }
+
+    // Get assessments
+    const assessments = await Assessment.findAll({
+      where: assessmentQuery,
+      include: [
+        { model: Course, as: "course" },
+        { model: Semester, as: "semester" },
+      ],
+    })
+
+    const assessmentIds = assessments.map((assessment) => assessment.id)
+
+    // Get assessment submissions
+    const submissions = await AssessmentSubmission.findAll({
+      where: {
+        assessmentId: { [Op.in]: assessmentIds },
+      },
+      include: [
+        { model: StudentProfile, as: "studentProfile", include: [{ association: "user" }] },
+        { model: Assessment, as: "assessment" },
+      ],
+    })
+
+    // Group by course and semester
+    const courseAssessments: Record<string, any> = {}
+
+    assessments.forEach((assessment) => {
+      const key = `${assessment.courseId}-${assessment.semesterId}`
+      if (!courseAssessments[key]) {
+        courseAssessments[key] = {
+          courseId: assessment.courseId,
+          courseName: assessment.course.name,
+          courseCode: assessment.course.code,
+          semesterId: assessment.semesterId,
+          semesterName: assessment.semester.name,
+          assessmentCount: 0,
+          assessments: [],
+        }
+      }
+
+      courseAssessments[key].assessmentCount++
+      courseAssessments[key].assessments.push({
+        id: assessment.id,
+        title: assessment.title,
+        description: assessment.description,
+        dueDate: assessment.dueDate,
+        totalPoints: assessment.totalPoints,
+        assessmentType: assessment.assessmentType,
+      })
+    })
+
+    // Process submissions
+    const submissionMap: Record<string, any[]> = {}
+    submissions.forEach((submission) => {
+      if (!submissionMap[submission.assessmentId]) {
+        submissionMap[submission.assessmentId] = []
+      }
+      submissionMap[submission.assessmentId].push(submission)
+    })
+
+    // Calculate assessment statistics
+    const assessmentStats = Object.values(courseAssessments).map((stats: any) => {
+      // Calculate submission statistics for each assessment
+      stats.assessments = stats.assessments.map((assessment: any) => {
+        const assessmentSubmissions = submissionMap[assessment.id] || []
+        const submissionCount = assessmentSubmissions.length
+        const gradedSubmissions = assessmentSubmissions.filter((submission) => submission.isGraded)
+        const gradedCount = gradedSubmissions.length
+        const totalScore = gradedSubmissions.reduce((sum, submission) => sum + submission.marks, 0)
+
+        return {
+          ...assessment,
+          submissionCount,
+          gradedCount,
+          averageScore: gradedCount > 0 ? totalScore / gradedCount : 0,
+          submissionRate: submissionCount > 0 ? (submissionCount / submissionCount) * 100 : 0,
+        }
+      })
+
+      // Calculate overall statistics for the course
+      const totalSubmissions = stats.assessments.reduce(
+        (sum: number, assessment: any) => sum + assessment.submissionCount,
+        0,
+      )
+      const totalGraded = stats.assessments.reduce((sum: number, assessment: any) => sum + assessment.gradedCount, 0)
+      const totalAverageScore = stats.assessments.reduce(
+        (sum: number, assessment: any) => sum + assessment.averageScore,
+        0,
+      )
+
+      return {
+        courseId: stats.courseId,
+        courseName: stats.courseName,
+        courseCode: stats.courseCode,
+        semesterId: stats.semesterId,
+        semesterName: stats.semesterName,
+        assessmentCount: stats.assessmentCount,
+        totalSubmissions,
+        totalGraded,
+        gradingRate: totalSubmissions > 0 ? (totalGraded / totalSubmissions) * 100 : 0,
+        averageScore: stats.assessmentCount > 0 ? totalAverageScore / stats.assessmentCount : 0,
+        assessments: stats.assessments,
+      }
+    })
+
+    return {
+      courseAssessments: assessmentStats,
+      totalAssessments: assessmentStats.reduce((sum, stat) => sum + stat.assessmentCount, 0),
+      totalSubmissions: assessmentStats.reduce((sum, stat) => sum + stat.totalSubmissions, 0),
+      totalGraded: assessmentStats.reduce((sum, stat) => sum + stat.totalGraded, 0),
+      overallGradingRate:
+        assessmentStats.reduce((sum, stat) => sum + stat.totalSubmissions, 0) > 0
+          ? (assessmentStats.reduce((sum, stat) => sum + stat.totalGraded, 0) /
+              assessmentStats.reduce((sum, stat) => sum + stat.totalSubmissions, 0)) *
+            100
+          : 0,
+      overallAverageScore:
+        assessmentStats.length > 0
+          ? assessmentStats.reduce((sum, stat) => sum + stat.averageScore, 0) / assessmentStats.length
+          : 0,
+    }
+  }
+
+  async getStudentEngagement(courseId: string, semesterId: string) {
+    // Get enrolled students
+    const enrollments = await CourseEnrollment.findAll({
+      where: {
+        courseId,
+        semesterId,
+      },
       include: [
         {
-          model: User,
-          attributes: ["firstName", "lastName", "email"],
+          model: StudentProfile,
+          as: "studentProfile",
+          include: [{ association: "user" }],
         },
       ],
     })
 
-    if (!student) {
-      throw new Error("Student not found")
-    }
+    const studentIds = enrollments.map((enrollment) => enrollment.studentProfileId)
 
-    // Get enrollment details
-    const enrollment = await CourseEnrollment.findOne({
+    // Get attendance data
+    const physicalAttendance = await PhysicalAttendance.findAll({
       where: {
-        studentProfileId,
+        studentProfileId: { [Op.in]: studentIds },
         courseId,
         semesterId,
       },
     })
 
-    if (!enrollment) {
-      throw new Error("Student is not enrolled in this course")
-    }
-
-    // Get attendance details
-    const attendanceDetails = await this.attendanceService.getStudentAttendanceDetails(
-      studentProfileId,
-      courseId,
-      semesterId,
-    )
-
-    // Get assignment submissions
-    const submissions = await AssessmentSubmission.findAll({
+    const virtualAttendance = await VirtualClassAttendance.findAll({
       include: [
         {
-          model: Assessment,
+          model: VirtualClass,
+          as: "virtualClass",
           where: {
             courseId,
             semesterId,
           },
-          required: true,
         },
       ],
       where: {
-        studentProfileId,
+        studentProfileId: { [Op.in]: studentIds },
       },
     })
 
     // Get quiz attempts
-    const attempts = await QuizAttempt.findAll({
+    const quizAttempts = await QuizAttempt.findAll({
       include: [
         {
           model: Quiz,
+          as: "quiz",
           where: {
             courseId,
             semesterId,
           },
-          required: true,
         },
       ],
       where: {
-        studentProfileId,
+        studentProfileId: { [Op.in]: studentIds },
       },
     })
 
-    // Get performance analysis
-    const performance = await this.studentPerformanceService.findByStudent(studentProfileId, courseId, semesterId)
-
-    return {
-      student: {
-        id: student.id,
-        name: `${student.user?.firstName} ${student.user?.lastName}`,
-        email: student.user?.email,
-        studentId: student.studentId,
-      },
-      enrollment: {
-        status: enrollment.status,
-        enrollmentDate: enrollment.createdAt,
-      },
-      attendance: attendanceDetails,
-      assignments: submissions.map((submission) => ({
-        assessmentId: submission.assessmentId,
-        assessmentTitle: submission.assessment?.title,
-        submissionDate: submission.createdAt,
-        isGraded: submission.isGraded,
-        marks: submission.marks,
-        totalMarks: submission.assessment?.totalMarks,
-        feedback: submission.feedback,
-      })),
-      quizzes: attempts.map((attempt) => ({
-        quizId: attempt.quizId,
-        quizTitle: attempt.quiz?.title,
-        attemptDate: attempt.startTime,
-        status: attempt.status,
-        score: attempt.score,
-        totalMarks: attempt.quiz?.totalMarks,
-        isPassed: attempt.isPassed,
-      })),
-      performance: performance
-        ? {
-            attendancePercentage: performance.attendancePercentage,
-            assignmentAverage: performance.assignmentAverage,
-            quizAverage: performance.quizAverage,
-            overallPerformance: performance.overallPerformance,
-            performanceCategory: performance.performanceCategory,
-            strengths: performance.strengths,
-            weaknesses: performance.weaknesses,
-            recommendations: performance.recommendations,
-          }
-        : null,
-    }
-  }
-
-  async getTeachingLoad(data: TeachingLoadDto) {
-    const { lecturerProfileId, semesterId } = data
-
-    // Get course assignments
-    const whereClause: any = {
-      lecturerProfileId,
-      isActive: true,
-    }
-
-    if (semesterId) {
-      whereClause.semesterId = semesterId
-    }
-
-    const courseAssignments = await CourseAssignment.findAll({
-      where: whereClause,
+    // Get assessment submissions
+    const assessmentSubmissions = await AssessmentSubmission.findAll({
       include: [
         {
-          model: Course,
-        },
-        {
-          model: Semester,
+          model: Assessment,
+          as: "assessment",
+          where: {
+            courseId,
+            semesterId,
+          },
         },
       ],
+      where: {
+        studentProfileId: { [Op.in]: studentIds },
+      },
     })
 
-    // Group by semester
-    const semesterGroups: Record<string, any[]> = {}
-    courseAssignments.forEach((assignment) => {
-      if (!semesterGroups[assignment.semesterId]) {
-        semesterGroups[assignment.semesterId] = []
-      }
-      semesterGroups[assignment.semesterId].push(assignment)
-    })
+    // Calculate engagement metrics for each student
+    const studentEngagement = enrollments.map((enrollment) => {
+      const studentId = enrollment.studentProfileId
 
-    // Calculate teaching load for each semester
-    const teachingLoad = Object.entries(semesterGroups).map(([semesterId, assignments]) => {
-      const semester = assignments[0].semester
-      const totalCourses = assignments.length
-      const primaryCourses = assignments.filter((a) => a.role === "primary").length
-      const assistantCourses = assignments.filter((a) => a.role === "assistant").length
-      const guestCourses = assignments.filter((a) => a.role === "guest").length
+      // Calculate attendance
+      const studentPhysicalAttendance = physicalAttendance.filter((record) => record.studentProfileId === studentId)
+      const studentVirtualAttendance = virtualAttendance.filter((record) => record.studentProfileId === studentId)
+
+      const physicalAttendanceRate =
+        studentPhysicalAttendance.length > 0
+          ? (studentPhysicalAttendance.filter((record) => record.isPresent).length / studentPhysicalAttendance.length) *
+            100
+          : 0
+
+      const virtualAttendanceRate =
+        studentVirtualAttendance.length > 0
+          ? (studentVirtualAttendance.filter((record) => record.isPresent).length / studentVirtualAttendance.length) *
+            100
+          : 0
+
+      // Calculate quiz engagement
+      const studentQuizAttempts = quizAttempts.filter((attempt) => attempt.studentProfileId === studentId)
+
+      const quizCompletionRate =
+        studentQuizAttempts.length > 0
+          ? (studentQuizAttempts.filter((attempt) => attempt.isSubmitted).length / studentQuizAttempts.length) * 100
+          : 0
+
+      // Calculate assessment engagement
+      const studentAssessmentSubmissions = assessmentSubmissions.filter(
+        (submission) => submission.studentProfileId === studentId,
+      )
+
+      const assessmentSubmissionRate =
+        studentAssessmentSubmissions.length > 0
+          ? (studentAssessmentSubmissions.filter((submission) => submission.submittedAt !== null).length /
+              studentAssessmentSubmissions.length) *
+            100
+          : 0
+
+      // Calculate overall engagement score (weighted average)
+      const attendanceWeight = 0.4
+      const quizWeight = 0.3
+      const assessmentWeight = 0.3
+
+      const overallEngagement =
+        ((physicalAttendanceRate + virtualAttendanceRate) / 2) * attendanceWeight +
+        quizCompletionRate * quizWeight +
+        assessmentSubmissionRate * assessmentWeight
 
       return {
-        semesterId,
-        semesterName: semester?.name,
-        academicYear: semester?.academicYear,
-        totalCourses,
-        primaryCourses,
-        assistantCourses,
-        guestCourses,
-        courses: assignments.map((assignment) => ({
-          courseId: assignment.courseId,
-          courseName: assignment.course?.name,
-          courseCode: assignment.course?.code,
-          role: assignment.role,
-        })),
+        studentProfileId: studentId,
+        studentName: enrollment.studentProfile.user.fullName,
+        studentEmail: enrollment.studentProfile.user.email,
+        physicalAttendanceRate,
+        virtualAttendanceRate,
+        overallAttendanceRate: (physicalAttendanceRate + virtualAttendanceRate) / 2,
+        quizCompletionRate,
+        assessmentSubmissionRate,
+        overallEngagement,
+        engagementLevel: this.getEngagementLevel(overallEngagement),
       }
     })
 
+    // Sort by engagement level (descending)
+    studentEngagement.sort((a, b) => b.overallEngagement - a.overallEngagement)
+
+    // Calculate class averages
+    const classAverages = {
+      physicalAttendanceRate:
+        studentEngagement.reduce((sum, student) => sum + student.physicalAttendanceRate, 0) / studentEngagement.length,
+      virtualAttendanceRate:
+        studentEngagement.reduce((sum, student) => sum + student.virtualAttendanceRate, 0) / studentEngagement.length,
+      overallAttendanceRate:
+        studentEngagement.reduce((sum, student) => sum + student.overallAttendanceRate, 0) / studentEngagement.length,
+      quizCompletionRate:
+        studentEngagement.reduce((sum, student) => sum + student.quizCompletionRate, 0) / studentEngagement.length,
+      assessmentSubmissionRate:
+        studentEngagement.reduce((sum, student) => sum + student.assessmentSubmissionRate, 0) /
+        studentEngagement.length,
+      overallEngagement:
+        studentEngagement.reduce((sum, student) => sum + student.overallEngagement, 0) / studentEngagement.length,
+    }
+
+    // Calculate engagement distribution
+    const engagementDistribution = {
+      veryHigh: studentEngagement.filter((student) => student.engagementLevel === "Very High").length,
+      high: studentEngagement.filter((student) => student.engagementLevel === "High").length,
+      moderate: studentEngagement.filter((student) => student.engagementLevel === "Moderate").length,
+      low: studentEngagement.filter((student) => student.engagementLevel === "Low").length,
+      veryLow: studentEngagement.filter((student) => student.engagementLevel === "Very Low").length,
+    }
+
     return {
-      lecturerProfileId,
-      teachingLoad,
+      courseId,
+      semesterId,
+      studentCount: studentEngagement.length,
+      studentEngagement,
+      classAverages,
+      engagementDistribution,
+      topEngagedStudents: studentEngagement.slice(0, 5),
+      leastEngagedStudents: [...studentEngagement].reverse().slice(0, 5),
     }
   }
 
-  async getUpcomingSchedule(data: UpcomingScheduleDto) {
-    const { lecturerProfileId, days = 7 } = data
-    const now = new Date()
-    const endDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000)
+  private getEngagementLevel(engagementScore: number): string {
+    if (engagementScore >= 90) return "Very High"
+    if (engagementScore >= 75) return "High"
+    if (engagementScore >= 60) return "Moderate"
+    if (engagementScore >= 40) return "Low"
+    return "Very Low"
+  }
 
-    // Get upcoming virtual classes
-    const virtualClasses = await VirtualClass.findAll({
+  async getTeachingMaterials(courseId: string, semesterId: string) {
+    const teachingMaterials = await TeachingMaterial.findAll({
       where: {
-        lecturerProfileId,
-        scheduledStartTime: {
-          [Op.between]: [now, endDate],
-        },
-        status: "scheduled",
+        courseId,
+        semesterId,
       },
-      include: [
-        {
-          model: Course,
-        },
-        {
-          model: Semester,
-        },
-      ],
-      order: [["scheduledStartTime", "ASC"]],
+      order: [["createdAt", "DESC"]],
     })
 
-    // Get upcoming assignment deadlines
-    const assignments = await Assessment.findAll({
-      where: {
-        lecturerProfileId,
-        dueDate: {
-          [Op.between]: [now, endDate],
-        },
-      },
-      include: [
-        {
-          model: Course,
-        },
-        {
-          model: Semester,
-        },
-      ],
-      order: [["dueDate", "ASC"]],
-    })
-
-    // Get upcoming quiz deadlines
-    const quizzes = await Quiz.findAll({
-      where: {
-        lecturerProfileId,
-        endDate: {
-          [Op.between]: [now, endDate],
-        },
-      },
-      include: [
-        {
-          model: Course,
-        },
-        {
-          model: Semester,
-        },
-      ],
-      order: [["endDate", "ASC"]],
-    })
-
-    // Combine all events
-    const events = [
-      ...virtualClasses.map((vc) => ({
-        type: "virtual_class",
-        id: vc.id,
-        title: vc.title,
-        description: vc.description,
-        startTime: vc.scheduledStartTime,
-        endTime: vc.scheduledEndTime,
-        course: vc.course?.name,
-        courseId: vc.courseId,
-        semester: vc.semester?.name,
-        semesterId: vc.semesterId,
-      })),
-      ...assignments.map((a) => ({
-        type: "assignment",
-        id: a.id,
-        title: a.title,
-        description: a.description,
-        startTime: null,
-        endTime: a.dueDate,
-        course: a.course?.name,
-        courseId: a.courseId,
-        semester: a.semester?.name,
-        semesterId: a.semesterId,
-      })),
-      ...quizzes.map((q) => ({
-        type: "quiz",
-        id: q.id,
-        title: q.title,
-        description: q.description,
-        startTime: q.startDate,
-        endTime: q.endDate,
-        course: q.course?.name,
-        courseId: q.courseId,
-        semester: q.semester?.name,
-        semesterId: q.semesterId,
-      })),
-    ]
-
-    // Sort by start time
-    events.sort((a, b) => {
-      const timeA = a.startTime || a.endTime
-      const timeB = b.startTime || b.endTime
-      return new Date(timeA).getTime() - new Date(timeB).getTime()
+    // Group by type
+    const materialsByType: Record<string, any[]> = {}
+    teachingMaterials.forEach((material) => {
+      if (!materialsByType[material.materialType]) {
+        materialsByType[material.materialType] = []
+      }
+      materialsByType[material.materialType].push({
+        id: material.id,
+        title: material.title,
+        description: material.description,
+        fileUrl: material.fileUrl,
+        fileType: material.fileType,
+        fileSize: material.fileSize,
+        uploadDate: material.createdAt,
+        materialType: material.materialType,
+      })
     })
 
     return {
-      lecturerProfileId,
-      days,
-      events,
+      courseId,
+      semesterId,
+      totalMaterials: teachingMaterials.length,
+      materialsByType,
+      recentMaterials: teachingMaterials.slice(0, 5).map((material) => ({
+        id: material.id,
+        title: material.title,
+        description: material.description,
+        fileUrl: material.fileUrl,
+        fileType: material.fileType,
+        fileSize: material.fileSize,
+        uploadDate: material.createdAt,
+        materialType: material.materialType,
+      })),
     }
   }
 }
