@@ -31,6 +31,15 @@ import { LearningRecommendation } from "./LearningRecommendation"
 import { ResourceInteraction } from "./ResourceInteraction"
 import {StudentPerformance} from "./StudentPerformance"
 
+
+// console.log("Initializing Sequelize with the following configuration:")
+// console.log("DB_HOST:", process.env.DB_HOST || "localhost")
+// console.log("DB_PORT:", process.env.DB_PORT || "5432")
+// console.log("DB_USERNAME:", process.env.DB_USERNAME || "postgres")
+// console.log("DB_NAME:", process.env.DB_NAME || "learn_smart")
+// console.log("DB_PASSWORD:", process.env.DB_PASSWORD ? "******" : "not set")
+// console.log("DB_SSL:", process.env.DB_SSL ? "true" : "false")
+
 const sequelize = new Sequelize({
   dialect: "postgres",
   host: process.env.DB_HOST || "localhost",
