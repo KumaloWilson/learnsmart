@@ -72,7 +72,7 @@ export class CourseMasteryService {
     })
 
     // Calculate quiz average
-    const totalQuizScore = quizAttempts.reduce((sum, attempt) => sum + attempt.score, 0) || 0
+    const totalQuizScore = quizAttempts.reduce((sum, attempt) => sum + (attempt.score ?? 0), 0) || 0
     const quizAverage = quizAttempts.length > 0 ? totalQuizScore / quizAttempts.length : 0
 
     // Get assignment submissions for this student in this course
@@ -94,7 +94,7 @@ export class CourseMasteryService {
     })
 
     // Calculate assignment average
-    const totalAssignmentScore = assignmentSubmissions.reduce((sum, submission) => sum + submission.score, 0) || 0
+    const totalAssignmentScore = assignmentSubmissions.reduce((sum, submission) => sum + (submission.marks ?? 0), 0) || 0
     const assignmentAverage = assignmentSubmissions.length > 0 ? totalAssignmentScore / assignmentSubmissions.length : 0
 
     // Find or create course mastery record
