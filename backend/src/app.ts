@@ -3,8 +3,12 @@ import express from "express"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
+import dotenv from "dotenv"
 import { sequelize } from "./models"
 import routes from "./routes"
+
+// Load environment variables
+dotenv.config()
 
 const app = express()
 
@@ -39,13 +43,15 @@ const startServer = async () => {
     if (process.env.NODE_ENV === "development") {
       await sequelize.sync({ alter: true })
       console.log("Database synced successfully")
+    } else {
+      console.warn("Skipping database sync in production")
     }
 
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`)
     })
   } catch (error) {
-    console.error("Unable to connect to the database:", error)
+    console.error("Unable to connect to the database:", (error as Error).message)
   }
 }
 
