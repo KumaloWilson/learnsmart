@@ -3,8 +3,9 @@ import { AttendanceService } from "../services/attendance.service"
 import type {
   CreatePhysicalAttendanceDto,
   UpdatePhysicalAttendanceDto,
-  BulkCreateAttendanceDto,
   AttendanceFilterDto,
+  BulkCreatePhysicalAttendanceDto,
+  BulkCreatePhysicalAttendanceItemDto,
   AttendanceStatisticsDto,
   AttendanceStatisticsParamsDto,
 } from "../dto/attendance.dto"
@@ -62,13 +63,18 @@ export class AttendanceController {
 
   async bulkCreate(req: Request, res: Response) {
     try {
-      const data: BulkCreateAttendanceDto = req.body
+      const data: BulkCreatePhysicalAttendanceDto = req.body
+      // Validate that attendances array exists and is not empty
+      if (!data.attendances?.length) {
+        return res.status(400).json({ message: "No attendance records provided" })
+      }
       const attendances = await this.attendanceService.bulkCreate(data)
       return res.status(201).json(attendances)
     } catch (error: any) {
       return res.status(500).json({ message: error.message })
     }
   }
+  
 
   async delete(req: Request, res: Response) {
     try {
