@@ -50,7 +50,7 @@ export class LecturerDashboardController {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve lecturer dashboard overview",
-        error: error.message,
+        error: error,
       })
     }
   }
@@ -69,7 +69,7 @@ export class LecturerDashboardController {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve lecturer courses",
-        error: error.message,
+        error: error,
       })
     }
   }
@@ -88,7 +88,7 @@ export class LecturerDashboardController {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve at-risk students",
-        error: error.message,
+        error: error,
       })
     }
   }
@@ -117,7 +117,7 @@ export class LecturerDashboardController {
       return res.status(500).json({
         success: false,
         message: "Failed to identify at-risk students",
-        error: error.message,
+        error: error,
       })
     }
   }
@@ -136,7 +136,7 @@ export class LecturerDashboardController {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve course topic progress",
-        error: error.message,
+        error: error,
       })
     }
   }
@@ -155,7 +155,7 @@ export class LecturerDashboardController {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve course mastery distribution",
-        error: error.message,
+        error: error,
       })
     }
   }
@@ -177,7 +177,7 @@ export class LecturerDashboardController {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve attendance overview",
-        error: error.message,
+        error: error,
       })
     }
   }
@@ -199,7 +199,7 @@ export class LecturerDashboardController {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve performance overview",
-        error: error.message,
+        error: error,
       })
     }
   }
@@ -218,7 +218,7 @@ export class LecturerDashboardController {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve student engagement",
-        error: error.message,
+        error: error,
       })
     }
   }
@@ -237,7 +237,7 @@ export class LecturerDashboardController {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve teaching materials",
-        error: error.message,
+        error: error,
       })
     }
   }
@@ -256,7 +256,7 @@ export class LecturerDashboardController {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve upcoming classes",
-        error: error.message,
+        error: error,
       })
     }
   }
@@ -279,7 +279,7 @@ export class LecturerDashboardController {
       return res.status(500).json({
         success: false,
         message: "Failed to retrieve course performance analytics",
-        error: error.message,
+        error: error,
       })
     }
   }

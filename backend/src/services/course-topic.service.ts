@@ -1,65 +1,34 @@
-import { Op, type Sequelize } from "sequelize"
-import { CourseTopic, Course, Semester, TopicProgress } from "../models"
-import type { CreateCourseTopicDto, UpdateCourseTopicDto, CourseTopicFilterDto } from "../dto/course-topic.dto"
+import { Op } from "sequelize"
+import { CourseTopic } from "../models/CourseTopic"
+import { Course } from "../models/Course"
+import { Semester } from "../models/Semester"
+import { TopicProgress } from "../models/TopicProgress"
+import { TeachingMaterial } from "../models/TeachingMaterial"
+import { LearningResource } from "../models/LearningResource"
 
 export class CourseTopicService {
-  private sequelize: Sequelize
-
-  constructor() {
-    this.sequelize = CourseTopic.sequelize!
+  /**
+   * Create a new course topic
+   */
+  async createCourseTopic(topicData: {
+    title: string
+    description?: string
+    orderIndex: number
+    durationHours: number
+    learningObjectives?: string[]
+    keywords?: string[]
+    difficulty: "beginner" | "intermediate" | "advanced"
+    courseId: string
+    semesterId: string
+    isActive?: boolean
+  }): Promise<CourseTopic> {
+    return CourseTopic.create(topicData)
   }
 
-  async findAll(filters?: CourseTopicFilterDto) {
-    const whereClause: any = {}
-
-    if (filters) {
-      if (filters.courseId) {
-        whereClause.courseId = filters.courseId
-      }
-
-      if (filters.semesterId) {
-        whereClause.semesterId = filters.semesterId
-      }
-
-      if (filters.isActive !== undefined) {
-        whereClause.isActive = filters.isActive
-      }
-
-      if (filters.difficulty) {
-        whereClause.difficulty = filters.difficulty
-      }
-
-      if (filters.search) {
-        whereClause[Op.or] = [
-          {
-            title: {
-              [Op.iLike]: `%${filters.search}%`,
-            },
-          },
-          {
-            description: {
-              [Op.iLike]: `%${filters.search}%`,
-            },
-          },
-        ]
-      }
-    }
-
-    return CourseTopic.findAll({
-      where: whereClause,
-      include: [
-        {
-          model: Course,
-        },
-        {
-          model: Semester,
-        },
-      ],
-      order: [["orderIndex", "ASC"]],
-    })
-  }
-
-  async findById(id: string) {
+  /**
+   * Get a course topic by ID
+   */
+  async getTopicById(id: string): Promise<CourseTopic | null> {
     return CourseTopic.findByPk(id, {
       include: [
         {
@@ -72,147 +41,190 @@ export class CourseTopicService {
     })
   }
 
-  async create(data: CreateCourseTopicDto) {
-    // Check if course exists
-    const course = await Course.findByPk(data.courseId)
-    if (!course) {
-      throw new Error("Course not found")
-    }
-
-    // Check if semester exists
-    const semester = await Semester.findByPk(data.semesterId)
-    if (!semester) {
-      throw new Error("Semester not found")
-    }
-
-    // If orderIndex is not provided, set it to the next available index
-    if (!data.orderIndex) {
-      const maxOrderIndex = await CourseTopic.max("orderIndex", {
-        where: {
-          courseId: data.courseId,
-          semesterId: data.semesterId,
-        },
-      })
-      data.orderIndex = (maxOrderIndex || 0) + 1
-    }
-
-    return CourseTopic.create(data)
-  }
-
-  async update(id: string, data: UpdateCourseTopicDto) {
-    const topic = await CourseTopic.findByPk(id)
-    if (!topic) {
-      throw new Error("Course topic not found")
-    }
-
-    await topic.update(data)
-    return this.findById(id)
-  }
-
-  async delete(id: string) {
-    const topic = await CourseTopic.findByPk(id)
-    if (!topic) {
-      throw new Error("Course topic not found")
-    }
-
-    // Check if there are any progress records for this topic
-    const progressCount = await TopicProgress.count({
+  /**
+   * Get all topics for a course
+   */
+  async getCourseTopics(courseId: string, semesterId: string): Promise<CourseTopic[]> {
+    return CourseTopic.findAll({
       where: {
-        courseTopicId: id,
+        courseId,
+        semesterId,
       },
+      order: [["orderIndex", "ASC"]],
     })
+  }
 
-    if (progressCount > 0) {
-      // Instead of deleting, mark as inactive
-      await topic.update({ isActive: false })
-      return { message: "Course topic marked as inactive due to existing progress records" }
+  /**
+   * Update a course topic
+   */
+  async updateCourseTopic(id: string, topicData: Partial<CourseTopic>): Promise<CourseTopic | null> {
+    const topic = await CourseTopic.findByPk(id)
+
+    if (!topic) {
+      return null
+    }
+
+    await topic.update(topicData)
+    return topic
+  }
+
+  /**
+   * Delete a course topic
+   */
+  async deleteCourseTopic(id: string): Promise<boolean> {
+    const topic = await CourseTopic.findByPk(id)
+
+    if (!topic) {
+      return false
     }
 
     await topic.destroy()
-    return { message: "Course topic deleted successfully" }
+    return true
   }
 
-  async reorderTopics(courseId: string, semesterId: string, topicIds: string[]) {
-    // Verify all topics exist and belong to the course and semester
-    const topics = await CourseTopic.findAll({
-      where: {
-        id: {
-          [Op.in]: topicIds,
-        },
-        courseId,
-        semesterId,
-      },
-    })
-
-    if (topics.length !== topicIds.length) {
-      throw new Error("One or more topics not found or do not belong to the specified course and semester")
-    }
-
-    // Update order indexes
-    for (let i = 0; i < topicIds.length; i++) {
-      await CourseTopic.update(
-        { orderIndex: i + 1 },
-        {
-          where: {
-            id: topicIds[i],
+  /**
+   * Reorder course topics
+   */
+  async reorderTopics(
+    courseId: string,
+    semesterId: string,
+    topicOrder: { id: string; orderIndex: number }[],
+  ): Promise<boolean> {
+    try {
+      for (const item of topicOrder) {
+        await CourseTopic.update(
+          { orderIndex: item.orderIndex },
+          {
+            where: {
+              id: item.id,
+              courseId,
+              semesterId,
+            },
           },
-        },
-      )
+        )
+      }
+      return true
+    } catch (error) {
+      console.error("Error reordering topics:", error)
+      return false
     }
-
-    return this.findAll({ courseId, semesterId })
   }
 
-  async getCourseTopicProgress(courseId: string, semesterId: string) {
-    // Get all topics for the course
+  /**
+   * Get topic progress for a student
+   */
+  async getStudentTopicProgress(
+    studentProfileId: string,
+    courseId: string,
+    semesterId: string,
+  ): Promise<{
+    topics: CourseTopic[]
+    progress: TopicProgress[]
+    completionPercentage: number
+  }> {
     const topics = await CourseTopic.findAll({
       where: {
         courseId,
         semesterId,
-        isActive: true,
       },
       order: [["orderIndex", "ASC"]],
     })
 
-    // Get progress for each topic
-    const topicProgress = await Promise.all(
-      topics.map(async (topic) => {
-        const completedCount = await TopicProgress.count({
-          where: {
-            courseTopicId: topic.id,
-            isCompleted: true,
-          },
-        })
+    const progress = await TopicProgress.findAll({
+      where: {
+        studentProfileId,
+        courseTopicId: {
+          [Op.in]: topics.map((topic) => topic.id),
+        },
+      },
+    })
 
-        const totalStudents = await TopicProgress.count({
-          where: {
-            courseTopicId: topic.id,
-          },
-        })
-
-        const averageMastery = await TopicProgress.findOne({
-          attributes: [[this.sequelize.fn("AVG", this.sequelize.col("masteryLevel")), "averageMastery"]],
-          where: {
-            courseTopicId: topic.id,
-          },
-          raw: true,
-        })
-
-        return {
-          topic,
-          completedCount,
-          totalStudents,
-          completionRate: totalStudents > 0 ? (completedCount / totalStudents) * 100 : 0,
-          averageMastery: averageMastery ? Number((averageMastery as any).averageMastery) || 0 : 0,
-        }
-      }),
-    )
+    const completedTopics = progress.filter((p) => p.isCompleted).length
+    const completionPercentage = topics.length > 0 ? (completedTopics / topics.length) * 100 : 0
 
     return {
-      courseId,
-      semesterId,
-      totalTopics: topics.length,
-      topicProgress,
+      topics,
+      progress,
+      completionPercentage,
     }
+  }
+
+  /**
+   * Get topic progress statistics for a course
+   */
+  async getTopicProgressStatistics(
+    courseId: string,
+    semesterId: string,
+  ): Promise<
+    {
+      topicId: string
+      title: string
+      completionRate: number
+      averageMasteryLevel: number
+      averageTimeSpent: number
+      difficulty: string
+    }[]
+  > {
+    const topics = await CourseTopic.findAll({
+      where: {
+        courseId,
+        semesterId,
+      },
+    })
+
+    const result = []
+
+    for (const topic of topics) {
+      const progress = await TopicProgress.findAll({
+        where: {
+          courseTopicId: topic.id,
+        },
+      })
+
+      const totalProgress = progress.length
+      const completedProgress = progress.filter((p) => p.isCompleted).length
+      const completionRate = totalProgress > 0 ? (completedProgress / totalProgress) * 100 : 0
+
+      const totalMasteryLevel = progress.reduce((sum, p) => sum + p.masteryLevel, 0)
+      const averageMasteryLevel = totalProgress > 0 ? totalMasteryLevel / totalProgress : 0
+
+      const totalTimeSpent = progress.reduce((sum, p) => sum + p.timeSpentMinutes, 0)
+      const averageTimeSpent = totalProgress > 0 ? totalTimeSpent / totalProgress : 0
+
+      result.push({
+        topicId: topic.id,
+        title: topic.title,
+        completionRate,
+        averageMasteryLevel,
+        averageTimeSpent,
+        difficulty: topic.difficulty,
+      })
+    }
+
+    return result
+  }
+
+  /**
+   * Get teaching materials for a topic
+   */
+  async getTopicTeachingMaterials(topicId: string): Promise<TeachingMaterial[]> {
+    return TeachingMaterial.findAll({
+      where: {
+        courseTopicId: topicId,
+      },
+      order: [["createdAt", "DESC"]],
+    })
+  }
+
+  /**
+   * Get learning resources for a topic
+   */
+  async getTopicLearningResources(topicId: string): Promise<LearningResource[]> {
+    return LearningResource.findAll({
+      where: {
+        courseTopicId: topicId,
+      },
+      order: [["createdAt", "DESC"]],
+    })
   }
 }
