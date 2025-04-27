@@ -12,10 +12,9 @@ import {
   VirtualClass,
   TeachingMaterial,
   User,
-  AtRiskStudent,
   PhysicalAttendance,
   VirtualClassAttendance,
-  StudentPerformance,
+  StudentPerformance
 } from "../models"
 import { AttendanceService } from "./attendance.service"
 import { StudentPerformanceService } from "./student-performance.service"
@@ -24,6 +23,7 @@ import { CourseTopicService } from "./course-topic.service"
 import { CourseMasteryService } from "./course-mastery.service"
 import type { LecturerDashboardStatsDto } from "../dto/lecturer-dashboard.dto"
 import { LecturerProfile } from "../models/LecturerProfile"
+import { AtRiskStudent } from '../models/AtRiskStudent';
 
 export class LecturerDashboardService {
   private attendanceService: AttendanceService
@@ -72,9 +72,7 @@ export class LecturerDashboardService {
     // Count total students enrolled in these courses
     const enrollments = await CourseEnrollment.findAll({
       where: {
-        courseId: {
-          [Op.in]: courseIds,
-        },
+        courseId: courseIds,
         ...(semesterId ? { semesterId } : {}),
         status: "enrolled",
       },
@@ -141,9 +139,7 @@ export class LecturerDashboardService {
     let averagePerformance = 0
     if (courseIds.length > 0 && semesterId) {
       const performances = await this.studentPerformanceService.findAll({
-        courseId: {
-          [Op.in]: courseIds,
-        },
+        courseId: courseIds.join(','),
         semesterId,
       })
       const totalPerformance = performances.reduce((sum, perf) => sum + perf.overallPerformance, 0)
@@ -264,25 +260,25 @@ export class LecturerDashboardService {
     const result: any = {
       lecturer: {
         id: lecturerProfile.id,
-        name: lecturerProfile.user.fullName,
-        email: lecturerProfile.user.email,
+        name: `${lecturerProfile.user?.firstName} ${lecturerProfile.user?.lastName}` || 'Unknown',
+        email: lecturerProfile.user?.email,
         department: lecturerProfile.department,
         specialization: lecturerProfile.specialization,
       },
       courses: courseAssignments.map((assignment) => ({
         id: assignment.courseId,
-        name: assignment.course.name,
-        code: assignment.course.code,
+        name: assignment.course?.name,
+        code: assignment.course?.code,
         semesterId: assignment.semesterId,
-        semesterName: assignment.semester.name,
+        semesterName: assignment.semester?.name,
         studentCount: enrollmentMap[`${assignment.courseId}-${assignment.semesterId}`] || 0,
       })),
       upcomingClasses: upcomingClasses.map((virtualClass) => ({
         id: virtualClass.id,
         title: virtualClass.title,
         courseId: virtualClass.courseId,
-        courseName: virtualClass.course.name,
-        courseCode: virtualClass.course.code,
+        courseName: virtualClass.course?.name,
+        courseCode: virtualClass.course?.code,
         startTime: virtualClass.scheduledStartTime,
         endTime: virtualClass.scheduledEndTime,
         meetingLink: virtualClass.meetingLink,
@@ -361,11 +357,11 @@ export class LecturerDashboardService {
     return courseAssignments.map((assignment) => ({
       id: assignment.id,
       courseId: assignment.courseId,
-      courseName: assignment.course.name,
-      courseCode: assignment.course.code,
-      courseDescription: assignment.course.description,
+      courseName: assignment.course?.name,
+      courseCode: assignment.course?.code,
+      courseDescription: assignment.course?.description,
       semesterId: assignment.semesterId,
-      semesterName: assignment.semester.name,
+      semesterName: assignment.semester?.name,
       studentCount: enrollmentMap[`${assignment.courseId}-${assignment.semesterId}`] || 0,
       assignedDate: assignment.createdAt,
     }))
@@ -425,10 +421,10 @@ export class LecturerDashboardService {
       if (!courseAttendance[key]) {
         courseAttendance[key] = {
           courseId: record.courseId,
-          courseName: record.course.name,
-          courseCode: record.course.code,
+          courseName: record.course?.name,
+          courseCode: record.course?.code,
           semesterId: record.semesterId,
-          semesterName: record.semester.name,
+          semesterName: record.semester?.name,
           physicalSessions: new Set(),
           physicalAttendance: 0,
           virtualSessions: new Set(),
@@ -436,7 +432,7 @@ export class LecturerDashboardService {
         }
       }
 
-      courseAttendance[key].physicalSessions.add(record.periodId)
+      courseAttendance[key].physicalSessions.add(record.id)
       if (record.isPresent) {
         courseAttendance[key].physicalAttendance++
       }
@@ -444,14 +440,14 @@ export class LecturerDashboardService {
 
     // Process virtual attendance
     virtualAttendance.forEach((record) => {
-      const key = `${record.virtualClass.courseId}-${record.virtualClass.semesterId}`
+      const key = `${record.virtualClass?.courseId}-${record.virtualClass?.semesterId}`
       if (!courseAttendance[key]) {
         courseAttendance[key] = {
-          courseId: record.virtualClass.courseId,
-          courseName: record.virtualClass.course.name,
-          courseCode: record.virtualClass.course.code,
-          semesterId: record.virtualClass.semesterId,
-          semesterName: record.virtualClass.semester.name,
+          courseId: record.virtualClass?.courseId,
+          courseName: record.virtualClass?.course?.name,
+          courseCode: record.virtualClass?.course?.code,
+          semesterId: record.virtualClass?.semesterId,
+          semesterName: record.virtualClass?.semester?.name,
           physicalSessions: new Set(),
           physicalAttendance: 0,
           virtualSessions: new Set(),
@@ -532,10 +528,10 @@ export class LecturerDashboardService {
       if (!coursePerformance[key]) {
         coursePerformance[key] = {
           courseId: record.courseId,
-          courseName: record.course.name,
-          courseCode: record.course.code,
+          courseName: record.course?.name,
+          courseCode: record.course?.code,
           semesterId: record.semesterId,
-          semesterName: record.semester.name,
+          semesterName: record.semester?.name,
           totalScore: 0,
           recordCount: 0,
           highestScore: 0,
@@ -1053,10 +1049,10 @@ export class LecturerDashboardService {
     // Group by type
     const materialsByType: Record<string, any[]> = {}
     teachingMaterials.forEach((material) => {
-      if (!materialsByType[material.materialType]) {
-        materialsByType[material.materialType] = []
+      if (!materialsByType[material.type]) {
+        materialsByType[material.type] = []
       }
-      materialsByType[material.materialType].push({
+      materialsByType[material.type].push({
         id: material.id,
         title: material.title,
         description: material.description,
@@ -1064,7 +1060,7 @@ export class LecturerDashboardService {
         fileType: material.fileType,
         fileSize: material.fileSize,
         uploadDate: material.createdAt,
-        materialType: material.materialType,
+        type: material.type,
       })
     })
 
@@ -1081,7 +1077,7 @@ export class LecturerDashboardService {
         fileType: material.fileType,
         fileSize: material.fileSize,
         uploadDate: material.createdAt,
-        materialType: material.materialType,
+        type: material.type,
       })),
     }
   }

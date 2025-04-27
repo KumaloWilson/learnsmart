@@ -24,6 +24,14 @@ export class LecturerDashboardStatsDto {
 
   @IsInt()
   @Expose()
+  atRiskStudentsCount: number
+
+  @IsInt()
+  @Expose()
+  criticalAtRiskStudentsCount: number
+
+  @IsInt()
+  @Expose()
   averageAttendance: number
 
   @IsInt()
