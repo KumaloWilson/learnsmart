@@ -1,6 +1,10 @@
 import { Sequelize } from "sequelize"
 import { SequelizeStorage, Umzug } from "umzug"
 import path from "path"
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config()
 
 const sequelize = new Sequelize({
   dialect: "postgres",

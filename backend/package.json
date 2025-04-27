@@ -2,10 +2,10 @@
   "name": "learn-smart-backend",
   "version": "1.0.0",
   "description": "AI-powered smart learning system for Chinhoyi Technology students",
-  "main": "dist/app.js",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "node dist/app.js",
-    "dev": "nodemon --watch src --exec ts-node src/app.ts",
+    "start": "node dist/server.js",
+    "dev": "nodemon --watch src --exec ts-node src/server.ts",
     "build": "tsc",
     "migrate": "ts-node src/scripts/migrate.ts",
     "seed": "ts-node src/scripts/seed.ts",
