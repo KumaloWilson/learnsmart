@@ -1,5 +1,64 @@
-import { IsDate, IsEnum, IsInt, IsObject, IsOptional, IsString, IsUUID, Max, Min, IsBoolean } from "class-validator"
+import {
+  IsDate,
+  IsEnum,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  Min,
+  IsBoolean,
+  IsArray,
+} from "class-validator"
 import { Expose, Type } from "class-transformer"
+
+export class CreateAtRiskStudentDto {
+  @IsUUID(4)
+  @Expose()
+  studentProfileId!: string
+
+  @IsUUID(4)
+  @Expose()
+  courseId!: string
+
+  @IsUUID(4)
+  @Expose()
+  semesterId!: string
+
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  @Expose()
+  riskScore!: number
+
+  @IsEnum(["low", "medium", "high", "critical"], {
+    message: "Risk level must be one of: low, medium, high, critical",
+  })
+  @Expose()
+  riskLevel!: "low" | "medium" | "high" | "critical"
+
+  @IsArray()
+  @IsString({ each: true })
+  @Expose()
+  riskFactors!: string[]
+
+  @IsString()
+  @IsOptional()
+  @Expose()
+  recommendedActions?: string
+
+  @IsObject()
+  @IsOptional()
+  @Expose()
+  aiAnalysis?: object
+}
+
+export class ResolveAtRiskStudentDto {
+  @IsString()
+  @Expose()
+  resolutionNotes!: string
+}
 
 export class UpdateAtRiskStudentDto {
   @IsEnum(["low", "medium", "high", "critical"], {

@@ -1,54 +1,63 @@
-import "reflect-metadata"
-import express from "express"
+import express, { type Application, NextFunction, Request, Response } from "express"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
+import dotenv from "dotenv"
+import "reflect-metadata"
 import { sequelize } from "./models"
 import routes from "./routes"
 
-const app = express()
+// Load environment variables
+dotenv.config()
 
-// Middleware
-app.use(cors())
-app.use(helmet())
-app.use(morgan("dev"))
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+class App {
+  public app: Application
 
-// Routes
-app.use("/api", routes)
+  constructor() {
+    this.app = express()
+    this.initializeMiddlewares()
+    this.initializeRoutes()
+    this.initializeErrorHandling()
+    this.initializeDatabase()
+  }
 
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack)
-  res.status(500).json({
-    message: "Internal Server Error",
-    error: process.env.NODE_ENV === "development" ? err.message : undefined,
-  })
-})
+  private initializeMiddlewares() {
+    this.app.use(helmet())
+    this.app.use(cors())
+    this.app.use(morgan("dev"))
+    this.app.use(express.json())
+    this.app.use(express.urlencoded({ extended: true }))
+  }
 
-// Database connection and server start
-const PORT = process.env.PORT || 3000
+  private initializeRoutes() {
+    this.app.use("/api", routes)
+  }
 
-const startServer = async () => {
-  try {
-    await sequelize.authenticate()
-    console.log("Database connection has been established successfully.")
-
-    // Sync database (in development only)
-    if (process.env.NODE_ENV === "development") {
-      await sequelize.sync({ alter: true })
-      console.log("Database synced successfully")
-    }
-
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`)
+  private initializeErrorHandling() {
+    this.app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+      console.error(err.stack)
+      res.status(500).json({
+        message: "Internal Server Error",
+        error: process.env.NODE_ENV === "development" ? err.message : undefined,
+      })
     })
-  } catch (error) {
-    console.error("Unable to connect to the database:", error)
+  }
+  
+
+  private async initializeDatabase() {
+    try {
+      await sequelize.authenticate()
+      console.log("Database connection has been established successfully.")
+
+      // Sync database in development mode
+      if (process.env.NODE_ENV === "development") {
+        await sequelize.sync({ alter: true })
+        console.log("Database synchronized")
+      }
+    } catch (error) {
+      console.error("Unable to connect to the database:", error)
+    }
   }
 }
 
-startServer()
-
-export default app
+export default new App().app

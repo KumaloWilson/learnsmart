@@ -28,39 +28,16 @@ export class CreatePhysicalAttendanceDto {
   @Expose()
   lecturerProfileId: string
 
-  @IsUUID(4)
+  @IsArray()
   @Expose()
-  studentProfileId: string
-
-  @IsBoolean()
-  @Expose()
-  isPresent: boolean
+  attendanceRecords: {
+    studentProfileId: string
+    isPresent: boolean
+    notes?: string
+  }[]
 }
 
-export class UpdatePhysicalAttendanceDto {
-  @IsString()
-  @IsOptional()
-  @Expose()
-  topic?: string
-
-  @IsString()
-  @IsOptional()
-  @Expose()
-  notes?: string
-
-  @IsBoolean()
-  @IsOptional()
-  @Expose()
-  isPresent?: boolean
-
-  @IsDate()
-  @Type(() => Date)
-  @IsOptional()
-  @Expose()
-  date?: Date
-}
-
-export class BulkCreateAttendanceDto {
+export class BulkCreatePhysicalAttendanceItemDto {
   @IsUUID(4)
   @Expose()
   courseId: string
@@ -89,11 +66,50 @@ export class BulkCreateAttendanceDto {
 
   @IsArray()
   @Expose()
-  attendances: {
+  attendanceRecords: {
     studentProfileId: string
     isPresent: boolean
     notes?: string
   }[]
+}
+
+export class BulkCreatePhysicalAttendanceDto {
+  @IsArray()
+  @Type(() => BulkCreatePhysicalAttendanceItemDto)
+  @Expose()
+  attendances: BulkCreatePhysicalAttendanceItemDto[]
+}
+
+
+export class UpdatePhysicalAttendanceDto {
+  @IsString()
+  @IsOptional()
+  @Expose()
+  topic?: string
+
+  @IsString()
+  @IsOptional()
+  @Expose()
+  notes?: string
+
+  @IsDate()
+  @Type(() => Date)
+  @IsOptional()
+  @Expose()
+  date?: Date
+}
+
+export class UpdateAttendanceRecordDto {
+  @IsBoolean()
+  @IsBoolean()
+  @IsOptional()
+  @Expose()
+  isPresent?: boolean
+
+  @IsString()
+  @IsOptional()
+  @Expose()
+  notes?: string
 }
 
 export class AttendanceFilterDto {
@@ -112,6 +128,11 @@ export class AttendanceFilterDto {
   @Expose()
   studentProfileId?: string
 
+  @IsBoolean()
+  @IsOptional()
+  @Expose()
+  isPresent?: boolean
+
   @IsUUID(4)
   @IsOptional()
   @Expose()
@@ -128,11 +149,6 @@ export class AttendanceFilterDto {
   @IsOptional()
   @Expose()
   endDate?: Date
-
-  @IsBoolean()
-  @IsOptional()
-  @Expose()
-  isPresent?: boolean
 }
 
 export class AttendanceStatisticsParamsDto {

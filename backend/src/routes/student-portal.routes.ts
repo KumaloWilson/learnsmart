@@ -7,6 +7,7 @@ import { validate, aiRecommendationValidation } from "../middlewares/validation.
 const router = Router()
 const studentPortalController = new StudentPortalController()
 
+
 // Configure multer for file uploads
 const storage = multer.memoryStorage()
 const upload = multer({

@@ -60,7 +60,7 @@ export class CreateLecturerProfileDto {
   @Expose()
   officeHours?: string
 
-  @IsPhoneNumber(null)
+  @IsPhoneNumber(undefined)
   @IsOptional()
   @Expose()
   phoneNumber?: string
@@ -101,7 +101,7 @@ export class UpdateLecturerProfileDto {
   @Expose()
   officeHours?: string
 
-  @IsPhoneNumber(null)
+  @IsPhoneNumber(undefined)
   @IsOptional()
   @Expose()
   phoneNumber?: string

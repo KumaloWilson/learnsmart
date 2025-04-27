@@ -2,10 +2,11 @@ import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize
 import { StudentProfile } from "./StudentProfile"
 import { Course } from "./Course"
 import { Semester } from "./Semester"
-import { DataTypes } from "sequelize"
+import { Assessment } from "./Assessment"
+import { Quiz } from "./Quiz"
 
 @Table({
-  tableName: "student_performances",
+  tableName: "StudentPerformances",
   timestamps: true,
 })
 export class StudentPerformance extends Model {
@@ -23,18 +24,12 @@ export class StudentPerformance extends Model {
   })
   studentProfileId!: string
 
-  @BelongsTo(() => StudentProfile)
-  studentProfile?: StudentProfile
-
   @ForeignKey(() => Course)
   @Column({
     type: DataType.UUID,
     allowNull: false,
   })
   courseId!: string
-
-  @BelongsTo(() => Course)
-  course?: Course
 
   @ForeignKey(() => Semester)
   @Column({
@@ -43,41 +38,49 @@ export class StudentPerformance extends Model {
   })
   semesterId!: string
 
-  @BelongsTo(() => Semester)
-  semester?: Semester
-
   @Column({
     type: DataType.FLOAT,
     allowNull: false,
-    defaultValue: 0,
+    validate: {
+      min: 0,
+      max: 100,
+    },
   })
   attendancePercentage!: number
 
   @Column({
     type: DataType.FLOAT,
     allowNull: false,
-    defaultValue: 0,
+    validate: {
+      min: 0,
+      max: 100,
+    },
   })
   assignmentAverage!: number
 
   @Column({
     type: DataType.FLOAT,
     allowNull: false,
-    defaultValue: 0,
+    validate: {
+      min: 0,
+      max: 100,
+    },
   })
   quizAverage!: number
 
   @Column({
     type: DataType.FLOAT,
     allowNull: false,
-    defaultValue: 0,
+    validate: {
+      min: 0,
+      max: 100,
+    },
   })
   overallPerformance!: number
 
   @Column({
     type: DataType.ENUM("excellent", "good", "average", "below_average", "poor"),
     allowNull: false,
-    defaultValue: "average",
   })
   performanceCategory!: "excellent" | "good" | "average" | "below_average" | "poor"
 
@@ -100,7 +103,7 @@ export class StudentPerformance extends Model {
   recommendations?: string
 
   @Column({
-    type: DataType.JSONB,
+    type: DataType.JSON,
     allowNull: true,
   })
   aiAnalysis?: object
@@ -108,7 +111,36 @@ export class StudentPerformance extends Model {
   @Column({
     type: DataType.DATE,
     allowNull: false,
-    defaultValue: DataTypes.NOW,
+    defaultValue: DataType.NOW,
   })
   lastUpdated!: Date
+
+  @ForeignKey(() => Assessment)
+  @Column({
+    type: DataType.UUID,
+    allowNull: true,
+  })
+  assessmentId?: string
+
+  @ForeignKey(() => Quiz)
+  @Column({
+    type: DataType.UUID,
+    allowNull: true,
+  })
+  quizId?: string
+
+  @BelongsTo(() => StudentProfile)
+  studentProfile?: StudentProfile
+
+  @BelongsTo(() => Course)
+  course?: Course
+
+  @BelongsTo(() => Semester)
+  semester?: Semester
+
+  @BelongsTo(() => Assessment)
+  assessment?: Assessment
+
+  @BelongsTo(() => Quiz)
+  quiz?: Quiz
 }

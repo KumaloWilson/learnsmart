@@ -26,10 +26,10 @@ import { QuizOption } from "./QuizOption"
 import { QuizAttempt } from "./QuizAttempt"
 import { QuizResponse } from "./QuizResponse"
 import { PhysicalAttendance } from "./PhysicalAttendance"
-import { StudentPerformance } from "./StudentPerformance"
 import { LearningResource } from "./LearningResource"
 import { LearningRecommendation } from "./LearningRecommendation"
 import { ResourceInteraction } from "./ResourceInteraction"
+import {StudentPerformance} from "./StudentPerformance"
 
 const sequelize = new Sequelize({
   dialect: "postgres",

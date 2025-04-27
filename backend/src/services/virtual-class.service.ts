@@ -341,40 +341,15 @@ export class VirtualClassService {
       throw new Error("Virtual class or course not found")
     }
 
-    // Get all students enrolled in the course
-    const { CourseEnrollment, StudentProfile } = require("../models")
-    const enrollments = await CourseEnrollment.findAll({
-      where: {
-        courseId: virtualClass.courseId,
-        semesterId: virtualClass.semesterId,
-        status: "enrolled",
-      },
-      include: [
-        {
-          model: StudentProfile,
-          include: [
-            {
-              model: User,
-              attributes: ["id"],
-            },
-          ],
-        },
-      ],
+    // Send notification to enrolled students
+    await this.notificationService.notifyNewAnnouncement({
+      courseId: virtualClass.courseId,
+      semesterId: virtualClass.semesterId,
+      title: "Virtual Class Scheduled",
+      message: `A new virtual class for ${virtualClass.course.name} has been scheduled on ${new Date(
+        virtualClass.scheduledStartTime,
+      ).toLocaleString()}`
     })
-
-    // Send notification to each student
-    const userIds = enrollments.map((enrollment: any) => enrollment.studentProfile?.user?.id).filter((id: string) => id)
-
-    if (userIds.length > 0) {
-      await this.notificationService.notifyNewAnnouncement(
-        "Virtual Class Scheduled",
-        `A new virtual class for ${virtualClass.course.name} has been scheduled on ${new Date(
-          virtualClass.scheduledStartTime,
-        ).toLocaleString()}`,
-        userIds,
-        virtualClass.lecturerProfileId,
-      )
-    }
   }
 
   private async notifyCancellation(virtualClassId: string) {
@@ -408,14 +383,14 @@ export class VirtualClassService {
     const userIds = enrollments.map((enrollment: any) => enrollment.studentProfile?.user?.id).filter((id: string) => id)
 
     if (userIds.length > 0) {
-      await this.notificationService.notifyNewAnnouncement(
-        "Virtual Class Cancelled",
-        `The virtual class for ${virtualClass.course.name} scheduled on ${new Date(
+      await this.notificationService.notifyNewAnnouncement({
+        courseId: virtualClass.courseId,
+        semesterId: virtualClass.semesterId,
+        title: "Virtual Class Cancelled",
+        message: `The virtual class for ${virtualClass.course.name} scheduled on ${new Date(
           virtualClass.scheduledStartTime,
-        ).toLocaleString()} has been cancelled.`,
-        userIds,
-        virtualClass.lecturerProfileId,
-      )
+        ).toLocaleString()} has been cancelled.`
+      })
     }
   }
 
