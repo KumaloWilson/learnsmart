@@ -1,6 +1,6 @@
 import { DataTypes, type QueryInterface } from "sequelize"
 
-export async function up(queryInterface: QueryInterface): Promise<void> {
+const up = async (queryInterface: QueryInterface): Promise<void> => {
   // Create learning_resources table
   await queryInterface.createTable("learning_resources", {
     id: {
@@ -221,9 +221,11 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   })
 }
 
-export async function down(queryInterface: QueryInterface): Promise<void> {
+const down = async (queryInterface: QueryInterface): Promise<void> => {
   // Drop tables in reverse order
   await queryInterface.dropTable("resource_interactions")
   await queryInterface.dropTable("learning_recommendations")
   await queryInterface.dropTable("learning_resources")
 }
+
+export default { up, down }
