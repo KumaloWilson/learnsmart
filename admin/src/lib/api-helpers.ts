@@ -1,0 +1,76 @@
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api"
+
+export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+  const token = localStorage.getItem("token")
+
+  if (!token) {
+    throw new Error("No authentication token found")
+  }
+
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+    ...options.headers,
+  }
+
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
+    })
+
+    if (response.status === 401) {
+      // Token expired, try to refresh
+      const refreshed = await refreshToken()
+
+      if (refreshed) {
+        // Retry with new token
+        return fetchWithAuth(endpoint, options)
+      } else {
+        // Refresh failed, redirect to login
+        window.location.href = "/login"
+        throw new Error("Authentication failed")
+      }
+    }
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || "API request failed")
+    }
+
+    return response.json()
+  } catch (error) {
+    console.error("API request error:", error)
+    throw error
+  }
+}
+
+async function refreshToken() {
+  const refreshToken = localStorage.getItem("refreshToken")
+
+  if (!refreshToken) {
+    return false
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/auth/refresh-token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refreshToken }),
+    })
+
+    if (!response.ok) {
+      return false
+    }
+
+    const data = await response.json()
+    localStorage.setItem("token", data.accessToken)
+
+    return true
+  } catch (error) {
+    console.error("Token refresh failed:", error)
+    return false
+  }
+}
