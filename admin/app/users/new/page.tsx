@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { PageHeader } from "@/components/page-header"
-import { UserForm } from "@/components/user-form"
-import { useToast } from "@/hooks/use-toast"
-import { fetchWithAuth } from "@/lib/api-helpers"
+import { PageHeader } from "../../../components/page-header"
+import { UserForm } from "../../../components/user-form"
+import { useToast } from "../../../hooks/use-toast"
+import { fetchWithAuth } from "../../../lib/api-helpers"
 
 export default function NewUserPage() {
   const router = useRouter()

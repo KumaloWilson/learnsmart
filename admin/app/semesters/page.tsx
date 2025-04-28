@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { PageHeader } from "@/components/page-header"
-import { SemestersTable } from "@/components/semesters-table"
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
-import { fetchWithAuth } from "@/lib/api-helpers"
 import { Plus } from "lucide-react"
+import { Button } from "react-day-picker"
+import { PageHeader } from "../../components/page-header"
+import { SemestersTable } from "../../components/semesters-table"
+import { useToast } from "../../hooks/use-toast"
+import { fetchWithAuth } from "../../lib/api-helpers"
 
 export default function SemestersPage() {
   const { toast } = useToast()

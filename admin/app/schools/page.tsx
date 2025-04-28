@@ -1,8 +1,9 @@
-import { PageHeader } from "@/components/page-header"
-import { SchoolsTable } from "@/components/schools-table"
+
 import { Button } from "@/components/ui/button"
 import { PlusCircle } from "lucide-react"
 import Link from "next/link"
+import { PageHeader } from "../../components/page-header"
+import { SchoolsTable } from "../../components/schools-table"
 
 export default function SchoolsPage() {
   return (
