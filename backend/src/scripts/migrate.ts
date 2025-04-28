@@ -1,4 +1,4 @@
-import { migrator } from "../config/umzug"
+import { migrator } from "../config/sequelize"
 
 const runMigrations = async () => {
   try {
