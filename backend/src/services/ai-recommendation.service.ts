@@ -1,18 +1,5 @@
 import { Op } from "sequelize"
 import OpenAI from "openai"
-import {
-  LearningResource,
-  LearningRecommendation,
-  ResourceInteraction,
-  StudentProfile,
-  Course,
-  StudentPerformance,
-  AssessmentSubmission,
-  Assessment,
-  QuizAttempt,
-  Quiz,
-  User,
-} from "../models"
 import type {
   CreateLearningResourceDto,
   UpdateLearningResourceDto,
@@ -25,6 +12,17 @@ import type {
   GenerateRecommendationsDto,
   RecommendationFeedbackDto,
 } from "../dto/learning-recommendation.dto"
+import { Assessment } from "../models/Assessment"
+import { AssessmentSubmission } from "../models/AssessmentSubmission"
+import { Course } from "../models/Course"
+import { LearningRecommendation } from "../models/LearningRecommendation"
+import { LearningResource } from "../models/LearningResource"
+import { Quiz } from "../models/Quiz"
+import { QuizAttempt } from "../models/QuizAttempt"
+import { ResourceInteraction } from "../models/ResourceInteraction"
+import { StudentPerformance } from "../models/StudentPerformance"
+import { StudentProfile } from "../models/StudentProfile"
+import { User } from "../models/User"
 
 export class AIRecommendationService {
   private openai: OpenAI

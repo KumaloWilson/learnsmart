@@ -1,5 +1,5 @@
-import { Department } from "../models"
 import type { CreateDepartmentDto, UpdateDepartmentDto } from "../dto/department.dto"
+import { Department } from "../models/Department"
 
 export class DepartmentService {
   async findAll() {

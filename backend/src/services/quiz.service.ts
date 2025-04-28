@@ -1,6 +1,5 @@
 import { Op } from "sequelize"
 import axios from "axios"
-import { Quiz, QuizAttempt, LecturerProfile, Course, Semester, StudentProfile, User } from "../models"
 import { NotificationService } from "./notification.service"
 import type {
   CreateQuizDto,
@@ -12,6 +11,13 @@ import type {
   QuizAttemptFilterDto,
   GenerateQuizQuestionsDto,
 } from "../dto/quiz.dto"
+import { Course } from "../models/Course"
+import { LecturerProfile } from "../models/LecturerProfile"
+import { Quiz } from "../models/Quiz"
+import { QuizAttempt } from "../models/QuizAttempt"
+import { Semester } from "../models/Semester"
+import { StudentProfile } from "../models/StudentProfile"
+import { User } from "../models/User"
 
 export class QuizService {
   private notificationService: NotificationService

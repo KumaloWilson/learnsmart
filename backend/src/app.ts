@@ -4,8 +4,8 @@ import helmet from "helmet"
 import morgan from "morgan"
 import dotenv from "dotenv"
 import "reflect-metadata"
-import { sequelize } from "./models"
 import routes from "./routes"
+import sequelize from "./config/sequelize"
 
 // Load environment variables
 dotenv.config()

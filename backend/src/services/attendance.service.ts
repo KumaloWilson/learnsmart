@@ -1,14 +1,4 @@
 import { Op } from "sequelize"
-import {
-  PhysicalAttendance,
-  VirtualClassAttendance,
-  LecturerProfile,
-  Course,
-  Semester,
-  StudentProfile,
-  User,
-  VirtualClass,
-} from "../models"
 import type {
   CreatePhysicalAttendanceDto,
   UpdatePhysicalAttendanceDto,
@@ -18,6 +8,14 @@ import type {
   AttendanceStatisticsParamsDto,
   UpdateAttendanceRecordDto,
 } from "../dto/attendance.dto"
+import { Course } from "../models/Course"
+import { LecturerProfile } from "../models/LecturerProfile"
+import { PhysicalAttendance } from "../models/PhysicalAttendance"
+import { Semester } from "../models/Semester"
+import { StudentProfile } from "../models/StudentProfile"
+import { User } from "../models/User"
+import { VirtualClass } from "../models/VirtualClass"
+import { VirtualClassAttendance } from "../models/VirtualClassAttendance"
 
 export class AttendanceService {
   // Physical attendance methods

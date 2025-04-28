@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt"
-import { User } from "../models"
 import { TokenService } from "./token.service"
 import type { RegisterUserDto, LoginDto, AuthResponseDto, ChangePasswordDto } from "../dto/auth.dto"
+import { User } from "../models/User"
 
 export class AuthService {
   private tokenService: TokenService

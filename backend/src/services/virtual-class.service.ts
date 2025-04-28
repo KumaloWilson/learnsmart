@@ -1,13 +1,4 @@
 import { Op } from "sequelize"
-import {
-  VirtualClass,
-  VirtualClassAttendance,
-  LecturerProfile,
-  Course,
-  Semester,
-  StudentProfile,
-  User,
-} from "../models"
 import { NotificationService } from "./notification.service"
 import type {
   CreateVirtualClassDto,
@@ -16,6 +7,13 @@ import type {
   UpdateVirtualClassAttendanceDto,
   VirtualClassFilterDto,
 } from "../dto/virtual-class.dto"
+import { Course } from "../models/Course"
+import { LecturerProfile } from "../models/LecturerProfile"
+import { Semester } from "../models/Semester"
+import { StudentProfile } from "../models/StudentProfile"
+import { User } from "../models/User"
+import { VirtualClass } from "../models/VirtualClass"
+import { VirtualClassAttendance } from "../models/VirtualClassAttendance"
 
 export class VirtualClassService {
   private notificationService: NotificationService

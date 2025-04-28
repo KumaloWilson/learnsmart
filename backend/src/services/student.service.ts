@@ -1,5 +1,4 @@
 import { Op } from "sequelize"
-import { User, StudentProfile, CourseEnrollment, AcademicRecord, Course, Semester, Program } from "../models"
 import { AuthService } from "./auth.service"
 import type {
   CreateStudentProfileDto,
@@ -10,6 +9,13 @@ import type {
   UpdateAcademicRecordDto,
   StudentFilterDto,
 } from "../dto/student.dto"
+import { AcademicRecord } from "../models/AcademicRecord"
+import { Course } from "../models/Course"
+import { CourseEnrollment } from "../models/CourseEnrollment"
+import { Program } from "../models/Program"
+import { Semester } from "../models/Semester"
+import { StudentProfile } from "../models/StudentProfile"
+import { User } from "../models/User"
 
 export class StudentService {
   private authService: AuthService
