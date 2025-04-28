@@ -39,7 +39,7 @@ export default function NewProgramPage() {
 
   return (
     <div className="container mx-auto py-6">
-      <PageHeader title="Create Program" description="Add a new academic program to the system" />
+      <PageHeader heading="Create Program" text="Add a new academic program to the system" />
       <div className="mt-6">
         <ProgramForm onSubmit={handleSubmit} isLoading={isLoading} />
       </div>

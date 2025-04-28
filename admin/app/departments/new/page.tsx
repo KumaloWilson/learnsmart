@@ -39,7 +39,7 @@ export default function NewDepartmentPage() {
 
   return (
     <div className="container mx-auto py-6">
-      <PageHeader title="Create Department" description="Add a new academic department to the system" />
+      <PageHeader heading="Create Department" text="Add a new academic department to the system" />
       <div className="mt-6">
         <DepartmentForm onSubmit={handleSubmit} isLoading={isLoading} />
       </div>

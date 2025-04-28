@@ -76,7 +76,7 @@ export default function EditDepartmentPage({ params }: { params: { id: string } 
 
   return (
     <div className="container mx-auto py-6">
-      <PageHeader title={`Edit Department: ${department?.name}`} description="Update department information" />
+      <PageHeader heading={`Edit Department: ${department?.name}`} text="Update department information" />
       <div className="mt-6">
         <DepartmentForm initialData={department} onSubmit={handleSubmit} isLoading={isSaving} />
       </div>

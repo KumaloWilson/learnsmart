@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { CourseForm } from "../../../components/course-form"
 import { useToast } from "../../../hooks/use-toast"
 import { fetchWithAuth } from "../../../lib/api-helpers"
+import { PageHeader } from "../../../components/page-header"
 
 interface CoursePageProps {
   params: {

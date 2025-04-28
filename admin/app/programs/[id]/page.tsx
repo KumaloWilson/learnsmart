@@ -76,7 +76,7 @@ export default function EditProgramPage({ params }: { params: { id: string } }) 
 
   return (
     <div className="container mx-auto py-6">
-      <PageHeader title={`Edit Program: ${program?.name}`} description="Update program information" />
+      <PageHeader heading={`Edit Program: ${program?.name}`} text="Update program information" />
       <div className="mt-6">
         <ProgramForm initialData={program} onSubmit={handleSubmit} isLoading={isSaving} />
       </div>

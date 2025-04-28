@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -48,16 +48,16 @@ export default function ProgramsPage() {
   }
 
   // Load programs on component mount
-  useState(() => {
+  useEffect(() => {
     loadPrograms()
   }, [])
 
   return (
     <div className="container mx-auto py-6">
       <PageHeader
-        title="Programs"
-        description="Manage academic programs across all departments"
-        actions={
+        heading="Programs"
+        text="Manage academic programs across all departments"
+        children={
           <Link href="/programs/new">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
