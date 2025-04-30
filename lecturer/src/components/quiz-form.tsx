@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { CalendarIcon, Clock, AlertTriangle } from "lucide-react"
+import { CalendarIcon, Clock, AlertTriangle, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
@@ -23,13 +23,9 @@ import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
-
-// Mock courses data
-const mockCourses = [
-  { id: "101", name: "CS101: Programming Fundamentals", semester: "Spring 2025" },
-  { id: "202", name: "CS202: Data Structures", semester: "Spring 2025" },
-  { id: "303", name: "CS303: Artificial Intelligence", semester: "Spring 2025" },
-]
+import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/components/ui/use-toast"
+import { lecturerService } from "@/lib/api-services"
 
 // Form schema
 const formSchema = z
@@ -72,9 +68,12 @@ const formSchema = z
 
 export function QuizForm({ quiz = null }) {
   const router = useRouter()
+  const { user } = useAuth()
+  const { toast } = useToast()
   const [courses, setCourses] = useState([])
   const [semesters, setSemesters] = useState([])
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState("basic")
 
   // Initialize the form
@@ -101,57 +100,83 @@ export function QuizForm({ quiz = null }) {
   // Fetch courses and semesters
   useEffect(() => {
     const fetchData = async () => {
+      if (!user?.id) return
+
       try {
-        // In a real app, these would be API calls:
-        // const coursesRes = await fetch("/api/lecturer/courses")
-        // const courses = await coursesRes.json()
-        //
-        // const semestersRes = await fetch("/api/semesters")
-        // const semesters = await semestersRes.json()
+        // Get lecturer profile
+        const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
 
-        // Mock data
-        const mockSemesters = [{ id: "s2025", name: "Spring 2025" }]
+        // Get courses assigned to the lecturer
+        const lecturerCourses = await lecturerService.getLecturerCourses(lecturerProfile.id)
+        setCourses(lecturerCourses)
 
-        setTimeout(() => {
-          setCourses(mockCourses)
-          setSemesters(mockSemesters)
+        // Get active semesters
+        const activeSemesters = await lecturerService.getActiveSemesters()
+        setSemesters(activeSemesters)
 
-          // Set default semester if we have one
-          if (mockSemesters.length > 0 && !quiz) {
-            form.setValue("semesterId", mockSemesters[0].id)
-          }
-
-          setLoading(false)
-        }, 1000)
+        // Set default semester if we have one
+        if (activeSemesters.length > 0 && !quiz) {
+          form.setValue("semesterId", activeSemesters[0].id)
+        }
       } catch (error) {
         console.error("Failed to fetch data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load courses and semesters",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchData()
-  }, [form, quiz])
+  }, [form, quiz, user, toast])
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      // Show that we're submitting
-      console.log("Submitting form:", values)
+      setSubmitting(true)
 
-      // In a real app, send data to API:
-      // const res = await fetch(`/api/lecturer/quizzes${quiz ? `/${quiz.id}` : ''}`, {
-      //   method: quiz ? 'PUT' : 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(values),
-      // })
-      // const data = await res.json()
+      if (!user?.id) {
+        throw new Error("User not authenticated")
+      }
 
-      // Simulate API delay
-      setTimeout(() => {
-        // Navigate to the quizzes list page or the newly created quiz page
-        router.push("/quizzes")
-      }, 1000)
+      const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
+
+      // Prepare quiz data
+      const quizData = {
+        ...values,
+        startDate: values.startDate.toISOString(),
+        endDate: values.endDate.toISOString(),
+        lecturerProfileId: lecturerProfile.id,
+      }
+
+      if (quiz) {
+        // Update existing quiz
+        await lecturerService.updateQuiz(quiz.id, quizData)
+        toast({
+          title: "Success",
+          description: "Quiz updated successfully",
+        })
+      } else {
+        // Create new quiz
+        await lecturerService.createQuiz(quizData)
+        toast({
+          title: "Success",
+          description: "Quiz created successfully",
+        })
+      }
+
+      router.push("/quizzes")
     } catch (error) {
       console.error("Failed to save quiz:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save quiz",
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -255,7 +280,7 @@ export function QuizForm({ quiz = null }) {
                           <SelectContent>
                             {courses.map((course) => (
                               <SelectItem key={course.id} value={course.id}>
-                                {course.name}
+                                {course.code}: {course.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -659,7 +684,16 @@ export function QuizForm({ quiz = null }) {
                 <Button type="button" variant="outline" onClick={() => setActiveTab("settings")}>
                   Back
                 </Button>
-                <Button type="submit">{quiz ? "Update Quiz" : "Create Quiz"}</Button>
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {quiz ? "Updating Quiz..." : "Creating Quiz..."}
+                    </>
+                  ) : (
+                    <>{quiz ? "Update Quiz" : "Create Quiz"}</>
+                  )}
+                </Button>
               </CardFooter>
             </Card>
           </TabsContent>

@@ -11,129 +11,95 @@ import { Label } from "@/components/ui/label"
 import { Calendar, Search, Edit2, Eye, Trash2, BarChart2 } from "lucide-react"
 import Link from "next/link"
 import { formatDate } from "@/lib/utils"
+import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/components/ui/use-toast"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { lecturerService } from "@/lib/api-services"
 
-// Mock quiz data
-const mockQuizzes = [
-  {
-    id: "1",
-    title: "Midterm Assessment",
-    topic: "Introduction to Programming",
-    courseId: "101",
-    courseName: "CS101: Programming Fundamentals",
-    questionType: "multiple_choice",
-    numberOfQuestions: 20,
-    timeLimit: 60,
-    totalMarks: 100,
-    passingMarks: 60,
-    startDate: "2025-05-10T10:00:00",
-    endDate: "2025-05-10T11:00:00",
-    isActive: true,
-    attempts: 28,
-    averageScore: 76.4,
-    passRate: 92.8,
-  },
-  {
-    id: "2",
-    title: "Weekly Quiz 3",
-    topic: "Arrays and Pointers",
-    courseId: "101",
-    courseName: "CS101: Programming Fundamentals",
-    questionType: "mixed",
-    numberOfQuestions: 10,
-    timeLimit: 30,
-    totalMarks: 50,
-    passingMarks: 30,
-    startDate: "2025-05-05T14:00:00",
-    endDate: "2025-05-05T14:30:00",
-    isActive: false,
-    attempts: 32,
-    averageScore: 42.1,
-    passRate: 87.5,
-  },
-  {
-    id: "3",
-    title: "Final Quiz",
-    topic: "Advanced Data Structures",
-    courseId: "202",
-    courseName: "CS202: Data Structures",
-    questionType: "mixed",
-    numberOfQuestions: 15,
-    timeLimit: 45,
-    totalMarks: 75,
-    passingMarks: 45,
-    startDate: "2025-05-20T10:00:00",
-    endDate: "2025-05-20T10:45:00",
-    isActive: true,
-    attempts: 0,
-    averageScore: 0,
-    passRate: 0,
-  },
-  {
-    id: "4",
-    title: "Practice Quiz",
-    topic: "Algorithms Complexity",
-    courseId: "202",
-    courseName: "CS202: Data Structures",
-    questionType: "true_false",
-    numberOfQuestions: 20,
-    timeLimit: 20,
-    totalMarks: 20,
-    passingMarks: 14,
-    startDate: "2025-05-01T10:00:00",
-    endDate: "2025-05-01T10:20:00",
-    isActive: false,
-    attempts: 25,
-    averageScore: 18.2,
-    passRate: 96,
-  },
-  {
-    id: "5",
-    title: "Short Assessment",
-    topic: "Machine Learning Basics",
-    courseId: "303",
-    courseName: "CS303: Artificial Intelligence",
-    questionType: "short_answer",
-    numberOfQuestions: 5,
-    timeLimit: 30,
-    totalMarks: 50,
-    passingMarks: 25,
-    startDate: "2025-05-15T10:00:00",
-    endDate: "2025-05-15T10:30:00",
-    isActive: true,
-    attempts: 12,
-    averageScore: 28.5,
-    passRate: 75,
-  },
-]
+interface Quiz {
+  id: string
+  title: string
+  topic: string
+  courseId: string
+  courseName: string
+  courseCode: string
+  questionType: string
+  numberOfQuestions: number
+  timeLimit: number
+  totalMarks: number
+  passingMarks: number
+  startDate: string
+  endDate: string
+  isActive: boolean
+  attempts: number
+  averageScore: number
+  passRate: number
+}
 
 export function QuizzesTable() {
-  const [quizzes, setQuizzes] = useState([])
+  const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [courseFilter, setCourseFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [quizToDelete, setQuizToDelete] = useState<string | null>(null)
 
   useEffect(() => {
-    // Simulate API fetch
     const fetchQuizzes = async () => {
-      try {
-        // In a real app, this would be a fetch call to your API
-        // const response = await fetch("/api/lecturer/quizzes")
-        // const data = await response.json()
+      if (!user?.id) return
 
-        // Using mock data for now
-        setTimeout(() => {
-          setQuizzes(mockQuizzes)
-          setLoading(false)
-        }, 1000)
+      try {
+        const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
+        const quizData = await lecturerService.getQuizzes(lecturerProfile.id)
+        setQuizzes(quizData)
       } catch (error) {
         console.error("Failed to fetch quizzes:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load quizzes",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchQuizzes()
-  }, [])
+  }, [user, toast])
+
+  const handleDeleteQuiz = async () => {
+    if (!quizToDelete) return
+
+    try {
+      await lecturerService.deleteQuiz(quizToDelete)
+      setQuizzes(quizzes.filter((quiz) => quiz.id !== quizToDelete))
+      toast({
+        title: "Success",
+        description: "Quiz deleted successfully",
+      })
+    } catch (error) {
+      console.error("Failed to delete quiz:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete quiz",
+        variant: "destructive",
+      })
+    } finally {
+      setQuizToDelete(null)
+    }
+  }
 
   // Get unique courses for filter dropdown
   const courses =
@@ -148,16 +114,23 @@ export function QuizzesTable() {
   const filteredQuizzes = quizzes.filter((quiz) => {
     const matchesSearch =
       quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quiz.topic.toLowerCase().includes(searchTerm.toLowerCase())
+      quiz.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quiz.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quiz.courseCode.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesCourse = courseFilter === "all" || quiz.courseId === courseFilter
 
+    const now = new Date()
+    const isUpcoming = new Date(quiz.startDate) > now
+    const isCompleted = new Date(quiz.endDate) < now
+    const isActive = !isUpcoming && !isCompleted && quiz.isActive
+
     const matchesStatus =
       statusFilter === "all" ||
-      (statusFilter === "active" && quiz.isActive) ||
+      (statusFilter === "active" && isActive) ||
       (statusFilter === "inactive" && !quiz.isActive) ||
-      (statusFilter === "upcoming" && new Date(quiz.startDate) > new Date()) ||
-      (statusFilter === "completed" && new Date(quiz.endDate) < new Date())
+      (statusFilter === "upcoming" && isUpcoming) ||
+      (statusFilter === "completed" && isCompleted)
 
     return matchesSearch && matchesCourse && matchesStatus
   })
@@ -254,15 +227,32 @@ export function QuizzesTable() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredQuizzes.map((quiz) => (
-            <QuizCard key={quiz.id} quiz={quiz} />
+            <QuizCard key={quiz.id} quiz={quiz} onDelete={() => setQuizToDelete(quiz.id)} />
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!quizToDelete} onOpenChange={(open) => !open && setQuizToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this quiz and all associated data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteQuiz} className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
 
-function QuizCard({ quiz }) {
+function QuizCard({ quiz, onDelete }: { quiz: Quiz; onDelete: () => void }) {
   const isUpcoming = new Date(quiz.startDate) > new Date()
   const isCompleted = new Date(quiz.endDate) < new Date()
   const isInProgress = !isUpcoming && !isCompleted && quiz.isActive
@@ -271,7 +261,7 @@ function QuizCard({ quiz }) {
   if (isUpcoming) {
     statusBadge = <Badge variant="outline">Upcoming</Badge>
   } else if (isInProgress) {
-    statusBadge = <Badge variant="success">Active</Badge>
+    statusBadge = <Badge variant="default">Active</Badge>
   } else if (isCompleted) {
     statusBadge = <Badge variant="secondary">Completed</Badge>
   } else {
@@ -350,10 +340,28 @@ function QuizCard({ quiz }) {
             </Button>
           </Link>
         ) : (
-          <Button size="sm" variant="destructive">
-            <Trash2 className="mr-1 h-3.5 w-3.5" />
-            Delete
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="destructive">
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete this quiz and all associated data. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground">
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </CardFooter>
     </Card>

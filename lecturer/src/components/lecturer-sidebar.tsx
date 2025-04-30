@@ -3,177 +3,179 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
 import {
-  BarChart3,
   BookOpen,
   Calendar,
+  ChevronLeft,
+  ClipboardList,
   FileText,
-  GraduationCap,
-  LayoutDashboard,
+  Home,
   LogOut,
   Menu,
-  MessageSquare,
   Settings,
-  Users,
+  User,
   Video,
-  X,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { useAuth } from "@/contexts/auth-context"
 
-const routes = [
-  {
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    href: "/",
-    color: "text-sky-500",
-  },
-  {
-    label: "Courses",
-    icon: BookOpen,
-    href: "/courses",
-    color: "text-violet-500",
-  },
-  {
-    label: "Students",
-    icon: Users,
-    href: "/students",
-    color: "text-pink-700",
-  },
-  {
-    label: "Assessments",
-    icon: FileText,
-    href: "/assessments",
-    color: "text-orange-500",
-  },
-  {
-    label: "Virtual Classes",
-    icon: Video,
-    href: "/virtual-classes",
-    color: "text-emerald-500",
-  },
-  {
-    label: "Teaching Materials",
-    icon: FileText,
-    href: "/materials",
-    color: "text-blue-500",
-  },
-  {
-    label: "Quizzes",
-    icon: GraduationCap,
-    href: "/quizzes",
-    color: "text-yellow-500",
-  },
-  {
-    label: "Schedule",
-    icon: Calendar,
-    href: "/schedule",
-    color: "text-green-500",
-  },
-  {
-    label: "Messages",
-    icon: MessageSquare,
-    href: "/messages",
-    color: "text-violet-500",
-  },
-  {
-    label: "Analytics",
-    icon: BarChart3,
-    href: "/analytics",
-    color: "text-pink-500",
-  },
-  {
-    label: "Settings",
-    icon: Settings,
-    href: "/settings",
-  },
-]
-
-export function LecturerSidebar({ className }: { className?: string }) {
+export function LecturerSidebar() {
   const pathname = usePathname()
-  const [isOpen, setIsOpen] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const { user, logout } = useAuth()
+
+  // Skip rendering sidebar on login page
+  if (pathname === "/login") {
+    return null
+  }
 
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild className="md:hidden">
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu />
-            <span className="sr-only">Toggle Menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="p-0">
-          <div className="flex h-16 items-center border-b px-4">
-            <Link href="/" className="flex items-center gap-2 font-bold">
-              <GraduationCap className="h-6 w-6" />
-              <span>Learn Smart</span>
-            </Link>
-            <Button variant="ghost" size="icon" className="ml-auto" onClick={() => setIsOpen(false)}>
-              <X className="h-5 w-5" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </div>
-          <ScrollArea className="h-[calc(100vh-4rem)]">
-            <div className="flex flex-col gap-2 p-4">
-              {routes.map((route) => (
-                <Link
-                  key={route.href}
-                  href={route.href}
-                  onClick={() => setIsOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent",
-                    pathname === route.href ? "bg-accent" : "transparent",
-                  )}
-                >
-                  <route.icon className={cn("h-5 w-5", route.color)} />
-                  {route.label}
-                </Link>
-              ))}
-            </div>
-            <div className="mt-4 border-t p-4">
-              <Link
-                href="/login"
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-accent"
-              >
-                <LogOut className="h-5 w-5" />
-                Logout
-              </Link>
-            </div>
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
-      <div className={cn("hidden border-r md:flex md:w-64 md:flex-col", className)}>
-        <div className="flex h-16 items-center border-b px-6">
-          <Link href="/" className="flex items-center gap-2 font-bold">
-            <GraduationCap className="h-6 w-6" />
+      {/* Mobile sidebar toggle */}
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed left-4 top-4 z-40 md:hidden"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        <Menu className="h-4 w-4" />
+        <span className="sr-only">Toggle Menu</span>
+      </Button>
+
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r bg-background transition-transform md:translate-x-0",
+          isCollapsed ? "-translate-x-full" : "translate-x-0",
+        )}
+      >
+        <div className="flex h-14 items-center border-b px-4">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <BookOpen className="h-5 w-5" />
             <span>Learn Smart</span>
           </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto hidden md:flex"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="sr-only">Collapse Sidebar</span>
+          </Button>
         </div>
-        <ScrollArea className="flex-1">
-          <div className="flex flex-col gap-2 p-4">
-            {routes.map((route) => (
-              <Link
-                key={route.href}
-                href={route.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent",
-                  pathname === route.href ? "bg-accent" : "transparent",
-                )}
-              >
-                <route.icon className={cn("h-5 w-5", route.color)} />
-                {route.label}
-              </Link>
-            ))}
-          </div>
-          <div className="mt-4 border-t p-4">
-            <Link href="/login" className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-accent">
-              <LogOut className="h-5 w-5" />
-              Logout
+        <div className="flex-1 overflow-auto py-2">
+          <nav className="grid gap-1 px-2">
+            <Link
+              href="/"
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/" ? "bg-accent text-accent-foreground" : "transparent",
+              )}
+            >
+              <Home className="h-4 w-4" />
+              <span>Dashboard</span>
             </Link>
+            <Link
+              href="/courses"
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/courses" || pathname.startsWith("/courses/")
+                  ? "bg-accent text-accent-foreground"
+                  : "transparent",
+              )}
+            >
+              <BookOpen className="h-4 w-4" />
+              <span>Courses</span>
+            </Link>
+            <Link
+              href="/assessments"
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/assessments" || pathname.startsWith("/assessments/")
+                  ? "bg-accent text-accent-foreground"
+                  : "transparent",
+              )}
+            >
+              <ClipboardList className="h-4 w-4" />
+              <span>Assessments</span>
+            </Link>
+            <Link
+              href="/quizzes"
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/quizzes" || pathname.startsWith("/quizzes/")
+                  ? "bg-accent text-accent-foreground"
+                  : "transparent",
+              )}
+            >
+              <ClipboardList className="h-4 w-4" />
+              <span>Quizzes</span>
+            </Link>
+            <Link
+              href="/materials"
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/materials" || pathname.startsWith("/materials/")
+                  ? "bg-accent text-accent-foreground"
+                  : "transparent",
+              )}
+            >
+              <FileText className="h-4 w-4" />
+              <span>Materials</span>
+            </Link>
+            <Link
+              href="/virtual-classes"
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/virtual-classes" || pathname.startsWith("/virtual-classes/")
+                  ? "bg-accent text-accent-foreground"
+                  : "transparent",
+              )}
+            >
+              <Video className="h-4 w-4" />
+              <span>Virtual Classes</span>
+            </Link>
+            <Link
+              href="/calendar"
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/calendar" ? "bg-accent text-accent-foreground" : "transparent",
+              )}
+            >
+              <Calendar className="h-4 w-4" />
+              <span>Calendar</span>
+            </Link>
+          </nav>
+        </div>
+        <div className="border-t p-4">
+          <div className="flex items-center gap-3 rounded-md px-3 py-2">
+            <User className="h-4 w-4" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">
+                {user?.firstName} {user?.lastName}
+              </span>
+              <span className="text-xs text-muted-foreground">{user?.email}</span>
+            </div>
           </div>
-        </ScrollArea>
+          <nav className="mt-2 grid gap-1">
+            <Link
+              href="/profile"
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </Link>
+            <button
+              onClick={logout}
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </button>
+          </nav>
+        </div>
       </div>
     </>
   )

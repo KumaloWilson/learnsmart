@@ -11,143 +11,57 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatDate, formatFileSize } from "@/lib/utils"
 import Link from "next/link"
+import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from "@/contexts/auth-context"
+import { lecturerService } from "@/lib/api-services"
 
-// Mock teaching materials data
-const mockMaterials = [
-  {
-    id: "1",
-    title: "Introduction to Programming Slides",
-    description: "Lecture slides covering basic programming concepts",
-    fileType: "pdf",
-    fileSize: 2500000, // 2.5 MB
-    uploadDate: "2025-04-15T10:30:00",
-    courseId: "101",
-    courseName: "CS101: Programming Fundamentals",
-    topic: "Introduction to Programming",
-    downloadUrl: "/api/materials/1/download",
-    viewUrl: "/api/materials/1/view",
-    downloadCount: 28,
-    isPublic: true,
-  },
-  {
-    id: "2",
-    title: "Data Structures Handbook",
-    description: "Comprehensive guide to common data structures",
-    fileType: "pdf",
-    fileSize: 5800000, // 5.8 MB
-    uploadDate: "2025-04-10T14:20:00",
-    courseId: "202",
-    courseName: "CS202: Data Structures",
-    topic: "Data Structures Overview",
-    downloadUrl: "/api/materials/2/download",
-    viewUrl: "/api/materials/2/view",
-    downloadCount: 15,
-    isPublic: true,
-  },
-  {
-    id: "3",
-    title: "Binary Search Trees - Code Examples",
-    description: "Implementation examples of BST in various languages",
-    fileType: "zip",
-    fileSize: 1200000, // 1.2 MB
-    uploadDate: "2025-04-12T09:15:00",
-    courseId: "202",
-    courseName: "CS202: Data Structures",
-    topic: "Trees and Binary Search Trees",
-    downloadUrl: "/api/materials/3/download",
-    downloadCount: 22,
-    isPublic: false,
-  },
-  {
-    id: "4",
-    title: "Neural Networks Visualization",
-    description: "Interactive visualization of neural network architecture",
-    fileType: "html",
-    fileSize: 850000, // 850 KB
-    uploadDate: "2025-04-18T16:45:00",
-    courseId: "303",
-    courseName: "CS303: Artificial Intelligence",
-    topic: "Neural Networks",
-    downloadUrl: "/api/materials/4/download",
-    viewUrl: "/api/materials/4/view",
-    downloadCount: 19,
-    isPublic: true,
-  },
-  {
-    id: "5",
-    title: "Programming Fundamentals - Week 3 Recording",
-    description: "Video recording of the lecture on control structures",
-    fileType: "mp4",
-    fileSize: 125000000, // 125 MB
-    uploadDate: "2025-04-05T11:30:00",
-    courseId: "101",
-    courseName: "CS101: Programming Fundamentals",
-    topic: "Control Structures",
-    downloadUrl: "/api/materials/5/download",
-    viewUrl: "/api/materials/5/view",
-    downloadCount: 31,
-    isPublic: true,
-  },
-  {
-    id: "6",
-    title: "AI Project Requirements",
-    description: "Detailed requirements for the final project",
-    fileType: "docx",
-    fileSize: 450000, // 450 KB
-    uploadDate: "2025-04-20T13:10:00",
-    courseId: "303",
-    courseName: "CS303: Artificial Intelligence",
-    topic: "Course Project",
-    downloadUrl: "/api/materials/6/download",
-    viewUrl: "/api/materials/6/view",
-    downloadCount: 25,
-    isPublic: false,
-  },
-  {
-    id: "7",
-    title: "Programming Exercises - Week 4",
-    description: "Practice problems on functions and arrays",
-    fileType: "pdf",
-    fileSize: 1800000, // 1.8 MB
-    uploadDate: "2025-04-22T09:00:00",
-    courseId: "101",
-    courseName: "CS101: Programming Fundamentals",
-    topic: "Functions and Arrays",
-    downloadUrl: "/api/materials/7/download",
-    viewUrl: "/api/materials/7/view",
-    downloadCount: 18,
-    isPublic: true,
-  },
-]
+interface TeachingMaterial {
+  id: string
+  title: string
+  description: string
+  fileType: string
+  fileSize: number
+  uploadDate: string
+  courseId: string
+  courseName: string
+  topic: string
+  downloadUrl: string
+  viewUrl?: string
+  downloadCount: number
+  isPublic: boolean
+}
 
 export function TeachingMaterialsTable() {
-  const [materials, setMaterials] = useState([])
+  const [materials, setMaterials] = useState<TeachingMaterial[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [courseFilter, setCourseFilter] = useState("all")
   const [typeFilter, setTypeFilter] = useState("all")
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Simulate API fetch
     const fetchMaterials = async () => {
-      try {
-        // In a real app, this would be a fetch call to your API
-        // const response = await fetch("/api/lecturer/materials")
-        // const data = await response.json()
+      if (!user?.id) return
 
-        // Using mock data for now
-        setTimeout(() => {
-          setMaterials(mockMaterials)
-          setLoading(false)
-        }, 1000)
+      try {
+        const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
+        const teachingMaterials = await lecturerService.getTeachingMaterials(lecturerProfile.id)
+        setMaterials(teachingMaterials)
       } catch (error) {
         console.error("Failed to fetch materials:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load teaching materials",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchMaterials()
-  }, [])
+  }, [user, toast])
 
   // Get unique courses for filter dropdown
   const courses =
@@ -279,9 +193,9 @@ export function TeachingMaterialsTable() {
   )
 }
 
-function MaterialCard({ material }) {
+function MaterialCard({ material }: { material: TeachingMaterial }) {
   // Function to get the appropriate icon based on file type
-  const getFileIcon = (fileType) => {
+  const getFileIcon = (fileType: string) => {
     switch (fileType.toLowerCase()) {
       case "pdf":
       case "docx":

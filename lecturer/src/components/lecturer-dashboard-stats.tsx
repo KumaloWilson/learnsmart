@@ -4,6 +4,9 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BookOpen, Calendar, ClipboardList, Users, AlertTriangle } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from "@/contexts/auth-context"
+import { lecturerService } from "@/lib/api-services"
 
 interface DashboardStats {
   totalCourses: number
@@ -16,38 +19,31 @@ interface DashboardStats {
 export function LecturerDashboardStats() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
-    // In a real app, fetch from API
     const fetchStats = async () => {
+      if (!user?.id) return
+
       try {
-        // Mock data for demonstration
-        const mockStats = {
-          totalCourses: 5,
-          totalStudents: 127,
-          upcomingClasses: 8,
-          pendingAssignments: 12,
-          atRiskStudentsCount: 7,
-        }
-
-        // Simulate API delay
-        setTimeout(() => {
-          setStats(mockStats)
-          setLoading(false)
-        }, 1000)
-
-        // Real API call would be:
-        // const response = await fetch('/api/lecturer/dashboard/stats')
-        // const data = await response.json()
-        // setStats(data)
+        const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
+        const dashboardStats = await lecturerService.getLecturerDashboardStats(lecturerProfile.id)
+        setStats(dashboardStats)
       } catch (error) {
         console.error("Failed to fetch dashboard stats:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard statistics",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchStats()
-  }, [])
+  }, [user, toast])
 
   if (loading) {
     return (

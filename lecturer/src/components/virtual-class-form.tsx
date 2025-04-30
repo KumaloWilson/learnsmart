@@ -6,153 +6,198 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { CalendarIcon, Clock } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
-
 import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { format, addHours, parse } from "date-fns"
+import { lecturerService } from "@/lib/api-service"
+import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/components/ui/use-toast"
 
-// Mock courses data
-const mockCourses = [
-  { id: "101", name: "CS101: Programming Fundamentals", semester: "Spring 2025" },
-  { id: "202", name: "CS202: Data Structures", semester: "Spring 2025" },
-  { id: "303", name: "CS303: Artificial Intelligence", semester: "Spring 2025" },
-]
-
-// Form schema
-const formSchema = z
-  .object({
-    title: z.string().min(3, "Title must be at least 3 characters"),
-    description: z.string().optional(),
-    courseId: z.string().min(1, "Please select a course"),
-    scheduledDate: z.date({ required_error: "Date is required" }),
-    startTime: z.string().min(1, "Start time is required"),
-    endTime: z.string().min(1, "End time is required"),
-    isRecorded: z.boolean().default(true),
-    isRecurring: z.boolean().default(false),
-    recurrencePattern: z.string().optional(),
-    recurrenceEndDate: z.date().optional(),
-    meetingPlatform: z.enum(["zoom", "teams", "google_meet", "jitsi", "other"]),
-    meetingLink: z.string().url("Please enter a valid URL").optional(),
-    additionalInformation: z.string().optional(),
-    sendNotification: z.boolean().default(true),
-  })
-  .refine(
-    (data) => {
-      if (!data.startTime || !data.endTime) return true
-      return data.startTime < data.endTime
-    },
-    {
-      message: "End time must be after start time",
-      path: ["endTime"],
-    },
-  )
-  .refine(
-    (data) => {
-      if (data.isRecurring && !data.recurrencePattern) return false
-      return true
-    },
-    {
-      message: "Recurrence pattern is required for recurring classes",
-      path: ["recurrencePattern"],
-    },
-  )
-  .refine(
-    (data) => {
-      if (data.isRecurring && !data.recurrenceEndDate) return false
-      return true
-    },
-    {
-      message: "End date is required for recurring classes",
-      path: ["recurrenceEndDate"],
-    },
-  )
+const formSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  description: z.string().optional(),
+  courseId: z.string().min(1, "Please select a course"),
+  date: z.date({ required_error: "Please select a date" }),
+  startTime: z.string().min(1, "Please select a start time"),
+  endTime: z.string().min(1, "Please select an end time"),
+  meetingPlatform: z.string().min(1, "Please select a meeting platform"),
+  meetingLink: z.string().url("Please enter a valid URL"),
+  isRecurring: z.boolean().default(false),
+  recurrencePattern: z.string().optional(),
+  recurrenceEndDate: z.date().optional(),
+  sendReminders: z.boolean().default(true),
+  isRecorded: z.boolean().default(true),
+})
 
 export function VirtualClassForm({ virtualClass = null }) {
   const router = useRouter()
+  const { user } = useAuth()
+  const { toast } = useToast()
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // Initialize the form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: virtualClass || {
-      title: "",
-      description: "",
-      courseId: "",
-      isRecorded: true,
-      isRecurring: false,
-      meetingPlatform: "zoom",
-      sendNotification: true,
-    },
+    defaultValues: virtualClass
+      ? {
+          ...virtualClass,
+          date: new Date(virtualClass.scheduledStartTime),
+          startTime: format(new Date(virtualClass.scheduledStartTime), "HH:mm"),
+          endTime: format(new Date(virtualClass.scheduledEndTime), "HH:mm"),
+          isRecurring: !!virtualClass.recurrencePattern,
+          recurrenceEndDate: virtualClass.recurrenceEndDate ? new Date(virtualClass.recurrenceEndDate) : undefined,
+        }
+      : {
+          title: "",
+          description: "",
+          courseId: "",
+          date: undefined,
+          startTime: "",
+          endTime: "",
+          meetingPlatform: "jitsi",
+          meetingLink: "",
+          isRecurring: false,
+          recurrencePattern: "weekly",
+          sendReminders: true,
+          isRecorded: true,
+        },
   })
 
-  // Watch for form value changes
   const isRecurring = form.watch("isRecurring")
+  const selectedDate = form.watch("date")
+  const selectedStartTime = form.watch("startTime")
 
-  // Fetch courses
   useEffect(() => {
     const fetchCourses = async () => {
-      try {
-        // In a real app, this would be a fetch call to your API
-        // const response = await fetch("/api/lecturer/courses")
-        // const data = await response.json()
+      if (!user?.id) return
 
-        // Using mock data for now
-        setTimeout(() => {
-          setCourses(mockCourses)
-          setLoading(false)
-        }, 1000)
+      try {
+        const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
+        const lecturerCourses = await lecturerService.getLecturerCourses(lecturerProfile.id)
+        setCourses(lecturerCourses)
       } catch (error) {
         console.error("Failed to fetch courses:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load courses",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchCourses()
-  }, [])
+  }, [user, toast])
+
+  // Auto-generate meeting link when platform changes
+  useEffect(() => {
+    const platform = form.getValues("meetingPlatform")
+    const courseId = form.getValues("courseId")
+
+    if (platform && courseId && !virtualClass) {
+      let link = ""
+      const randomId = Math.random().toString(36).substring(2, 10)
+
+      switch (platform) {
+        case "jitsi":
+          link = `https://meet.jit.si/${courseId}-${randomId}`
+          break
+        case "zoom":
+          link = `https://zoom.us/j/${randomId}`
+          break
+        case "teams":
+          link = `https://teams.microsoft.com/l/meetup-join/${randomId}`
+          break
+        case "google":
+          link = `https://meet.google.com/${randomId}`
+          break
+      }
+
+      form.setValue("meetingLink", link)
+    }
+  }, [form.watch("meetingPlatform"), form.watch("courseId"), virtualClass])
+
+  // Auto-suggest end time (1 hour after start time)
+  useEffect(() => {
+    if (selectedStartTime && !form.getValues("endTime") && !virtualClass) {
+      try {
+        const startDate = parse(selectedStartTime, "HH:mm", new Date())
+        const endDate = addHours(startDate, 1)
+        form.setValue("endTime", format(endDate, "HH:mm"))
+      } catch (error) {
+        console.error("Failed to parse time:", error)
+      }
+    }
+  }, [selectedStartTime, form, virtualClass])
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      console.log("Submitting form:", values)
-
-      // Combine date and time values
-      const startDateTime = new Date(values.scheduledDate)
-      const [startHours, startMinutes] = values.startTime.split(":").map(Number)
-      startDateTime.setHours(startHours, startMinutes)
-
-      const endDateTime = new Date(values.scheduledDate)
-      const [endHours, endMinutes] = values.endTime.split(":").map(Number)
-      endDateTime.setHours(endHours, endMinutes)
-
-      const formattedValues = {
-        ...values,
-        scheduledStartTime: startDateTime.toISOString(),
-        scheduledEndTime: endDateTime.toISOString(),
+      if (!user?.id) {
+        throw new Error("User not authenticated")
       }
 
-      // In a real app, send data to API:
-      // const res = await fetch(`/api/lecturer/virtual-classes${virtualClass ? `/${virtualClass.id}` : ''}`, {
-      //   method: virtualClass ? 'PUT' : 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formattedValues),
-      // })
-      // const data = await res.json()
+      const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
 
-      // Simulate API delay
-      setTimeout(() => {
-        router.push("/virtual-classes")
-      }, 1000)
+      // Combine date and time
+      const scheduledStartTime = new Date(values.date)
+      const [startHours, startMinutes] = values.startTime.split(":").map(Number)
+      scheduledStartTime.setHours(startHours, startMinutes, 0, 0)
+
+      const scheduledEndTime = new Date(values.date)
+      const [endHours, endMinutes] = values.endTime.split(":").map(Number)
+      scheduledEndTime.setHours(endHours, endMinutes, 0, 0)
+
+      const virtualClassData = {
+        title: values.title,
+        description: values.description || "",
+        courseId: values.courseId,
+        scheduledStartTime: scheduledStartTime.toISOString(),
+        scheduledEndTime: scheduledEndTime.toISOString(),
+        meetingPlatform: values.meetingPlatform,
+        meetingLink: values.meetingLink,
+        isRecorded: values.isRecorded,
+        lecturerProfileId: lecturerProfile.id,
+        sendReminders: values.sendReminders,
+        ...(values.isRecurring && {
+          recurrencePattern: values.recurrencePattern,
+          recurrenceEndDate: values.recurrenceEndDate?.toISOString(),
+        }),
+      }
+
+      if (virtualClass) {
+        // Update existing virtual class
+        await lecturerService.updateVirtualClass(virtualClass.id, virtualClassData)
+        toast({
+          title: "Success",
+          description: "Virtual class updated successfully",
+        })
+      } else {
+        // Create new virtual class
+        await lecturerService.createVirtualClass(virtualClassData)
+        toast({
+          title: "Success",
+          description: "Virtual class scheduled successfully",
+        })
+      }
+
+      router.push("/virtual-classes")
     } catch (error) {
       console.error("Failed to save virtual class:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save virtual class",
+        variant: "destructive",
+      })
     }
   }
 
@@ -179,8 +224,12 @@ export function VirtualClassForm({ virtualClass = null }) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Class Details</CardTitle>
-            <CardDescription>Enter the basic information about your virtual class</CardDescription>
+            <CardTitle>{virtualClass ? "Edit Virtual Class" : "Schedule New Virtual Class"}</CardTitle>
+            <CardDescription>
+              {virtualClass
+                ? "Update the details of your virtual class"
+                : "Create a new online class session for your students"}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -192,7 +241,6 @@ export function VirtualClassForm({ virtualClass = null }) {
                   <FormControl>
                     <Input placeholder="e.g. Introduction to Programming - Week 5" {...field} />
                   </FormControl>
-                  <FormDescription>Enter a clear title for your virtual class</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -206,7 +254,7 @@ export function VirtualClassForm({ virtualClass = null }) {
                   <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Provide a brief description of the class content"
+                      placeholder="Provide a brief description of what will be covered in this class"
                       className="resize-none"
                       {...field}
                     />
@@ -231,7 +279,7 @@ export function VirtualClassForm({ virtualClass = null }) {
                     <SelectContent>
                       {courses.map((course) => (
                         <SelectItem key={course.id} value={course.id}>
-                          {course.name}
+                          {course.code}: {course.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -244,7 +292,7 @@ export function VirtualClassForm({ virtualClass = null }) {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
-                name="scheduledDate"
+                name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Date</FormLabel>
@@ -252,7 +300,7 @@ export function VirtualClassForm({ virtualClass = null }) {
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
-                            variant="outline"
+                            variant={"outline"}
                             className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                           >
                             {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
@@ -261,7 +309,13 @@ export function VirtualClassForm({ virtualClass = null }) {
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                        />
                       </PopoverContent>
                     </Popover>
                     <FormMessage />
@@ -276,12 +330,12 @@ export function VirtualClassForm({ virtualClass = null }) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Start Time</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center">
+                      <div className="flex items-center">
+                        <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <FormControl>
                           <Input type="time" {...field} />
-                          <Clock className="ml-2 h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </FormControl>
+                        </FormControl>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -293,12 +347,12 @@ export function VirtualClassForm({ virtualClass = null }) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>End Time</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center">
+                      <div className="flex items-center">
+                        <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <FormControl>
                           <Input type="time" {...field} />
-                          <Clock className="ml-2 h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </FormControl>
+                        </FormControl>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -316,15 +370,14 @@ export function VirtualClassForm({ virtualClass = null }) {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a platform" />
+                          <SelectValue placeholder="Select platform" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="jitsi">Jitsi Meet</SelectItem>
                         <SelectItem value="zoom">Zoom</SelectItem>
                         <SelectItem value="teams">Microsoft Teams</SelectItem>
-                        <SelectItem value="google_meet">Google Meet</SelectItem>
-                        <SelectItem value="jitsi">Jitsi Meet</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="google">Google Meet</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -341,42 +394,7 @@ export function VirtualClassForm({ virtualClass = null }) {
                     <FormControl>
                       <Input placeholder="https://..." {...field} />
                     </FormControl>
-                    <FormDescription>The URL students will use to join the class</FormDescription>
                     <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="isRecorded"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Record Session</FormLabel>
-                      <FormDescription>Automatically record this virtual class</FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="sendNotification"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Send Notifications</FormLabel>
-                      <FormDescription>Notify students about this class</FormDescription>
-                    </div>
                   </FormItem>
                 )}
               />
@@ -392,14 +410,14 @@ export function VirtualClassForm({ virtualClass = null }) {
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>Recurring Class</FormLabel>
-                    <FormDescription>Set up a recurring schedule for this class</FormDescription>
+                    <FormDescription>Set this class to repeat on a regular schedule</FormDescription>
                   </div>
                 </FormItem>
               )}
             />
 
             {isRecurring && (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <>
                 <FormField
                   control={form.control}
                   name="recurrencePattern"
@@ -409,7 +427,7 @@ export function VirtualClassForm({ virtualClass = null }) {
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a pattern" />
+                            <SelectValue placeholder="Select pattern" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -429,12 +447,12 @@ export function VirtualClassForm({ virtualClass = null }) {
                   name="recurrenceEndDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>End Date</FormLabel>
+                      <FormLabel>End Recurrence</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
-                              variant="outline"
+                              variant={"outline"}
                               className={cn(
                                 "w-full pl-3 text-left font-normal",
                                 !field.value && "text-muted-foreground",
@@ -446,33 +464,58 @@ export function VirtualClassForm({ virtualClass = null }) {
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < selectedDate}
+                            initialFocus
+                          />
                         </PopoverContent>
                       </Popover>
+                      <FormDescription>
+                        When should this recurring class stop? If not specified, it will continue indefinitely.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
+              </>
             )}
 
-            <FormField
-              control={form.control}
-              name="additionalInformation"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Additional Information (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Any additional details students should know"
-                      className="resize-none min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="sendReminders"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Send Reminders</FormLabel>
+                      <FormDescription>Notify students before the class starts</FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isRecorded"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Record Class</FormLabel>
+                      <FormDescription>Save a recording for students to review later</FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button type="button" variant="outline" onClick={() => router.push("/virtual-classes")}>

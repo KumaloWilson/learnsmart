@@ -15,61 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatFileSize } from "@/lib/utils"
-
-// Mock material data
-const mockMaterial = {
-  id: "1",
-  title: "Introduction to Programming Slides",
-  description:
-    "Comprehensive lecture slides covering basic programming concepts including variables, data types, operators, and control structures. These slides are designed for beginners with no prior programming experience.",
-  fileType: "pdf",
-  fileSize: 2500000, // 2.5 MB
-  uploadDate: "2025-04-15T10:30:00",
-  courseId: "101",
-  courseName: "CS101: Programming Fundamentals",
-  topic: "Introduction to Programming",
-  downloadUrl: "/api/materials/1/download",
-  viewUrl: "/api/materials/1/view",
-  downloadCount: 28,
-  isPublic: true,
-  allowDownload: true,
-  tags: "lecture,slides,week1,introduction",
-  fileName: "CS101_Intro_Programming_Slides.pdf",
-}
-
-// Mock courses data
-const mockCourses = [
-  { id: "101", name: "CS101: Programming Fundamentals", semester: "Spring 2025" },
-  { id: "202", name: "CS202: Data Structures", semester: "Spring 2025" },
-  { id: "303", name: "CS303: Artificial Intelligence", semester: "Spring 2025" },
-]
-
-// Mock topics data
-const mockTopics = {
-  "101": [
-    "Introduction to Programming",
-    "Variables and Data Types",
-    "Control Structures",
-    "Functions and Arrays",
-    "Object-Oriented Programming",
-  ],
-  "202": [
-    "Data Structures Overview",
-    "Arrays and Linked Lists",
-    "Stacks and Queues",
-    "Trees and Binary Search Trees",
-    "Graphs and Graph Algorithms",
-  ],
-  "303": [
-    "Introduction to AI",
-    "Search Algorithms",
-    "Knowledge Representation",
-    "Machine Learning",
-    "Neural Networks",
-    "Natural Language Processing",
-    "Course Project",
-  ],
-}
+import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/components/ui/use-toast"
+import { lecturerService } from "@/lib/api-services"
 
 // Form schema
 const formSchema = z.object({
@@ -82,8 +30,10 @@ const formSchema = z.object({
   tags: z.string().optional(),
 })
 
-export function MaterialEditForm({ id }) {
+export function MaterialEditForm({ id }: { id: string }) {
   const router = useRouter()
+  const { user } = useAuth()
+  const { toast } = useToast()
   const [material, setMaterial] = useState(null)
   const [courses, setCourses] = useState([])
   const [topics, setTopics] = useState([])
@@ -109,51 +59,72 @@ export function MaterialEditForm({ id }) {
 
   useEffect(() => {
     if (selectedCourseId) {
-      setTopics(mockTopics[selectedCourseId] || [])
+      // Fetch topics for the selected course
+      const fetchTopics = async () => {
+        try {
+          const courseTopics = await lecturerService.getCourseTopics(selectedCourseId)
+          setTopics(courseTopics)
+        } catch (error) {
+          console.error("Failed to fetch topics:", error)
+          toast({
+            title: "Error",
+            description: "Failed to load course topics",
+            variant: "destructive",
+          })
+        }
+      }
+
+      fetchTopics()
     } else {
       setTopics([])
     }
-  }, [selectedCourseId])
+  }, [selectedCourseId, toast])
 
   // Fetch material and courses
   useEffect(() => {
     const fetchData = async () => {
+      if (!user?.id) return
+
       try {
-        // In a real app, these would be fetch calls to your API
-        // const materialResponse = await fetch(`/api/lecturer/materials/${id}`)
-        // const materialData = await materialResponse.json()
-        // const coursesResponse = await fetch("/api/lecturer/courses")
-        // const coursesData = await coursesResponse.json()
+        // Fetch lecturer profile
+        const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
 
-        // Using mock data for now
-        setTimeout(() => {
-          setMaterial(mockMaterial)
-          setCourses(mockCourses)
+        // Fetch material details
+        const materialData = await lecturerService.getTeachingMaterialById(id)
+        setMaterial(materialData)
 
-          // Set form values
-          form.reset({
-            title: mockMaterial.title,
-            description: mockMaterial.description || "",
-            courseId: mockMaterial.courseId,
-            topic: mockMaterial.topic,
-            isPublic: mockMaterial.isPublic,
-            allowDownload: mockMaterial.allowDownload,
-            tags: mockMaterial.tags || "",
-          })
+        // Fetch courses assigned to the lecturer
+        const lecturerCourses = await lecturerService.getLecturerCourses(lecturerProfile.id)
+        setCourses(lecturerCourses)
 
-          // Set topics based on course
-          setTopics(mockTopics[mockMaterial.courseId] || [])
+        // Set form values
+        form.reset({
+          title: materialData.title,
+          description: materialData.description || "",
+          courseId: materialData.courseId,
+          topic: materialData.topic,
+          isPublic: materialData.isPublic,
+          allowDownload: materialData.allowDownload,
+          tags: materialData.tags ? materialData.tags.join(",") : "",
+        })
 
-          setLoading(false)
-        }, 1000)
+        // Fetch topics for the material's course
+        const courseTopics = await lecturerService.getCourseTopics(materialData.courseId)
+        setTopics(courseTopics)
       } catch (error) {
         console.error("Failed to fetch data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load material data",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchData()
-  }, [id, form])
+  }, [id, user, form, toast])
 
   // Function to get the appropriate icon based on file type
   const getFileIcon = (fileType) => {
@@ -172,21 +143,35 @@ export function MaterialEditForm({ id }) {
     try {
       setIsSaving(true)
 
-      // In a real app, you would send data to API:
-      // const res = await fetch(`/api/lecturer/materials/${id}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(values),
-      // })
-      // const data = await res.json()
+      // Process tags from comma-separated string to array
+      const tagsArray = values.tags
+        ? values.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean)
+        : []
 
-      // Simulate API delay
-      setTimeout(() => {
-        setIsSaving(false)
-        router.push(`/materials/${id}`)
-      }, 1000)
+      const updatedMaterial = {
+        ...values,
+        tags: tagsArray,
+      }
+
+      await lecturerService.updateTeachingMaterial(id, updatedMaterial)
+
+      toast({
+        title: "Success",
+        description: "Teaching material updated successfully",
+      })
+
+      router.push(`/materials/${id}`)
     } catch (error) {
       console.error("Failed to update material:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update teaching material",
+        variant: "destructive",
+      })
+    } finally {
       setIsSaving(false)
     }
   }
@@ -274,7 +259,7 @@ export function MaterialEditForm({ id }) {
                       <SelectContent>
                         {courses.map((course) => (
                           <SelectItem key={course.id} value={course.id}>
-                            {course.name}
+                            {course.code}: {course.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -298,8 +283,8 @@ export function MaterialEditForm({ id }) {
                       </FormControl>
                       <SelectContent>
                         {topics.map((topic) => (
-                          <SelectItem key={topic} value={topic}>
-                            {topic}
+                          <SelectItem key={topic.id} value={topic.name}>
+                            {topic.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

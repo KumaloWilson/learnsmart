@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDateTime, formatFileSize } from "@/lib/utils"
 import Link from "next/link"
+import { useToast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,70 +37,69 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { lecturerService } from "@/lib/api-services"
 
-// Mock material data
-const mockMaterial = {
-  id: "1",
-  title: "Introduction to Programming Slides",
-  description:
-    "Comprehensive lecture slides covering basic programming concepts including variables, data types, operators, and control structures. These slides are designed for beginners with no prior programming experience.",
-  fileType: "pdf",
-  fileSize: 2500000, // 2.5 MB
-  uploadDate: "2025-04-15T10:30:00",
-  lastUpdated: "2025-04-16T14:20:00",
-  courseId: "101",
-  courseName: "CS101: Programming Fundamentals",
-  topic: "Introduction to Programming",
-  downloadUrl: "/api/materials/1/download",
-  viewUrl: "/api/materials/1/view",
-  downloadCount: 28,
-  viewCount: 45,
-  isPublic: true,
-  allowDownload: true,
-  tags: ["lecture", "slides", "week1", "introduction"],
-  uploadedBy: "Dr. Jane Smith",
-  fileName: "CS101_Intro_Programming_Slides.pdf",
-  analytics: {
-    weeklyViews: [5, 12, 8, 15, 5],
-    weeklyDownloads: [3, 8, 5, 10, 2],
-    topStudents: [
-      { id: "s1", name: "Alice Johnson", views: 5, downloads: 2 },
-      { id: "s2", name: "Bob Williams", views: 4, downloads: 1 },
-      { id: "s3", name: "Charlie Brown", views: 3, downloads: 1 },
-    ],
-  },
+interface TeachingMaterial {
+  id: string
+  title: string
+  description: string
+  fileType: string
+  fileSize: number
+  uploadDate: string
+  lastUpdated: string
+  courseId: string
+  courseName: string
+  topic: string
+  downloadUrl: string
+  viewUrl?: string
+  downloadCount: number
+  viewCount: number
+  isPublic: boolean
+  allowDownload: boolean
+  tags: string[]
+  uploadedBy: string
+  fileName: string
+  analytics?: {
+    weeklyViews: number[]
+    weeklyDownloads: number[]
+    topStudents: {
+      id: string
+      name: string
+      views: number
+      downloads: number
+    }[]
+  }
 }
 
-export function MaterialDetails({ id }) {
+export function MaterialDetails({ id }: { id: string }) {
   const router = useRouter()
-  const [material, setMaterial] = useState(null)
+  const [material, setMaterial] = useState<TeachingMaterial | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Simulate API fetch
     const fetchMaterial = async () => {
       try {
-        // In a real app, this would be a fetch call to your API
-        // const response = await fetch(`/api/lecturer/materials/${id}`)
-        // const data = await response.json()
-
-        // Using mock data for now
-        setTimeout(() => {
-          setMaterial(mockMaterial)
-          setLoading(false)
-        }, 1000)
+        const materialData = await lecturerService.getTeachingMaterialById(id)
+        setMaterial(materialData)
       } catch (error) {
         console.error("Failed to fetch material:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load teaching material",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchMaterial()
-  }, [id])
+  }, [id, toast])
 
   // Function to get the appropriate icon based on file type
-  const getFileIcon = (fileType) => {
+  const getFileIcon = (fileType: string) => {
     switch (fileType?.toLowerCase()) {
       case "pdf":
       case "docx":
@@ -125,17 +125,21 @@ export function MaterialDetails({ id }) {
 
   const handleDelete = async () => {
     try {
-      // In a real app, this would be a fetch call to your API
-      // await fetch(`/api/lecturer/materials/${id}`, {
-      //   method: "DELETE",
-      // })
-
-      // Simulate API delay
-      setTimeout(() => {
-        router.push("/materials")
-      }, 500)
+      await lecturerService.deleteTeachingMaterial(id)
+      toast({
+        title: "Success",
+        description: "Teaching material deleted successfully",
+      })
+      router.push("/materials")
     } catch (error) {
       console.error("Failed to delete material:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete teaching material",
+        variant: "destructive",
+      })
+    } finally {
+      setDeleteDialogOpen(false)
     }
   }
 
@@ -257,16 +261,6 @@ export function MaterialDetails({ id }) {
                     <p className="text-xs text-muted-foreground">Total Downloads</p>
                   </div>
                 </div>
-                <div className="mt-4 space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                    <span>Last viewed: 2 hours ago</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Download className="h-4 w-4 text-muted-foreground" />
-                    <span>Last downloaded: Yesterday</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -344,17 +338,24 @@ export function MaterialDetails({ id }) {
                 <div>
                   <h4 className="mb-2 text-sm font-medium">Weekly Activity</h4>
                   <div className="h-[200px] rounded-md border p-4">
-                    <div className="flex h-full items-center justify-center">
-                      <BarChart2 className="h-16 w-16 text-muted-foreground" />
-                      <p className="ml-2 text-sm text-muted-foreground">Analytics visualization would appear here</p>
-                    </div>
+                    {material.analytics?.weeklyViews ? (
+                      <div className="flex h-full items-center justify-center">
+                        {/* In a real implementation, you would render a chart here using the analytics data */}
+                        <BarChart2 className="h-16 w-16 text-muted-foreground" />
+                        <p className="ml-2 text-sm text-muted-foreground">Analytics visualization would appear here</p>
+                      </div>
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <p className="text-sm text-muted-foreground">No analytics data available</p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>
                   <h4 className="mb-2 text-sm font-medium">Top Students</h4>
                   <div className="rounded-md border">
                     <div className="p-4">
-                      {material.analytics.topStudents.length > 0 ? (
+                      {material.analytics?.topStudents && material.analytics.topStudents.length > 0 ? (
                         <div className="divide-y">
                           {material.analytics.topStudents.map((student) => (
                             <div key={student.id} className="flex items-center justify-between py-2">

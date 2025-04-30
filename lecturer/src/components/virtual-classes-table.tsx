@@ -12,145 +12,60 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatDate, formatTime } from "@/lib/utils"
 import Link from "next/link"
+import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/components/ui/use-toast"
+import { lecturerService } from "@/lib/api-services"
 
-// Mock virtual class data
-const mockVirtualClasses = [
-  {
-    id: "1",
-    title: "Introduction to Programming - Week 5",
-    description: "Control structures and loops in C++",
-    scheduledStartTime: "2025-05-10T10:00:00",
-    scheduledEndTime: "2025-05-10T12:00:00",
-    courseId: "101",
-    courseName: "CS101: Programming Fundamentals",
-    status: "scheduled",
-    isRecorded: true,
-    meetingLink: "https://meet.zoom.us/j/123456789",
-    attendanceCount: 0,
-    totalStudents: 35,
-  },
-  {
-    id: "2",
-    title: "Data Structures Lecture",
-    description: "Trees and Binary Search Trees",
-    scheduledStartTime: "2025-05-05T14:00:00",
-    scheduledEndTime: "2025-05-05T16:00:00",
-    actualStartTime: "2025-05-05T14:05:00",
-    actualEndTime: "2025-05-05T16:10:00",
-    courseId: "202",
-    courseName: "CS202: Data Structures",
-    status: "completed",
-    isRecorded: true,
-    recordingUrl: "https://university.edu/recordings/ds-lecture-5",
-    meetingLink: "https://meet.zoom.us/j/987654321",
-    attendanceCount: 28,
-    totalStudents: 30,
-  },
-  {
-    id: "3",
-    title: "AI Concepts Review",
-    description: "Review session before midterm exam",
-    scheduledStartTime: "2025-05-15T13:00:00",
-    scheduledEndTime: "2025-05-15T14:30:00",
-    courseId: "303",
-    courseName: "CS303: Artificial Intelligence",
-    status: "scheduled",
-    isRecorded: true,
-    meetingLink: "https://meet.zoom.us/j/456789123",
-    attendanceCount: 0,
-    totalStudents: 25,
-  },
-  {
-    id: "4",
-    title: "Office Hours",
-    description: "Weekly office hours for CS101 students",
-    scheduledStartTime: "2025-05-08T16:00:00",
-    scheduledEndTime: "2025-05-08T17:30:00",
-    actualStartTime: "2025-05-08T16:00:00",
-    actualEndTime: "2025-05-08T17:15:00",
-    courseId: "101",
-    courseName: "CS101: Programming Fundamentals",
-    status: "completed",
-    isRecorded: false,
-    meetingLink: "https://meet.zoom.us/j/135792468",
-    attendanceCount: 12,
-    totalStudents: 35,
-  },
-  {
-    id: "5",
-    title: "Data Structures Project Discussion",
-    description: "Group project requirements and Q&A",
-    scheduledStartTime: "2025-05-12T15:00:00",
-    scheduledEndTime: "2025-05-12T16:30:00",
-    courseId: "202",
-    courseName: "CS202: Data Structures",
-    status: "scheduled",
-    isRecorded: true,
-    meetingLink: "https://meet.zoom.us/j/246813579",
-    attendanceCount: 0,
-    totalStudents: 30,
-  },
-  {
-    id: "6",
-    title: "AI Lab Session",
-    description: "Hands-on lab with neural networks",
-    scheduledStartTime: "2025-05-03T10:00:00",
-    scheduledEndTime: "2025-05-03T12:30:00",
-    actualStartTime: "2025-05-03T10:05:00",
-    actualEndTime: "2025-05-03T12:25:00",
-    courseId: "303",
-    courseName: "CS303: Artificial Intelligence",
-    status: "completed",
-    isRecorded: true,
-    recordingUrl: "https://university.edu/recordings/ai-lab-3",
-    meetingLink: "https://meet.zoom.us/j/975318642",
-    attendanceCount: 23,
-    totalStudents: 25,
-  },
-  {
-    id: "7",
-    title: "Programming Fundamentals - Final Review",
-    description: "Comprehensive review for final exam",
-    scheduledStartTime: "2025-05-25T13:00:00",
-    scheduledEndTime: "2025-05-25T15:00:00",
-    courseId: "101",
-    courseName: "CS101: Programming Fundamentals",
-    status: "scheduled",
-    isRecorded: true,
-    meetingLink: "https://meet.zoom.us/j/753159852",
-    attendanceCount: 0,
-    totalStudents: 35,
-  },
-]
+interface VirtualClass {
+  id: string
+  title: string
+  description: string
+  scheduledStartTime: string
+  scheduledEndTime: string
+  actualStartTime?: string
+  actualEndTime?: string
+  courseId: string
+  courseName: string
+  courseCode: string
+  status: "scheduled" | "in_progress" | "completed" | "cancelled"
+  isRecorded: boolean
+  recordingUrl?: string
+  meetingLink: string
+  attendanceCount: number
+  totalStudents: number
+}
 
 export function VirtualClassesTable() {
-  const [virtualClasses, setVirtualClasses] = useState([])
+  const [virtualClasses, setVirtualClasses] = useState<VirtualClass[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [courseFilter, setCourseFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Simulate API fetch
     const fetchVirtualClasses = async () => {
-      try {
-        // In a real app, this would be a fetch call to your API
-        // const response = await fetch("/api/lecturer/virtual-classes")
-        // const data = await response.json()
+      if (!user?.id) return
 
-        // Using mock data for now
-        setTimeout(() => {
-          setVirtualClasses(mockVirtualClasses)
-          setLoading(false)
-        }, 1000)
+      try {
+        const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
+        const classes = await lecturerService.getVirtualClasses(lecturerProfile.id)
+        setVirtualClasses(classes)
       } catch (error) {
         console.error("Failed to fetch virtual classes:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load virtual classes",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchVirtualClasses()
-  }, [])
+  }, [user, toast])
 
   // Get unique courses for filter dropdown
   const courses =
@@ -166,7 +81,8 @@ export function VirtualClassesTable() {
     const matchesSearch =
       virtualClass.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       virtualClass.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      virtualClass.courseName.toLowerCase().includes(searchTerm.toLowerCase())
+      virtualClass.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      virtualClass.courseCode.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesCourse = courseFilter === "all" || virtualClass.courseId === courseFilter
 
@@ -319,7 +235,7 @@ export function VirtualClassesTable() {
   )
 }
 
-function VirtualClassCard({ virtualClass, isUpcoming }) {
+function VirtualClassCard({ virtualClass, isUpcoming }: { virtualClass: VirtualClass; isUpcoming: boolean }) {
   let statusBadge
 
   switch (virtualClass.status) {
@@ -327,7 +243,7 @@ function VirtualClassCard({ virtualClass, isUpcoming }) {
       statusBadge = <Badge variant="outline">Scheduled</Badge>
       break
     case "in_progress":
-      statusBadge = <Badge variant="success">In Progress</Badge>
+      statusBadge = <Badge variant="default">In Progress</Badge>
       break
     case "completed":
       statusBadge = <Badge variant="secondary">Completed</Badge>

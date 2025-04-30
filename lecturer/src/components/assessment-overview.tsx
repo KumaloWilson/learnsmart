@@ -6,6 +6,9 @@ import { CheckCircle, Clock, FileText } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from "@/contexts/auth-context"
+import { lecturerService } from "@/lib/api-services"
 
 interface Assessment {
   id: string
@@ -21,73 +24,31 @@ interface Assessment {
 export function AssessmentOverview() {
   const [assessments, setAssessments] = useState<Assessment[]>([])
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
-    // In a real app, fetch from API
     const fetchAssessments = async () => {
+      if (!user?.id) return
+
       try {
-        // Mock data for demonstration
-        const mockAssessments = [
-          {
-            id: "1",
-            title: "Programming Assignment 1",
-            courseCode: "CS101",
-            dueDate: "2025-05-05T23:59:59",
-            submissionCount: 28,
-            totalStudents: 35,
-            gradedCount: 15,
-            type: "assignment" as const,
-          },
-          {
-            id: "2",
-            title: "Data Structures Quiz",
-            courseCode: "CS201",
-            dueDate: "2025-05-03T23:59:59",
-            submissionCount: 25,
-            totalStudents: 28,
-            gradedCount: 25,
-            type: "quiz" as const,
-          },
-          {
-            id: "3",
-            title: "Database Design Project",
-            courseCode: "CS301",
-            dueDate: "2025-05-15T23:59:59",
-            submissionCount: 5,
-            totalStudents: 22,
-            gradedCount: 0,
-            type: "project" as const,
-          },
-          {
-            id: "4",
-            title: "Web Development Midterm",
-            courseCode: "CS401",
-            dueDate: "2025-05-10T14:00:00",
-            submissionCount: 0,
-            totalStudents: 18,
-            gradedCount: 0,
-            type: "exam" as const,
-          },
-        ]
-
-        // Simulate API delay
-        setTimeout(() => {
-          setAssessments(mockAssessments)
-          setLoading(false)
-        }, 1000)
-
-        // Real API call would be:
-        // const response = await fetch('/api/lecturer/assessments/overview')
-        // const data = await response.json()
-        // setAssessments(data)
+        const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
+        const assessmentOverview = await lecturerService.getAssessmentOverview(lecturerProfile.id)
+        setAssessments(assessmentOverview)
       } catch (error) {
         console.error("Failed to fetch assessment overview:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load assessment overview",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchAssessments()
-  }, [])
+  }, [user, toast])
 
   if (loading) {
     return (

@@ -15,6 +15,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
+import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from "@/contexts/auth-context"
+import { lecturerService } from "@/lib/api-services"
+
 interface AtRiskStudent {
   id: string
   name: string
@@ -31,73 +35,31 @@ export function AtRiskStudentsTable() {
   const [loading, setLoading] = useState(true)
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
-    // In a real app, fetch from API
     const fetchAtRiskStudents = async () => {
+      if (!user?.id) return
+
       try {
-        // Mock data for demonstration
-        const mockStudents = [
-          {
-            id: "1",
-            name: "John Smith",
-            studentId: "ST12345",
-            courseCode: "CS101",
-            attendanceRate: 45,
-            assignmentCompletion: 30,
-            riskLevel: "critical" as const,
-            riskFactors: ["Low attendance", "Missing assignments", "Failed midterm"],
-          },
-          {
-            id: "2",
-            name: "Emma Johnson",
-            studentId: "ST23456",
-            courseCode: "CS201",
-            attendanceRate: 60,
-            assignmentCompletion: 50,
-            riskLevel: "high" as const,
-            riskFactors: ["Low quiz scores", "Inconsistent attendance"],
-          },
-          {
-            id: "3",
-            name: "Michael Brown",
-            studentId: "ST34567",
-            courseCode: "CS301",
-            attendanceRate: 70,
-            assignmentCompletion: 65,
-            riskLevel: "medium" as const,
-            riskFactors: ["Declining performance", "Late submissions"],
-          },
-          {
-            id: "4",
-            name: "Sophia Davis",
-            studentId: "ST45678",
-            courseCode: "CS101",
-            attendanceRate: 75,
-            assignmentCompletion: 70,
-            riskLevel: "low" as const,
-            riskFactors: ["Recent absences", "Missed one assignment"],
-          },
-        ]
-
-        // Simulate API delay
-        setTimeout(() => {
-          setStudents(mockStudents)
-          setLoading(false)
-        }, 1000)
-
-        // Real API call would be:
-        // const response = await fetch('/api/lecturer/students/at-risk')
-        // const data = await response.json()
-        // setStudents(data)
+        const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
+        const atRiskStudents = await lecturerService.getAtRiskStudents(lecturerProfile.id)
+        setStudents(atRiskStudents)
       } catch (error) {
         console.error("Failed to fetch at-risk students:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load at-risk students data",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchAtRiskStudents()
-  }, [])
+  }, [user, toast])
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {

@@ -2,23 +2,18 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
-  // Get the pathname
-  const path = request.nextUrl.pathname
+  const token = request.cookies.get("token")?.value
+  const isLoginPage = request.nextUrl.pathname === "/login"
 
-  // Check if the path is the login page
-  const isLoginPage = path === "/login"
-
-  // Check if the user is authenticated
-  const token = request.cookies.get("token")?.value || request.headers.get("Authorization")?.split(" ")[1]
-  const isAuthenticated = !!token
-
-  // If the user is not authenticated and not on the login page, redirect to login
-  if (!isAuthenticated && !isLoginPage) {
-    return NextResponse.redirect(new URL("/login", request.url))
+  // If trying to access a protected route without being logged in
+  if (!token && !isLoginPage) {
+    const loginUrl = new URL("/login", request.url)
+    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
-  // If the user is authenticated and on the login page, redirect to dashboard
-  if (isAuthenticated && isLoginPage) {
+  // If trying to access login page while already logged in
+  if (token && isLoginPage) {
     return NextResponse.redirect(new URL("/", request.url))
   }
 

@@ -4,6 +4,9 @@ import { useEffect, useState } from "react"
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from "@/contexts/auth-context"
+import { lecturerService } from "@/lib/api-services"
 
 interface EngagementData {
   courseCode: string
@@ -16,61 +19,31 @@ interface EngagementData {
 export function StudentEngagementChart() {
   const [data, setData] = useState<EngagementData[]>([])
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
-    // In a real app, fetch from API
     const fetchEngagementData = async () => {
+      if (!user?.id) return
+
       try {
-        // Mock data for demonstration
-        const mockData = [
-          {
-            courseCode: "CS101",
-            attendance: 85,
-            participation: 70,
-            assignments: 92,
-            quizzes: 78,
-          },
-          {
-            courseCode: "CS201",
-            attendance: 92,
-            participation: 65,
-            assignments: 88,
-            quizzes: 82,
-          },
-          {
-            courseCode: "CS301",
-            attendance: 78,
-            participation: 80,
-            assignments: 75,
-            quizzes: 70,
-          },
-          {
-            courseCode: "CS401",
-            attendance: 88,
-            participation: 75,
-            assignments: 85,
-            quizzes: 90,
-          },
-        ]
-
-        // Simulate API delay
-        setTimeout(() => {
-          setData(mockData)
-          setLoading(false)
-        }, 1000)
-
-        // Real API call would be:
-        // const response = await fetch('/api/lecturer/analytics/engagement')
-        // const data = await response.json()
-        // setData(data)
+        const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
+        const engagementData = await lecturerService.getStudentEngagement(lecturerProfile.id)
+        setData(engagementData)
       } catch (error) {
         console.error("Failed to fetch engagement data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load student engagement data",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchEngagementData()
-  }, [])
+  }, [user, toast])
 
   if (loading) {
     return <Skeleton className="h-full w-full" />

@@ -6,6 +6,9 @@ import { Calendar, Clock, Users, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from "@/contexts/auth-context"
+import { lecturerService } from "@/lib/api-services"
 
 interface UpcomingClass {
   id: string
@@ -22,75 +25,31 @@ interface UpcomingClass {
 export function UpcomingClasses() {
   const [classes, setClasses] = useState<UpcomingClass[]>([])
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
-    // In a real app, fetch from API
     const fetchClasses = async () => {
+      if (!user?.id) return
+
       try {
-        // Mock data for demonstration
-        const mockClasses = [
-          {
-            id: "1",
-            title: "Introduction to Programming",
-            courseCode: "CS101",
-            courseName: "Computer Science Fundamentals",
-            startTime: "2025-04-30T10:00:00",
-            endTime: "2025-04-30T12:00:00",
-            meetingLink: "https://meet.learnsmart.com/cs101",
-            isVirtual: true,
-            studentCount: 35,
-          },
-          {
-            id: "2",
-            title: "Data Structures Lab",
-            courseCode: "CS201",
-            courseName: "Data Structures and Algorithms",
-            startTime: "2025-05-01T14:00:00",
-            endTime: "2025-05-01T16:00:00",
-            isVirtual: false,
-            studentCount: 28,
-          },
-          {
-            id: "3",
-            title: "Database Design Principles",
-            courseCode: "CS301",
-            courseName: "Database Management Systems",
-            startTime: "2025-05-02T09:00:00",
-            endTime: "2025-05-02T11:00:00",
-            meetingLink: "https://meet.learnsmart.com/cs301",
-            isVirtual: true,
-            studentCount: 22,
-          },
-          {
-            id: "4",
-            title: "Web Development Workshop",
-            courseCode: "CS401",
-            courseName: "Web Technologies",
-            startTime: "2025-05-03T13:00:00",
-            endTime: "2025-05-03T16:00:00",
-            isVirtual: false,
-            studentCount: 18,
-          },
-        ]
-
-        // Simulate API delay
-        setTimeout(() => {
-          setClasses(mockClasses)
-          setLoading(false)
-        }, 1000)
-
-        // Real API call would be:
-        // const response = await fetch('/api/lecturer/classes/upcoming')
-        // const data = await response.json()
-        // setClasses(data)
+        const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
+        const upcomingClasses = await lecturerService.getUpcomingClasses(lecturerProfile.id)
+        setClasses(upcomingClasses)
       } catch (error) {
         console.error("Failed to fetch upcoming classes:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load upcoming classes",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchClasses()
-  }, [])
+  }, [user, toast])
 
   if (loading) {
     return (
@@ -146,9 +105,11 @@ export function UpcomingClasses() {
                 </div>
               </div>
               {classItem.isVirtual && classItem.meetingLink && (
-                <Button size="sm" className="flex items-center gap-1">
-                  <Video className="h-4 w-4" />
-                  Join Class
+                <Button size="sm" className="flex items-center gap-1" asChild>
+                  <a href={classItem.meetingLink} target="_blank" rel="noopener noreferrer">
+                    <Video className="h-4 w-4" />
+                    Join Class
+                  </a>
                 </Button>
               )}
             </div>

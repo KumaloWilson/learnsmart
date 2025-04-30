@@ -16,6 +16,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from "@/contexts/auth-context"
+import { lecturerService } from "@/lib/api-services"
 
 interface Course {
   id: string
@@ -33,78 +36,31 @@ export function CoursesTable() {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
-    // In a real app, fetch from API
     const fetchCourses = async () => {
+      if (!user?.id) return
+
       try {
-        // Mock data for demonstration
-        const mockCourses = [
-          {
-            id: "1",
-            code: "CS101",
-            name: "Introduction to Computer Science",
-            semester: "Spring 2025",
-            studentCount: 35,
-            role: "primary" as const,
-            status: "active" as const,
-          },
-          {
-            id: "2",
-            code: "CS201",
-            name: "Data Structures and Algorithms",
-            semester: "Spring 2025",
-            studentCount: 28,
-            role: "primary" as const,
-            status: "active" as const,
-          },
-          {
-            id: "3",
-            code: "CS301",
-            name: "Database Management Systems",
-            semester: "Spring 2025",
-            studentCount: 22,
-            role: "assistant" as const,
-            status: "active" as const,
-          },
-          {
-            id: "4",
-            code: "CS401",
-            name: "Web Technologies",
-            semester: "Spring 2025",
-            studentCount: 18,
-            role: "primary" as const,
-            status: "active" as const,
-          },
-          {
-            id: "5",
-            code: "CS501",
-            name: "Artificial Intelligence",
-            semester: "Fall 2025",
-            studentCount: 0,
-            role: "primary" as const,
-            status: "upcoming" as const,
-          },
-        ]
-
-        // Simulate API delay
-        setTimeout(() => {
-          setCourses(mockCourses)
-          setLoading(false)
-        }, 1000)
-
-        // Real API call would be:
-        // const response = await fetch('/api/lecturer/courses')
-        // const data = await response.json()
-        // setCourses(data)
+        const lecturerProfile = await lecturerService.getLecturerProfile(user.id)
+        const lecturerCourses = await lecturerService.getLecturerCourses(lecturerProfile.id)
+        setCourses(lecturerCourses)
       } catch (error) {
         console.error("Failed to fetch courses:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load courses",
+          variant: "destructive",
+        })
+      } finally {
         setLoading(false)
       }
     }
 
     fetchCourses()
-  }, [])
+  }, [user, toast])
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
