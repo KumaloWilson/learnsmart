@@ -1,10 +1,10 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
-import { AssessmentsTable } from "@/components/assessments-table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { PlusCircle } from "lucide-react"
+import { AssessmentsTable } from "@/components/assessments-table"
 
 export default function AssessmentsPage() {
   return (

@@ -127,7 +127,7 @@ export function MaterialEditForm({ id }: { id: string }) {
   }, [id, user, form, toast])
 
   // Function to get the appropriate icon based on file type
-  const getFileIcon = (fileType) => {
+  const getFileIcon = (fileType: string) => {
     switch (fileType?.toLowerCase()) {
       case "pdf":
       case "docx":
@@ -139,7 +139,7 @@ export function MaterialEditForm({ id }: { id: string }) {
     }
   }
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSaving(true)
 

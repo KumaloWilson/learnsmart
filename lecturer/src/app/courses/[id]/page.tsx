@@ -2,6 +2,10 @@ import { Suspense } from "react"
 import { PageHeader } from "@/components/page-header"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { CourseAssessments } from "@/components/course-assessments"
+import { CourseDetails } from "@/components/course-details"
+import { CourseMaterials } from "@/components/course-materials"
+import { CourseStudents } from "@/components/course-students"
 
 interface CoursePageProps {
   params: {

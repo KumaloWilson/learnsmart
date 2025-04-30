@@ -2,7 +2,7 @@ import axios from "axios"
 
 // Create an axios instance with default config
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -24,13 +24,33 @@ api.interceptors.request.use(
 export const lecturerService = {
   // Profile
   getLecturerProfile: async (userId: string) => {
-    const response = await api.get(`/lecturers/user/${userId}`)
+    const response = await api.get(`/lecturers/${userId}`)
     return response.data
   },
 
   // Courses
   getLecturerCourses: async (lecturerId: string) => {
     const response = await api.get(`/lecturers/${lecturerId}/courses`)
+    return response.data
+  },
+
+  getCourseDetails: async (courseId: string, lecturerId: string) => {
+    const response = await api.get(`/lecturers/${lecturerId}/courses/${courseId}`)
+    return response.data
+  },
+
+  getCourseStudents: async (courseId: string, lecturerId: string) => {
+    const response = await api.get(`/lecturers/${lecturerId}/courses/${courseId}/students`)
+    return response.data
+  },
+
+  getCourseAssessments: async (courseId: string, lecturerId: string) => {
+    const response = await api.get(`/lecturers/${lecturerId}/courses/${courseId}/assessments`)
+    return response.data
+  },
+
+  getCourseMaterials: async (courseId: string, lecturerId: string) => {
+    const response = await api.get(`/lecturers/${lecturerId}/courses/${courseId}/materials`)
     return response.data
   },
 
