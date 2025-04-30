@@ -1,21 +1,4 @@
 import { Op } from "sequelize"
-import {
-  CourseAssignment,
-  Course,
-  Semester,
-  StudentProfile,
-  CourseEnrollment,
-  Assessment,
-  AssessmentSubmission,
-  Quiz,
-  QuizAttempt,
-  VirtualClass,
-  TeachingMaterial,
-  User,
-  PhysicalAttendance,
-  VirtualClassAttendance,
-  StudentPerformance
-} from "../models"
 import { AttendanceService } from "./attendance.service"
 import { StudentPerformanceService } from "./student-performance.service"
 import { AtRiskStudentService } from "./at-risk-student.service"
@@ -24,6 +7,21 @@ import { CourseMasteryService } from "./course-mastery.service"
 import type { LecturerDashboardStatsDto } from "../dto/lecturer-dashboard.dto"
 import { LecturerProfile } from "../models/LecturerProfile"
 import { AtRiskStudent } from '../models/AtRiskStudent';
+import { Assessment } from "../models/Assessment"
+import { AssessmentSubmission } from "../models/AssessmentSubmission"
+import { Course } from "../models/Course"
+import { CourseAssignment } from "../models/CourseAssignment"
+import { CourseEnrollment } from "../models/CourseEnrollment"
+import { PhysicalAttendance } from "../models/PhysicalAttendance"
+import { Quiz } from "../models/Quiz"
+import { QuizAttempt } from "../models/QuizAttempt"
+import { Semester } from "../models/Semester"
+import { StudentPerformance } from "../models/StudentPerformance"
+import { StudentProfile } from "../models/StudentProfile"
+import { TeachingMaterial } from "../models/TeachingMaterial"
+import { User } from "../models/User"
+import { VirtualClass } from "../models/VirtualClass"
+import { VirtualClassAttendance } from "../models/VirtualClassAttendance"
 
 export class LecturerDashboardService {
   private attendanceService: AttendanceService
@@ -142,7 +140,7 @@ export class LecturerDashboardService {
         courseId: courseIds.join(','),
         semesterId,
       })
-      const totalPerformance = performances.reduce((sum, perf) => sum + perf.overallPerformance, 0)
+      const totalPerformance = performances.reduce((sum: number, perf: StudentPerformance) => sum + perf.overallPerformance, 0)
       averagePerformance = performances.length > 0 ? totalPerformance / performances.length : 0
     }
 

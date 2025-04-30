@@ -1,5 +1,5 @@
-import { Program } from "../models"
 import type { CreateProgramDto, UpdateProgramDto } from "../dto/program.dto"
+import { Program } from "../models/Program"
 
 export class ProgramService {
   async findAll() {

@@ -1,21 +1,4 @@
 import { Op } from "sequelize"
-import {
-  CourseEnrollment,
-  Course,
-  Semester,
-  Assessment,
-  AssessmentSubmission,
-  Quiz,
-  QuizAttempt,
-  VirtualClass,
-  VirtualClassAttendance,
-  PhysicalAttendance,
-  TeachingMaterial,
-  AcademicRecord,
-  StudentPerformance,
-  User,
-  LecturerProfile,
-} from "../models"
 import { StorageService } from "./storage.service"
 import type {
   StudentAssessmentSubmissionDto,
@@ -25,6 +8,21 @@ import type {
   StudentAttendanceFilterDto,
   StudentMaterialsFilterDto,
 } from "../dto/student-portal.dto"
+import { AcademicRecord } from "../models/AcademicRecord"
+import { Assessment } from "../models/Assessment"
+import { AssessmentSubmission } from "../models/AssessmentSubmission"
+import { Course } from "../models/Course"
+import { CourseEnrollment } from "../models/CourseEnrollment"
+import { LecturerProfile } from "../models/LecturerProfile"
+import { PhysicalAttendance } from "../models/PhysicalAttendance"
+import { Quiz } from "../models/Quiz"
+import { QuizAttempt } from "../models/QuizAttempt"
+import { Semester } from "../models/Semester"
+import { StudentPerformance } from "../models/StudentPerformance"
+import { TeachingMaterial } from "../models/TeachingMaterial"
+import { User } from "../models/User"
+import { VirtualClass } from "../models/VirtualClass"
+import { VirtualClassAttendance } from "../models/VirtualClassAttendance"
 
 export class StudentPortalService {
   private storageService: StorageService

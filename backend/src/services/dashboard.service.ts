@@ -1,17 +1,4 @@
 import { Op, fn, col, literal } from "sequelize"
-import {
-  User,
-  StudentProfile,
-  LecturerProfile,
-  Course,
-  Program,
-  Department,
-  School,
-  CourseEnrollment,
-  AcademicRecord,
-  Assessment,
-  Semester, // Import Semester model
-} from "../models"
 import type {
   DashboardStatsDto,
   EnrollmentStatsDto,
@@ -19,6 +6,17 @@ import type {
   UserActivityDto,
   CourseStatsDto,
 } from "../dto/dashboard.dto"
+import { AcademicRecord } from "../models/AcademicRecord"
+import { Assessment } from "../models/Assessment"
+import { Course } from "../models/Course"
+import { CourseEnrollment } from "../models/CourseEnrollment"
+import { Department } from "../models/Department"
+import { LecturerProfile } from "../models/LecturerProfile"
+import { Program } from "../models/Program"
+import { School } from "../models/School"
+import { Semester } from "../models/Semester"
+import { StudentProfile } from "../models/StudentProfile"
+import { User } from "../models/User"
 
 export class DashboardService {
   async getOverviewStats(): Promise<DashboardStatsDto> {

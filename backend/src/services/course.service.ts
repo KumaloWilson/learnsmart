@@ -1,5 +1,5 @@
-import { Course } from "../models"
 import type { CreateCourseDto, UpdateCourseDto } from "../dto/course.dto"
+import { Course } from "../models/Course"
 
 export class CourseService {
   async findAll() {

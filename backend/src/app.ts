@@ -4,8 +4,8 @@ import helmet from "helmet"
 import morgan from "morgan"
 import dotenv from "dotenv"
 import "reflect-metadata"
-import { sequelize } from "./models"
 import routes from "./routes"
+import sequelize from "./config/sequelize"
 
 // Load environment variables
 dotenv.config()
@@ -51,7 +51,7 @@ class App {
 
       // Sync database in development mode
       if (process.env.NODE_ENV === "development") {
-        await sequelize.sync({ alter: true })
+        // await sequelize.sync({ alter: true })
         console.log("Database synchronized")
       }
     } catch (error) {

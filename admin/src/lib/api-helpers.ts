@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api"
+const API_URL = "http://localhost:5000/api"
 
 export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem("token")
@@ -28,14 +28,16 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
         return fetchWithAuth(endpoint, options)
       } else {
         // Refresh failed, redirect to login
+        localStorage.removeItem("token")
+        localStorage.removeItem("refreshToken")
         window.location.href = "/login"
         throw new Error("Authentication failed")
       }
     }
 
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || "API request failed")
+      const errorData = await response.json().catch(() => ({ message: "API request failed" }))
+      throw new Error(errorData.message || "API request failed")
     }
 
     return response.json()
@@ -67,10 +69,19 @@ async function refreshToken() {
 
     const data = await response.json()
     localStorage.setItem("token", data.accessToken)
+    localStorage.setItem("refreshToken", data.refreshToken)
 
     return true
   } catch (error) {
     console.error("Token refresh failed:", error)
     return false
   }
+}
+
+// Helper function to handle API errors
+export function handleApiError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+  return "An unexpected error occurred"
 }

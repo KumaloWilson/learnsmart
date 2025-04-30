@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt"
-import { User } from "../models"
 import { TokenService } from "./token.service"
 import type { RegisterUserDto, LoginDto, AuthResponseDto, ChangePasswordDto } from "../dto/auth.dto"
+import { User } from "../models/User"
 
 export class AuthService {
   private tokenService: TokenService
@@ -29,6 +29,7 @@ export class AuthService {
     const accessToken = this.tokenService.generateAccessToken(user)
     const refreshToken = await this.tokenService.generateRefreshToken(user)
 
+    
     return {
       user: {
         id: user.id,

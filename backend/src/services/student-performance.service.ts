@@ -1,14 +1,5 @@
 import { Op } from "sequelize"
 import axios from "axios"
-import {
-  StudentPerformance,
-  StudentProfile,
-  Course,
-  Semester,
-  User,
-  AssessmentSubmission,
-  QuizAttempt,
-} from "../models"
 import { AttendanceService } from "./attendance.service"
 import type {
   CreateStudentPerformanceDto,
@@ -17,6 +8,13 @@ import type {
   PerformanceFilterDto,
   ClassPerformanceAnalysisDto,
 } from "../dto/student-performance.dto"
+import { AssessmentSubmission } from "../models/AssessmentSubmission"
+import { Course } from "../models/Course"
+import { QuizAttempt } from "../models/QuizAttempt"
+import { Semester } from "../models/Semester"
+import { StudentPerformance } from "../models/StudentPerformance"
+import { StudentProfile } from "../models/StudentProfile"
+import { User } from "../models/User"
 
 export class StudentPerformanceService {
   private attendanceService: AttendanceService

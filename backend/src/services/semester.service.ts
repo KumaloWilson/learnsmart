@@ -1,5 +1,5 @@
-import { Semester } from "../models"
 import type { CreateSemesterDto, UpdateSemesterDto } from "../dto/semester.dto"
+import { Semester } from "../models/Semester"
 
 export class SemesterService {
   async findAll() {

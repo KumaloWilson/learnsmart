@@ -1,5 +1,5 @@
-import { Period } from "../models"
 import type { CreatePeriodDto, UpdatePeriodDto } from "../dto/period.dto"
+import { Period } from "../models/Period"
 
 export class PeriodService {
   async findAll() {

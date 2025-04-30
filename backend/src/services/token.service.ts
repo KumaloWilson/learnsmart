@@ -1,6 +1,8 @@
 import jwt, { SignOptions } from "jsonwebtoken"
 import crypto from "crypto"
-import { User, RefreshToken, PasswordResetToken } from "../models"
+import { PasswordResetToken } from "../models/PasswordResetToken"
+import { RefreshToken } from "../models/RefreshToken"
+import { User } from "../models/User"
 
 export class TokenService {
   private readonly JWT_SECRET: jwt.Secret

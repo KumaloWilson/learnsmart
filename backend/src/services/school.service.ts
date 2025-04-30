@@ -1,5 +1,6 @@
-import { School } from "../models"
+
 import type { CreateSchoolDto, UpdateSchoolDto } from "../dto/school.dto"
+import { School } from "../models/School"
 
 export class SchoolService {
   async findAll() {
