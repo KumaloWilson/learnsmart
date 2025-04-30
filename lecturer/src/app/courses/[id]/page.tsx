@@ -1,9 +1,5 @@
 import { Suspense } from "react"
 import { PageHeader } from "@/components/page-header"
-import { CourseDetails } from "@/components/course-details"
-import { CourseStudents } from "@/components/course-students"
-import { CourseAssessments } from "@/components/course-assessments"
-import { CourseMaterials } from "@/components/course-materials"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
