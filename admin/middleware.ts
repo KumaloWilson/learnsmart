@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
   // Check for token in cookies (server-side)
-  const token = request.cookies.get("authToken")?.value
+  const token = request.cookies.get("accessToken")?.value
   const isAuthPage = request.nextUrl.pathname === "/login"
 
   // If trying to access auth page with token, redirect to dashboard

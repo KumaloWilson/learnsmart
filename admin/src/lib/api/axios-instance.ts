@@ -12,7 +12,7 @@ axiosInstance.interceptors.request.use(
   (config) => {
     // Check if we're in a browser environment
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("authToken")
+      const token = localStorage.getItem("accessToken")
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
@@ -33,7 +33,7 @@ axiosInstance.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // Handle unauthorized access
       if (typeof window !== "undefined") {
-        localStorage.removeItem("authToken")
+        localStorage.removeItem("accessToken")
         window.location.href = "/login"
       }
     }

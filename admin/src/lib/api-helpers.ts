@@ -1,5 +1,5 @@
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
-    const token = localStorage.getItem("authToken")
+    const token = localStorage.getItem("accessToken")
   
     const headers = {
       "Content-Type": "application/json",

@@ -1,16 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
-import { usersApi } from "@/lib/api"
-
-export interface User {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-  role: string
-  isActive: boolean
-  createdAt?: string
-  updatedAt?: string
-}
+import { User, usersApi } from "@/lib/api/users-api"
 
 interface UsersState {
   users: User[]
@@ -76,6 +65,18 @@ export const updateUserStatus = createAsyncThunk(
       return response.data
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Failed to update user status")
+    }
+  },
+)
+
+export const deleteUser = createAsyncThunk(
+  "users/deleteUser",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await usersApi.deleteUser(id)
+      return id
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || "Failed to delete user")
     }
   },
 )
@@ -165,6 +166,22 @@ const usersSlice = createSlice({
         }
       })
       .addCase(updateUserStatus.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
+      })
+      // Delete User
+      .addCase(deleteUser.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(deleteUser.fulfilled, (state, action: PayloadAction<string>) => {
+        state.isLoading = false
+        state.users = state.users.filter(user => user.id !== action.payload)
+        if (state.currentUser?.id === action.payload) {
+          state.currentUser = null
+        }
+      })
+      .addCase(deleteUser.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload as string
       })

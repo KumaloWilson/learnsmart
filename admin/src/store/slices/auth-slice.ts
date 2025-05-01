@@ -20,8 +20,8 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: typeof window !== "undefined" ? localStorage.getItem("authToken") : null,
-  isAuthenticated: typeof window !== "undefined" ? !!localStorage.getItem("authToken") : false,
+  token: typeof window !== "undefined" ? localStorage.getItem("accessToken") : null,
+  isAuthenticated: typeof window !== "undefined" ? !!localStorage.getItem("accessToken") : false,
   isLoading: false,
   error: null,
 }
@@ -64,15 +64,15 @@ const authSlice = createSlice({
       state.user = action.payload.user
       state.token = action.payload.token
       state.isAuthenticated = true
-      localStorage.setItem("authToken", action.payload.token)
-      Cookies.set("authToken", action.payload.token, { path: "/" })
+      localStorage.setItem("accessToken", action.payload.token)
+      Cookies.set("accessToken", action.payload.token, { path: "/" })
     },
     clearCredentials: (state) => {
       state.user = null
       state.token = null
       state.isAuthenticated = false
-      localStorage.removeItem("authToken")
-      Cookies.remove("authToken", { path: "/" })
+      localStorage.removeItem("accessToken")
+      Cookies.remove("accessToken", { path: "/" })
     },
   },
   extraReducers: (builder) => {
@@ -88,9 +88,9 @@ const authSlice = createSlice({
         state.isAuthenticated = true
         
         // Store token in both localStorage and cookies
-        localStorage.setItem("authToken", action.payload.data.token)
+        localStorage.setItem("accessToken", action.payload.data.token)
         localStorage.setItem("admin_user", JSON.stringify(action.payload.data.user))
-        Cookies.set("authToken", action.payload.data.token, { path: "/" })
+        Cookies.set("accessToken", action.payload.data.token, { path: "/" })
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false
@@ -104,9 +104,9 @@ const authSlice = createSlice({
         state.user = null
         state.token = null
         state.isAuthenticated = false
-        localStorage.removeItem("authToken")
+        localStorage.removeItem("accessToken")
         localStorage.removeItem("admin_user")
-        Cookies.remove("authToken", { path: "/" })
+        Cookies.remove("accessToken", { path: "/" })
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.isLoading = false
