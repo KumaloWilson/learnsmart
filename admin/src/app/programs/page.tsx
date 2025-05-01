@@ -64,7 +64,7 @@ export default function ProgramsPage() {
           }
         />
 
-<div className="mt-6">
+      <div className="mt-6">
         <ProgramsTable 
           programs={programs.map(p => ({ 
             ...p, 

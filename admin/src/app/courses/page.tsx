@@ -9,6 +9,7 @@ import { CoursesTable } from "@/components/courses-table"
 import { useAppDispatch, useAppSelector } from "@/store"
 import { fetchCourses, deleteCourse } from "@/store/slices/courses-slice"
 import { useToast } from "@/components/ui/use-toast"
+import { AdminSidebar } from "@/components/admin-sidebar"
 
 export default function CoursesPage() {
   const dispatch = useAppDispatch()
@@ -46,7 +47,9 @@ export default function CoursesPage() {
   }
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="flex min-h-screen bg-gray-100">
+      <AdminSidebar />
+      <div className="flex-1 p-8">
       <PageHeader
         title="Courses"
         description="Manage academic courses across all programs"
@@ -71,6 +74,8 @@ export default function CoursesPage() {
           onDelete={handleDelete} 
         />
       </div>
+      </div>
+    
     </div>
   )
 }
