@@ -1,4 +1,4 @@
-import axios from "axios"
+import axios, { AxiosResponse } from "axios"
 
 export const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "/api",
@@ -40,3 +40,17 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+export function handleApiError(error: unknown): never {
+  if (axios.isAxiosError(error)) {
+    const message = error.response?.data?.message || error.message || "An error occurred"
+    throw new Error(message)
+  } else {
+    throw new Error("An unexpected error occurred")
+  }
+}
+
+export function handleApiResponse<T>(response: AxiosResponse<T>): T {
+  return response.data
+}
+

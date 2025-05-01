@@ -1,82 +1,21 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import { fetchWithAuth } from "@/lib/api-helpers"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useAuth } from "@/hooks/use-auth"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 
-
 interface ActivityItem {
   id: string
-  action: string
-  user: {
-    name: string
-    email: string
-  }
-  entity: string
-  entityId: string
+  type: string
+  description: string
   timestamp: string
+  userId: string
+  userName: string
 }
 
-export function RecentActivity() {
-  const { isAuthenticated } = useAuth()
-  const [activities, setActivities] = useState<ActivityItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+interface RecentActivityProps {
+  activities: ActivityItem[]
+}
 
-  useEffect(() => {
-    const fetchActivities = async () => {
-      if (!isAuthenticated) {
-        return
-      }
-
-      setIsLoading(true)
-      setError(null)
-
-      try {
-        const response = await fetchWithAuth("/dashboard/recent-activity")
-        const data = await response.json()
-        setActivities(data || [])
-      } catch (err) {
-        console.error("Failed to fetch recent activities:", err)
-        setError("Failed to load recent activity data. Please try again later.")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchActivities()
-  }, [isAuthenticated])
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-[250px]" />
-              <Skeleton className="h-4 w-[200px]" />
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    )
-  }
-
+export function RecentActivity({ activities }: RecentActivityProps) {
   if (activities.length === 0) {
     return <div className="text-center py-8 text-muted-foreground">No recent activity to display</div>
   }
@@ -87,7 +26,7 @@ export function RecentActivity() {
         <div key={activity.id} className="flex items-start gap-4">
           <Avatar>
             <AvatarFallback>
-              {activity.user.name
+              {activity.userName
                 .split(" ")
                 .map((n) => n[0])
                 .join("")}
@@ -95,7 +34,7 @@ export function RecentActivity() {
           </Avatar>
           <div>
             <p className="text-sm font-medium">
-              {activity.user.name} {activity.action} a {activity.entity.toLowerCase()}
+              <span className="font-semibold">{activity.userName}</span> {activity.description}
             </p>
             <p className="text-xs text-muted-foreground">{new Date(activity.timestamp).toLocaleString()}</p>
           </div>
