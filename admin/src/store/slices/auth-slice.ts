@@ -8,6 +8,7 @@ interface User {
   firstName: string
   lastName: string
   role: string
+  isActive?: boolean
 }
 
 interface AuthState {
@@ -31,7 +32,7 @@ export const loginUser = createAsyncThunk(
   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const response = await authApi.login(credentials)
-      return response
+      return response.data // Adjusted to return response.data directly
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to login")
     }
@@ -49,8 +50,8 @@ export const logoutUser = createAsyncThunk("auth/logout", async (_, { rejectWith
 
 export const fetchCurrentUser = createAsyncThunk("auth/getCurrentUser", async (_, { rejectWithValue }) => {
   try {
-    const user = await authApi.getCurrentUser()
-    return user
+    const response = await authApi.getCurrentUser()
+    return response.data
   } catch (error: any) {
     return rejectWithValue(error.message || "Failed to fetch current user")
   }
@@ -60,19 +61,23 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setCredentials: (state, action: PayloadAction<{ user: User; token: string }>) => {
+    setCredentials: (state, action: PayloadAction<{ user: User; accessToken: string }>) => {
       state.user = action.payload.user
-      state.token = action.payload.token
+      state.token = action.payload.accessToken
       state.isAuthenticated = true
-      localStorage.setItem("accessToken", action.payload.token)
-      Cookies.set("accessToken", action.payload.token, { path: "/" })
+      
+      // Store token in both localStorage and cookies
+      localStorage.setItem("accessToken", action.payload.accessToken)
+      localStorage.setItem("admin_user", JSON.stringify(action.payload.user))
+      Cookies.set("token", action.payload.accessToken, { path: "/" }) // Changed to "token" to match middleware
     },
     clearCredentials: (state) => {
       state.user = null
       state.token = null
       state.isAuthenticated = false
       localStorage.removeItem("accessToken")
-      Cookies.remove("accessToken", { path: "/" })
+      localStorage.removeItem("admin_user")
+      Cookies.remove("token", { path: "/" }) // Changed to "token" to match middleware
     },
   },
   extraReducers: (builder) => {
@@ -83,14 +88,14 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false
-        state.user = action.payload.data.user
-        state.token = action.payload.data.token
+        state.user = action.payload.user
+        state.token = action.payload.accessToken
         state.isAuthenticated = true
         
-        // Store token in both localStorage and cookies
-        localStorage.setItem("accessToken", action.payload.data.token)
-        localStorage.setItem("admin_user", JSON.stringify(action.payload.data.user))
-        Cookies.set("accessToken", action.payload.data.token, { path: "/" })
+        // Store token in both localStorage and cookies with consistent names
+        localStorage.setItem("accessToken", action.payload.accessToken)
+        localStorage.setItem("admin_user", JSON.stringify(action.payload.user))
+        Cookies.set("token", action.payload.accessToken, { path: "/" }) // Changed to "token" to match middleware
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false
@@ -106,7 +111,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false
         localStorage.removeItem("accessToken")
         localStorage.removeItem("admin_user")
-        Cookies.remove("accessToken", { path: "/" })
+        Cookies.remove("token", { path: "/" }) // Changed to "token" to match middleware
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.isLoading = false
@@ -118,9 +123,9 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.isLoading = false
-        state.user = action.payload.data
+        state.user = action.payload
         state.isAuthenticated = true
-        localStorage.setItem("admin_user", JSON.stringify(action.payload.data))
+        localStorage.setItem("admin_user", JSON.stringify(action.payload))
       })
       .addCase(fetchCurrentUser.rejected, (state, action) => {
         state.isLoading = false
