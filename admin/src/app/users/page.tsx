@@ -6,9 +6,9 @@ import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
 import { UsersTable } from "@/components/users-table"
-import { useToast } from "@/hooks/use-toast"
 import { useAppDispatch, useAppSelector } from "@/store"
 import { fetchUsers, updateUserStatus } from "@/store/slices/users-slice"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function UsersPage() {
   const dispatch = useAppDispatch()
@@ -60,7 +60,7 @@ export default function UsersPage() {
         }
       />
       <div className="mt-6">
-        <UsersTable users={users} isLoading={isLoading} onStatusChange={handleStatusChange} />
+        <UsersTable />
       </div>
     </div>
   )
