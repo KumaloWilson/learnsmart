@@ -1,9 +1,8 @@
 "use client"
 
-import type React from "react"
-import { createContext, useEffect, useState, useCallback } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import { LoginForm } from "@/components/login-form"
+import { createContext, useEffect, useState, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
+import { fetchWithAuth, login, logout } from "@/lib/api-helpers"
 
 interface User {
   id: string
@@ -15,87 +14,45 @@ interface User {
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<void>
-  logout: () => void
   isLoading: boolean
   isAuthenticated: boolean
+  login: (email: string, password: string) => Promise<void>
+  logout: () => void
+  error: string | null
 }
 
-// Create the context with default values
-export const AuthContext = createContext<AuthContextType>({
-  user: null,
-  login: async () => {},
-  logout: () => {},
-  isLoading: true,
-  isAuthenticated: false,
-})
+export const AuthContext = createContext<AuthContextType | null>(null)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const pathname = usePathname()
 
-  // Check authentication status on mount
   useEffect(() => {
+    // Check if user is already logged in
     const checkAuth = async () => {
       try {
-        // For development purposes, check if we're in a browser environment
-        if (typeof window === "undefined") {
-          setIsLoading(false)
-          return
-        }
-
+        const storedUser = localStorage.getItem("user")
         const token = localStorage.getItem("token")
-        if (!token) {
-          setIsLoading(false)
-          return
-        }
 
-        // Validate token with backend
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+        if (storedUser && token) {
+          // Validate token by making a request to the API
+          const userData = await fetchWithAuth("/auth/me")
 
-        try {
-          const response = await fetch(`${apiUrl}/auth/profile`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
-
-          if (response.ok) {
-            const userData = await response.json()
-
-            // Only allow admin users
-            if (userData.role !== "Admin") {
-              console.error("Non-admin user attempted to access admin portal")
-              localStorage.removeItem("token")
-              localStorage.removeItem("refreshToken")
-              setIsLoading(false)
-              return
-            }
-
+          if (userData) {
             setUser(userData)
           } else {
+            // Token is invalid, clear storage
+            localStorage.removeItem("user")
             localStorage.removeItem("token")
-            localStorage.removeItem("refreshToken")
           }
-        } catch (error) {
-          console.error("Failed to validate token:", error)
-
-          // For development purposes, create a mock admin user
-          const mockUser = {
-            id: "admin-1",
-            email: "admin@example.com",
-            firstName: "Admin",
-            lastName: "User",
-            role: "Admin",
-          }
-          setUser(mockUser)
         }
       } catch (error) {
-        console.error("Auth check failed:", error)
+        console.error("Authentication check failed:", error)
+        // Clear storage on error
+        localStorage.removeItem("user")
         localStorage.removeItem("token")
-        localStorage.removeItem("refreshToken")
       } finally {
         setIsLoading(false)
       }
@@ -104,112 +61,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth()
   }, [])
 
-  // Login function
-  const login = useCallback(
-    async (email: string, password: string) => {
-      setIsLoading(true)
+  const handleLogin = async (email: string, password: string) => {
+    setIsLoading(true)
+    setError(null)
 
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+    try {
+      const data = await login(email, password)
 
-        try {
-          const response = await fetch(`${apiUrl}/auth/login`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ email, password }),
-          })
+      if (data && data.token && data.user) {
+        localStorage.setItem("token", data.token)
+        localStorage.setItem("user", JSON.stringify(data.user))
+        setUser(data.user)
 
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: "Login failed" }))
-            throw new Error(errorData.message || "Login failed")
-          }
-
-          const data = await response.json()
-
-          // Check if user is an admin
-          if (data.user.role !== "Admin") {
-            throw new Error("Access denied. Only administrators can access this portal.")
-          }
-
-          // Store tokens
-          localStorage.setItem("token", data.accessToken)
-          localStorage.setItem("refreshToken", data.refreshToken)
-
-          // Set user data
-          setUser(data.user)
-        } catch (error) {
-          console.error("API login failed, using mock data for development:", error)
-
-          // For development purposes, create a mock token and admin user
-          localStorage.setItem("token", "mock-token-for-development")
-          localStorage.setItem("refreshToken", "mock-refresh-token-for-development")
-
-          const mockUser = {
-            id: "admin-1",
-            email: email,
-            firstName: "Admin",
-            lastName: "User",
-            role: "Admin",
-          }
-          setUser(mockUser)
+        // Redirect based on user role
+        if (data.user.role === "Admin") {
+          router.push("/")
+        } else {
+          setError("Access denied. Admin privileges required.")
+          await handleLogout()
         }
-
-        // Redirect to dashboard
-        router.push("/")
-      } catch (error) {
-        console.error("Login failed:", error)
-        throw error
-      } finally {
-        setIsLoading(false)
+      } else {
+        setError("Login failed. Invalid response from server.")
       }
-    },
-    [router],
+    } catch (error) {
+      console.error("Login error:", error)
+      setError(error instanceof Error ? error.message : "Login failed. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    setIsLoading(true)
+
+    try {
+      await logout()
+      setUser(null)
+      router.push("/login")
+    } catch (error) {
+      console.error("Logout error:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated: !!user,
+        login: handleLogin,
+        logout: handleLogout,
+        error,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   )
-
-  // Logout function
-  const logout = useCallback(() => {
-    // Clear local storage
-    localStorage.removeItem("token")
-    localStorage.removeItem("refreshToken")
-
-    // Update state
-    setUser(null)
-
-    // Redirect
-    router.push("/login")
-  }, [router])
-
-  // Memoize the context value to prevent unnecessary re-renders
-  const contextValue = {
-    user,
-    login,
-    logout,
-    isLoading,
-    isAuthenticated: !!user,
-  }
-
-  // If loading, show loading indicator
-  if (isLoading && !user) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // If not logged in and not on login page, show login form
-  if (!user && pathname !== "/login") {
-    return (
-      <div className="flex h-screen items-center justify-center bg-muted/40">
-        <LoginForm />
-      </div>
-    )
-  }
-
-  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
 }

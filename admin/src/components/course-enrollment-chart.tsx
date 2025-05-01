@@ -4,6 +4,9 @@ import { useEffect, useState } from "react"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
 import { fetchWithAuth } from "@/lib/api-helpers"
 import { useAuth } from "@/hooks/use-auth"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface EnrollmentData {
   name: string
@@ -14,42 +17,23 @@ export function CourseEnrollmentChart() {
   const { isAuthenticated } = useAuth()
   const [data, setData] = useState<EnrollmentData[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       if (!isAuthenticated) {
-        // Don't fetch if not authenticated yet
         return
       }
 
+      setIsLoading(true)
+      setError(null)
+
       try {
         const response = await fetchWithAuth("/dashboard/course-enrollments")
-        if (response) {
-          setData(response)
-        } else {
-          // Fallback data
-          setData([
-            { name: "Introduction to Programming", students: 120 },
-            { name: "Data Structures", students: 85 },
-            { name: "Database Systems", students: 95 },
-            { name: "Web Development", students: 110 },
-            { name: "Machine Learning", students: 65 },
-            { name: "Software Engineering", students: 75 },
-            { name: "Computer Networks", students: 60 },
-          ])
-        }
-      } catch (error) {
-        console.error("Failed to fetch course enrollment data:", error)
-        // Fallback data
-        setData([
-          { name: "Introduction to Programming", students: 120 },
-          { name: "Data Structures", students: 85 },
-          { name: "Database Systems", students: 95 },
-          { name: "Web Development", students: 110 },
-          { name: "Machine Learning", students: 65 },
-          { name: "Software Engineering", students: 75 },
-          { name: "Computer Networks", students: 60 },
-        ])
+        setData(response || [])
+      } catch (err) {
+        console.error("Failed to fetch course enrollment data:", err)
+        setError("Failed to load course enrollment data. Please try again later.")
       } finally {
         setIsLoading(false)
       }
@@ -59,11 +43,29 @@ export function CourseEnrollmentChart() {
   }, [isAuthenticated])
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-[300px]">Loading chart data...</div>
+    return (
+      <div className="h-[300px] w-full flex items-center justify-center">
+        <Skeleton className="h-[250px] w-full" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    )
+  }
+
+  if (data.length === 0) {
+    return <div className="text-center py-6 text-muted-foreground">No course enrollment data available</div>
   }
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data}>
         <XAxis
           dataKey="name"

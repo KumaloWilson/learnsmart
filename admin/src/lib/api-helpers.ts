@@ -1,18 +1,15 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+// Updated API helpers to properly handle authentication and API calls
 
 export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-  // Check if we're in a browser environment
-  if (typeof window === "undefined") {
-    return null // Return null during SSR
-  }
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
 
-  const token = localStorage.getItem("token")
-
-  // If no token is available, return fallback data instead of throwing an error
   if (!token) {
-    console.warn("No authentication token found, returning fallback data")
+    console.warn("No authentication token found for API call:", endpoint)
     return null
   }
+
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api"
+  const url = endpoint.startsWith("http") ? endpoint : `${baseUrl}${endpoint}`
 
   const headers = {
     "Content-Type": "application/json",
@@ -21,74 +18,53 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
   }
 
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(url, {
       ...options,
       headers,
     })
 
-    if (response.status === 401) {
-      // Token expired, try to refresh
-      const refreshed = await refreshToken()
-
-      if (refreshed) {
-        // Retry with new token
-        return fetchWithAuth(endpoint, options)
-      } else {
-        // Refresh failed, redirect to login
-        localStorage.removeItem("token")
-        localStorage.removeItem("refreshToken")
-        window.location.href = "/login"
-        throw new Error("Authentication failed")
-      }
-    }
-
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: "API request failed" }))
-      throw new Error(errorData.message || "API request failed")
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || `API error: ${response.status} ${response.statusText}`)
     }
 
-    return await response.json()
+    // Check if the response is empty
+    const text = await response.text()
+    return text ? JSON.parse(text) : null
   } catch (error) {
-    console.error("API request error:", error)
+    console.error(`API request failed for ${endpoint}:`, error)
     throw error
   }
 }
 
-async function refreshToken() {
-  const refreshToken = localStorage.getItem("refreshToken")
-
-  if (!refreshToken) {
-    return false
-  }
+export async function login(email: string, password: string) {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api"
 
   try {
-    const response = await fetch(`${API_URL}/auth/refresh-token`, {
+    const response = await fetch(`${baseUrl}/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ refreshToken }),
+      body: JSON.stringify({ email, password }),
     })
 
     if (!response.ok) {
-      return false
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || "Login failed")
     }
 
     const data = await response.json()
-    localStorage.setItem("token", data.accessToken)
-    localStorage.setItem("refreshToken", data.refreshToken)
-
-    return true
+    return data
   } catch (error) {
-    console.error("Token refresh failed:", error)
-    return false
+    console.error("Login failed:", error)
+    throw error
   }
 }
 
-// Helper function to handle API errors
-export function handleApiError(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message
+export async function logout() {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("token")
+    localStorage.removeItem("user")
   }
-  return "An unexpected error occurred"
 }

@@ -18,49 +18,25 @@ interface StatsData {
 
 export function DashboardStats() {
   const { isAuthenticated } = useAuth()
-  const [stats, setStats] = useState<StatsData>({
-    schoolCount: 0,
-    departmentCount: 0,
-    programCount: 0,
-    courseCount: 0,
-    studentCount: 0,
-    lecturerCount: 0,
-  })
+  const [stats, setStats] = useState<StatsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchStats = async () => {
       if (!isAuthenticated) {
-        // Don't fetch if not authenticated yet
         return
       }
 
+      setIsLoading(true)
+      setError(null)
+
       try {
         const data = await fetchWithAuth("/dashboard/stats")
-        if (data) {
-          setStats(data)
-        } else {
-          // Use fallback data if API call returns null
-          setStats({
-            schoolCount: 5,
-            departmentCount: 12,
-            programCount: 24,
-            courseCount: 86,
-            studentCount: 1250,
-            lecturerCount: 75,
-          })
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard stats:", error)
-        // Use fallback data on error
-        setStats({
-          schoolCount: 5,
-          departmentCount: 12,
-          programCount: 24,
-          courseCount: 86,
-          studentCount: 1250,
-          lecturerCount: 75,
-        })
+        setStats(data)
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats:", err)
+        setError("Failed to load statistics. Please try again later.")
       } finally {
         setIsLoading(false)
       }
@@ -79,9 +55,11 @@ export function DashboardStats() {
         <CardContent>
           {isLoading ? (
             <Skeleton className="h-8 w-20" />
+          ) : error ? (
+            <div className="text-sm text-red-500">Error loading data</div>
           ) : (
             <>
-              <div className="text-2xl font-bold">{stats.schoolCount}</div>
+              <div className="text-2xl font-bold">{stats?.schoolCount || 0}</div>
               <p className="text-xs text-muted-foreground">Total schools in the system</p>
             </>
           )}
@@ -96,9 +74,11 @@ export function DashboardStats() {
         <CardContent>
           {isLoading ? (
             <Skeleton className="h-8 w-20" />
+          ) : error ? (
+            <div className="text-sm text-red-500">Error loading data</div>
           ) : (
             <>
-              <div className="text-2xl font-bold">{stats.programCount}</div>
+              <div className="text-2xl font-bold">{stats?.programCount || 0}</div>
               <p className="text-xs text-muted-foreground">Academic programs offered</p>
             </>
           )}
@@ -113,9 +93,11 @@ export function DashboardStats() {
         <CardContent>
           {isLoading ? (
             <Skeleton className="h-8 w-20" />
+          ) : error ? (
+            <div className="text-sm text-red-500">Error loading data</div>
           ) : (
             <>
-              <div className="text-2xl font-bold">{stats.courseCount}</div>
+              <div className="text-2xl font-bold">{stats?.courseCount || 0}</div>
               <p className="text-xs text-muted-foreground">Total courses available</p>
             </>
           )}
@@ -130,9 +112,11 @@ export function DashboardStats() {
         <CardContent>
           {isLoading ? (
             <Skeleton className="h-8 w-20" />
+          ) : error ? (
+            <div className="text-sm text-red-500">Error loading data</div>
           ) : (
             <>
-              <div className="text-2xl font-bold">{stats.studentCount}</div>
+              <div className="text-2xl font-bold">{stats?.studentCount || 0}</div>
               <p className="text-xs text-muted-foreground">Enrolled students</p>
             </>
           )}

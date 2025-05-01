@@ -2,29 +2,34 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
-  // Get the pathname
-  const path = request.nextUrl.pathname
-
-  // Check if the path is the login page
-  const isLoginPage = path === "/login"
-
-  // Check if the user is authenticated
   const token = request.cookies.get("token")?.value
-  const isAuthenticated = !!token
+  const isLoginPage = request.nextUrl.pathname === "/login"
 
-  // If the user is not authenticated and not on the login page, redirect to login
-  if (!isAuthenticated && !isLoginPage) {
-    return NextResponse.redirect(new URL("/login", request.url))
+  // If trying to access a protected route without a token
+  if (!token && !isLoginPage) {
+    const loginUrl = new URL("/login", request.url)
+    return NextResponse.redirect(loginUrl)
   }
 
-  // If the user is authenticated and on the login page, redirect to dashboard
-  if (isAuthenticated && isLoginPage) {
-    return NextResponse.redirect(new URL("/", request.url))
+  // If trying to access login page with a valid token
+  if (token && isLoginPage) {
+    const dashboardUrl = new URL("/", request.url)
+    return NextResponse.redirect(dashboardUrl)
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     * - api routes
+     */
+    "/((?!_next/static|_next/image|favicon.ico|public|api).*)",
+  ],
 }

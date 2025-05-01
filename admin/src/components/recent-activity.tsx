@@ -5,6 +5,8 @@ import { fetchWithAuth } from "@/lib/api-helpers"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/hooks/use-auth"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 interface ActivityItem {
   id: string
@@ -22,92 +24,23 @@ export function RecentActivity() {
   const { isAuthenticated } = useAuth()
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchActivities = async () => {
       if (!isAuthenticated) {
-        // Don't fetch if not authenticated yet
         return
       }
 
+      setIsLoading(true)
+      setError(null)
+
       try {
         const data = await fetchWithAuth("/dashboard/recent-activity")
-        if (data) {
-          setActivities(data)
-        } else {
-          // Fallback data
-          setActivities([
-            {
-              id: "1",
-              action: "created",
-              user: { name: "John Doe", email: "john@example.com" },
-              entity: "Course",
-              entityId: "1",
-              timestamp: new Date().toISOString(),
-            },
-            {
-              id: "2",
-              action: "updated",
-              user: { name: "Jane Smith", email: "jane@example.com" },
-              entity: "Program",
-              entityId: "3",
-              timestamp: new Date(Date.now() - 3600000).toISOString(),
-            },
-            {
-              id: "3",
-              action: "deleted",
-              user: { name: "Admin User", email: "admin@example.com" },
-              entity: "Department",
-              entityId: "2",
-              timestamp: new Date(Date.now() - 7200000).toISOString(),
-            },
-            {
-              id: "4",
-              action: "created",
-              user: { name: "Sarah Johnson", email: "sarah@example.com" },
-              entity: "School",
-              entityId: "4",
-              timestamp: new Date(Date.now() - 86400000).toISOString(),
-            },
-            {
-              id: "5",
-              action: "updated",
-              user: { name: "Michael Brown", email: "michael@example.com" },
-              entity: "User",
-              entityId: "7",
-              timestamp: new Date(Date.now() - 172800000).toISOString(),
-            },
-          ])
-        }
-      } catch (error) {
-        console.error("Failed to fetch recent activities:", error)
-        // Fallback data
-        setActivities([
-          {
-            id: "1",
-            action: "created",
-            user: { name: "John Doe", email: "john@example.com" },
-            entity: "Course",
-            entityId: "1",
-            timestamp: new Date().toISOString(),
-          },
-          {
-            id: "2",
-            action: "updated",
-            user: { name: "Jane Smith", email: "jane@example.com" },
-            entity: "Program",
-            entityId: "3",
-            timestamp: new Date(Date.now() - 3600000).toISOString(),
-          },
-          {
-            id: "3",
-            action: "deleted",
-            user: { name: "Admin User", email: "admin@example.com" },
-            entity: "Department",
-            entityId: "2",
-            timestamp: new Date(Date.now() - 7200000).toISOString(),
-          },
-        ])
+        setActivities(data || [])
+      } catch (err) {
+        console.error("Failed to fetch recent activities:", err)
+        setError("Failed to load recent activity data. Please try again later.")
       } finally {
         setIsLoading(false)
       }
@@ -129,6 +62,16 @@ export function RecentActivity() {
           </div>
         ))}
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     )
   }
 

@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { useContext } from "react"
-import { AuthContext } from "@/components/auth-provider"
+import { useAuth } from "@/hooks/use-auth"
+import { AlertCircle } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "./ui/use-toast"
 
 const formSchema = z.object({
@@ -18,7 +19,7 @@ const formSchema = z.object({
 })
 
 export function LoginForm() {
-  const { login } = useContext(AuthContext)
+  const { login, error } = useAuth()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -56,6 +57,12 @@ export function LoginForm() {
         <CardDescription>Enter your credentials to access the admin dashboard</CardDescription>
       </CardHeader>
       <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField

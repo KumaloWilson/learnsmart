@@ -1,26 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table"
-import { ArrowUpDown, Edit, MoreHorizontal, Trash } from "lucide-react"
-import { fetchWithAuth } from "@/lib/api-helpers"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import Link from "next/link"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-
-
+import { Button } from "@/components/ui/button"
+import { Pencil, Trash2 } from "lucide-react"
+import { fetchWithAuth } from "@/lib/api-helpers"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,195 +18,105 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "./ui/use-toast"
 
 interface School {
   id: string
   name: string
-  code?: string
+  code: string
   description?: string
-  createdAt: string
-  updatedAt: string
 }
 
 export function SchoolsTable() {
   const router = useRouter()
   const { toast } = useToast()
-  const [data, setData] = useState<School[]>([])
+  const [schools, setSchools] = useState<School[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [deleteSchoolId, setDeleteSchoolId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  useEffect(() => {
-    const fetchSchools = async () => {
-      try {
-        const schools = await fetchWithAuth("/schools")
-        setData(schools)
-      } catch (error) {
-        console.error("Failed to fetch schools:", error)
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load schools. Please try again.",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchSchools()
-  }, [toast])
-
-  const columns: ColumnDef<School>[] = [
-    {
-      accessorKey: "name",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
-    },
-    {
-      accessorKey: "code",
-      header: "Code",
-      cell: ({ row }) => <div>{row.getValue("code") || "-"}</div>,
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ row }) => <div className="max-w-[500px] truncate">{row.getValue("description") || "-"}</div>,
-    },
-    {
-      accessorKey: "createdAt",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Created
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => <div>{new Date(row.getValue("createdAt")).toLocaleDateString()}</div>,
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const school = row.original
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => router.push(`/schools/${school.id}`)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => setDeleteSchoolId(school.id)}
-              >
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      },
-    },
-  ]
-
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    state: {
-      sorting,
-      columnFilters,
-    },
-  })
-
-  const handleDeleteSchool = async () => {
-    if (!deleteSchoolId) return
+  const fetchSchools = async () => {
+    setIsLoading(true)
+    setError(null)
 
     try {
-      await fetchWithAuth(`/schools/${deleteSchoolId}`, {
+      const data = await fetchWithAuth("/schools")
+      setSchools(data || [])
+    } catch (err) {
+      console.error("Failed to fetch schools:", err)
+      setError("Failed to load schools. Please try again later.")
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load schools. Please try again later.",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchSchools()
+  }, [])
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+
+    setIsDeleting(true)
+
+    try {
+      await fetchWithAuth(`/schools/${deleteId}`, {
         method: "DELETE",
       })
-
-      setData((prev) => prev.filter((school) => school.id !== deleteSchoolId))
 
       toast({
         title: "School deleted",
         description: "The school has been successfully deleted.",
       })
-    } catch (error) {
-      console.error("Failed to delete school:", error)
+
+      // Refresh the schools list
+      fetchSchools()
+    } catch (err) {
+      console.error("Failed to delete school:", err)
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to delete school. Please try again.",
       })
     } finally {
-      setDeleteSchoolId(null)
+      setIsDeleting(false)
+      setDeleteId(null)
     }
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-10 w-[250px]" />
-        </div>
+      <div>
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>
-                  <Skeleton className="h-4 w-[100px]" />
-                </TableHead>
-                <TableHead>
-                  <Skeleton className="h-4 w-[100px]" />
-                </TableHead>
-                <TableHead>
-                  <Skeleton className="h-4 w-[200px]" />
-                </TableHead>
-                <TableHead>
-                  <Skeleton className="h-4 w-[100px]" />
-                </TableHead>
-                <TableHead>
-                  <Skeleton className="h-4 w-[50px]" />
-                </TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
                   <TableCell>
-                    <Skeleton className="h-6 w-[150px]" />
+                    <Skeleton className="h-5 w-[150px]" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-6 w-[100px]" />
+                    <Skeleton className="h-5 w-[80px]" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-6 w-[300px]" />
+                    <Skeleton className="h-5 w-[200px]" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-6 w-[100px]" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-6 w-[50px]" />
+                    <Skeleton className="h-9 w-[100px]" />
                   </TableCell>
                 </TableRow>
               ))}
@@ -230,72 +127,85 @@ export function SchoolsTable() {
     )
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Input
-          placeholder="Filter schools..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
-          className="max-w-sm"
-        />
+  if (error) {
+    return (
+      <div className="rounded-md bg-destructive/15 p-4 text-center">
+        <p className="text-sm font-medium text-destructive">{error}</p>
+        <Button variant="outline" className="mt-4" onClick={fetchSchools}>
+          Try Again
+        </Button>
       </div>
+    )
+  }
 
+  if (schools.length === 0) {
+    return (
+      <div className="rounded-md border p-8 text-center">
+        <p className="text-muted-foreground">No schools found.</p>
+        <Button asChild className="mt-4">
+          <Link href="/schools/new">Add School</Link>
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Code</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
+            </TableRow>
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No schools found.
+            {schools.map((school) => (
+              <TableRow key={school.id}>
+                <TableCell className="font-medium">{school.name}</TableCell>
+                <TableCell>{school.code}</TableCell>
+                <TableCell className="max-w-[400px] truncate">{school.description || "No description"}</TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="icon" onClick={() => router.push(`/schools/${school.id}`)}>
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">Edit</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="text-destructive"
+                      onClick={() => setDeleteId(school.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
-            )}
+            ))}
           </TableBody>
         </Table>
       </div>
 
-      <div className="flex items-center justify-end space-x-2">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          Previous
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          Next
-        </Button>
-      </div>
-
-      <AlertDialog open={!!deleteSchoolId} onOpenChange={(open) => !open && setDeleteSchoolId(null)}>
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the school and all associated departments and
-              programs.
+              This action cannot be undone. This will permanently delete the school and all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteSchool} className="bg-destructive text-destructive-foreground">
-              Delete
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
