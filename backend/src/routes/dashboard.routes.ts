@@ -4,6 +4,7 @@ import { authMiddleware } from "../middlewares/auth.middleware"
 import { adminMiddleware } from "../middlewares/admin.middleware"
 
 const router = Router()
+
 const dashboardController = new DashboardController()
 
 // All dashboard routes are admin-only
