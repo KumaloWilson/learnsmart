@@ -1,195 +1,249 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { z } from "zod"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2 } from "lucide-react"
-import { fetchWithAuth } from "../lib/api-helpers"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { fetchWithAuth } from "@/lib/api-helpers"
+import { useToast } from "./ui/use-toast"
 
-const courseFormSchema = z.object({
-  code: z.string().min(2, "Course code must be at least 2 characters"),
-  name: z.string().min(3, "Course name must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  credits: z.coerce.number().min(1, "Credits must be at least 1").max(20, "Credits cannot exceed 20"),
-  programId: z.string().min(1, "Program is required"),
+const formSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  code: z.string().min(2, { message: "Code must be at least 2 characters" }),
+  description: z.string().min(10, { message: "Description must be at least 10 characters" }),
+  credits: z.coerce
+    .number()
+    .min(1, { message: "Credits must be at least 1" })
+    .max(12, { message: "Credits cannot exceed 12" }),
+  programId: z.string({ required_error: "Please select a program" }),
 })
-
-type CourseFormValues = z.infer<typeof courseFormSchema>
 
 interface Program {
   id: string
   name: string
-  departmentId: string
   departmentName?: string
 }
 
 interface CourseFormProps {
-  initialData?: CourseFormValues
-  onSubmit: (data: CourseFormValues) => void
-  isSubmitting: boolean
+  course?: {
+    id: string
+    name: string
+    code: string
+    description: string
+    credits: number
+    programId: string
+  }
 }
 
-export function CourseForm({ initialData, onSubmit, isSubmitting }: CourseFormProps) {
+export function CourseForm({ course }: CourseFormProps) {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [programs, setPrograms] = useState<Program[]>([])
   const [isLoadingPrograms, setIsLoadingPrograms] = useState(true)
 
-  const form = useForm<CourseFormValues>({
-    resolver: zodResolver(courseFormSchema),
-    defaultValues: initialData || {
-      code: "",
-      name: "",
-      description: "",
-      credits: 3,
-      programId: "",
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: course?.name || "",
+      code: course?.code || "",
+      description: course?.description || "",
+      credits: course?.credits || 3,
+      programId: course?.programId || "",
     },
   })
 
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
-        const response = await fetchWithAuth("/api/programs")
-        if (!response.ok) {
-          throw new Error("Failed to fetch programs")
-        }
-        const data = await response.json()
-
-        // Fetch department details for each program
-        const programsWithDepartments = await Promise.all(
-          data.map(async (program: Program) => {
-            const deptResponse = await fetchWithAuth(`/api/departments/${program.departmentId}`)
-            if (deptResponse.ok) {
-              const deptData = await deptResponse.json()
-              return { ...program, departmentName: deptData.name }
-            }
-            return program
-          }),
-        )
-
-        setPrograms(programsWithDepartments)
+        const data = await fetchWithAuth("/programs")
+        setPrograms(data)
       } catch (error) {
-        console.error("Error fetching programs:", error)
+        console.error("Failed to fetch programs:", error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load programs. Please try again.",
+        })
       } finally {
         setIsLoadingPrograms(false)
       }
     }
 
     fetchPrograms()
-  }, [])
+  }, [toast])
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true)
+
+    try {
+      if (course) {
+        // Update existing course
+        await fetchWithAuth(`/courses/${course.id}`, {
+          method: "PUT",
+          body: JSON.stringify(values),
+        })
+
+        toast({
+          title: "Course updated",
+          description: "The course has been successfully updated.",
+        })
+      } else {
+        // Create new course
+        await fetchWithAuth("/courses", {
+          method: "POST",
+          body: JSON.stringify(values),
+        })
+
+        toast({
+          title: "Course created",
+          description: "The course has been successfully created.",
+        })
+      }
+
+      router.push("/courses")
+      router.refresh()
+    } catch (error) {
+      console.error("Failed to save course:", error)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save course. Please try again.",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="code"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Course Code</FormLabel>
-                <FormControl>
-                  <Input placeholder="CS101" {...field} />
-                </FormControl>
-                <FormDescription>The unique identifier for this course</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <Card>
+      <CardHeader>
+        <CardTitle>{course ? "Edit Course" : "Create Course"}</CardTitle>
+        <CardDescription>
+          {course ? "Update the course details below." : "Enter the details for the new course."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Introduction to Programming" {...field} />
+                    </FormControl>
+                    <FormDescription>The full name of the course.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="credits"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Credits</FormLabel>
-                <FormControl>
-                  <Input type="number" min={1} max={20} {...field} />
-                </FormControl>
-                <FormDescription>Number of credit hours for this course</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Code</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., CS101" {...field} />
+                    </FormControl>
+                    <FormDescription>The course code.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Course Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Introduction to Computer Science" {...field} />
-              </FormControl>
-              <FormDescription>The full name of the course</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Enter a description of the course..." className="min-h-[100px]" {...field} />
+                  </FormControl>
+                  <FormDescription>A brief description of the course content and objectives.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Enter course description..." className="min-h-[120px]" {...field} />
-              </FormControl>
-              <FormDescription>Detailed description of the course content and objectives</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="credits"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Credits</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={1} max={12} {...field} />
+                    </FormControl>
+                    <FormDescription>The number of credit hours for this course.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <FormField
-          control={form.control}
-          name="programId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Program</FormLabel>
-              <Select disabled={isLoadingPrograms} onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a program" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {isLoadingPrograms ? (
-                    <div className="flex items-center justify-center p-4">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      <span>Loading programs...</span>
-                    </div>
-                  ) : (
-                    programs.map((program) => (
-                      <SelectItem key={program.id} value={program.id}>
-                        {program.name} {program.departmentName ? `(${program.departmentName})` : ""}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              <FormDescription>The academic program this course belongs to</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              <FormField
+                control={form.control}
+                name="programId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Program</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a program" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {isLoadingPrograms ? (
+                          <SelectItem value="loading" disabled>
+                            Loading programs...
+                          </SelectItem>
+                        ) : programs.length === 0 ? (
+                          <SelectItem value="none" disabled>
+                            No programs available
+                          </SelectItem>
+                        ) : (
+                          programs.map((program) => (
+                            <SelectItem key={program.id} value={program.id}>
+                              {program.name} {program.departmentName ? `(${program.departmentName})` : ""}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>The program this course belongs to.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <div className="flex gap-4">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {initialData ? "Update Course" : "Create Course"}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => window.history.back()}>
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </Form>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" type="button" onClick={() => router.back()} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : course ? "Update Course" : "Create Course"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   )
 }

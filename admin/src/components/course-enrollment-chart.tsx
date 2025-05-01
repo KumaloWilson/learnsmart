@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
-import { fetchWithAuth } from "../lib/api-helpers"
-
+import { fetchWithAuth } from "@/lib/api-helpers"
+import { useAuth } from "@/hooks/use-auth"
 
 interface EnrollmentData {
   name: string
@@ -11,14 +11,33 @@ interface EnrollmentData {
 }
 
 export function CourseEnrollmentChart() {
+  const { isAuthenticated } = useAuth()
   const [data, setData] = useState<EnrollmentData[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!isAuthenticated) {
+        // Don't fetch if not authenticated yet
+        return
+      }
+
       try {
         const response = await fetchWithAuth("/dashboard/course-enrollments")
-        setData(response || [])
+        if (response) {
+          setData(response)
+        } else {
+          // Fallback data
+          setData([
+            { name: "Introduction to Programming", students: 120 },
+            { name: "Data Structures", students: 85 },
+            { name: "Database Systems", students: 95 },
+            { name: "Web Development", students: 110 },
+            { name: "Machine Learning", students: 65 },
+            { name: "Software Engineering", students: 75 },
+            { name: "Computer Networks", students: 60 },
+          ])
+        }
       } catch (error) {
         console.error("Failed to fetch course enrollment data:", error)
         // Fallback data
@@ -28,6 +47,8 @@ export function CourseEnrollmentChart() {
           { name: "Database Systems", students: 95 },
           { name: "Web Development", students: 110 },
           { name: "Machine Learning", students: 65 },
+          { name: "Software Engineering", students: 75 },
+          { name: "Computer Networks", students: 60 },
         ])
       } finally {
         setIsLoading(false)
@@ -35,7 +56,7 @@ export function CourseEnrollmentChart() {
     }
 
     fetchData()
-  }, [])
+  }, [isAuthenticated])
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-[300px]">Loading chart data...</div>

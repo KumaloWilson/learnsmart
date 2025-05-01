@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { fetchWithAuth } from "@/lib/api-helpers"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { fetchWithAuth } from "../lib/api-helpers"
+import { useAuth } from "@/hooks/use-auth"
 
 interface ActivityItem {
   id: string
@@ -18,24 +19,102 @@ interface ActivityItem {
 }
 
 export function RecentActivity() {
+  const { isAuthenticated } = useAuth()
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchActivities = async () => {
+      if (!isAuthenticated) {
+        // Don't fetch if not authenticated yet
+        return
+      }
+
       try {
         const data = await fetchWithAuth("/dashboard/recent-activity")
-        setActivities(data || [])
+        if (data) {
+          setActivities(data)
+        } else {
+          // Fallback data
+          setActivities([
+            {
+              id: "1",
+              action: "created",
+              user: { name: "John Doe", email: "john@example.com" },
+              entity: "Course",
+              entityId: "1",
+              timestamp: new Date().toISOString(),
+            },
+            {
+              id: "2",
+              action: "updated",
+              user: { name: "Jane Smith", email: "jane@example.com" },
+              entity: "Program",
+              entityId: "3",
+              timestamp: new Date(Date.now() - 3600000).toISOString(),
+            },
+            {
+              id: "3",
+              action: "deleted",
+              user: { name: "Admin User", email: "admin@example.com" },
+              entity: "Department",
+              entityId: "2",
+              timestamp: new Date(Date.now() - 7200000).toISOString(),
+            },
+            {
+              id: "4",
+              action: "created",
+              user: { name: "Sarah Johnson", email: "sarah@example.com" },
+              entity: "School",
+              entityId: "4",
+              timestamp: new Date(Date.now() - 86400000).toISOString(),
+            },
+            {
+              id: "5",
+              action: "updated",
+              user: { name: "Michael Brown", email: "michael@example.com" },
+              entity: "User",
+              entityId: "7",
+              timestamp: new Date(Date.now() - 172800000).toISOString(),
+            },
+          ])
+        }
       } catch (error) {
         console.error("Failed to fetch recent activities:", error)
-        setActivities([])
+        // Fallback data
+        setActivities([
+          {
+            id: "1",
+            action: "created",
+            user: { name: "John Doe", email: "john@example.com" },
+            entity: "Course",
+            entityId: "1",
+            timestamp: new Date().toISOString(),
+          },
+          {
+            id: "2",
+            action: "updated",
+            user: { name: "Jane Smith", email: "jane@example.com" },
+            entity: "Program",
+            entityId: "3",
+            timestamp: new Date(Date.now() - 3600000).toISOString(),
+          },
+          {
+            id: "3",
+            action: "deleted",
+            user: { name: "Admin User", email: "admin@example.com" },
+            entity: "Department",
+            entityId: "2",
+            timestamp: new Date(Date.now() - 7200000).toISOString(),
+          },
+        ])
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchActivities()
-  }, [])
+  }, [isAuthenticated])
 
   if (isLoading) {
     return (
@@ -53,40 +132,13 @@ export function RecentActivity() {
     )
   }
 
-  // If no real data, show placeholder data
-  const displayActivities =
-    activities.length > 0
-      ? activities
-      : [
-          {
-            id: "1",
-            action: "created",
-            user: { name: "Admin User", email: "admin@example.com" },
-            entity: "Course",
-            entityId: "course-123",
-            timestamp: new Date().toISOString(),
-          },
-          {
-            id: "2",
-            action: "updated",
-            user: { name: "John Doe", email: "john@example.com" },
-            entity: "Program",
-            entityId: "program-456",
-            timestamp: new Date(Date.now() - 3600000).toISOString(),
-          },
-          {
-            id: "3",
-            action: "deleted",
-            user: { name: "Jane Smith", email: "jane@example.com" },
-            entity: "Department",
-            entityId: "dept-789",
-            timestamp: new Date(Date.now() - 7200000).toISOString(),
-          },
-        ]
+  if (activities.length === 0) {
+    return <div className="text-center py-8 text-muted-foreground">No recent activity to display</div>
+  }
 
   return (
     <div className="space-y-4">
-      {displayActivities.map((activity) => (
+      {activities.map((activity) => (
         <div key={activity.id} className="flex items-start gap-4">
           <Avatar>
             <AvatarFallback>

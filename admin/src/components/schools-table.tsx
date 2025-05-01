@@ -2,12 +2,24 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table"
 import { ArrowUpDown, Edit, MoreHorizontal, Trash } from "lucide-react"
-import { ColumnDef, SortingState, ColumnFiltersState, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, useReactTable, flexRender } from "@tanstack/react-table"
+import { fetchWithAuth } from "@/lib/api-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
 
 import {
   AlertDialog,
@@ -19,7 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { fetchWithAuth } from "../lib/api-helpers"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "./ui/use-toast"
 
 interface School {
@@ -165,7 +177,57 @@ export function SchoolsTable() {
   }
 
   if (isLoading) {
-    return <div className="py-8 text-center">Loading schools...</div>
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-[250px]" />
+        </div>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
+                  <Skeleton className="h-4 w-[100px]" />
+                </TableHead>
+                <TableHead>
+                  <Skeleton className="h-4 w-[100px]" />
+                </TableHead>
+                <TableHead>
+                  <Skeleton className="h-4 w-[200px]" />
+                </TableHead>
+                <TableHead>
+                  <Skeleton className="h-4 w-[100px]" />
+                </TableHead>
+                <TableHead>
+                  <Skeleton className="h-4 w-[50px]" />
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[150px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[100px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[300px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[100px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[50px]" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Edit, MoreHorizontal, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
+import { fetchWithAuth } from "@/lib/api-helpers"
+import { useToast } from "./ui/use-toast"
 
 interface Course {
   id: string
@@ -32,15 +34,32 @@ interface Course {
   createdAt: string
 }
 
-interface CoursesTableProps {
-  courses: Course[]
-  isLoading: boolean
-  onDelete: (id: string) => void
-}
-
-export function CoursesTable({ courses, isLoading, onDelete }: CoursesTableProps) {
+export function CoursesTable() {
+  const [courses, setCourses] = useState<Course[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const data = await fetchWithAuth("/courses")
+        setCourses(data)
+      } catch (error) {
+        console.error("Failed to fetch courses:", error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load courses. Please try again.",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchCourses()
+  }, [toast])
 
   const filteredCourses = courses.filter(
     (course) =>
@@ -54,10 +73,29 @@ export function CoursesTable({ courses, isLoading, onDelete }: CoursesTableProps
     setDeleteId(id)
   }
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (deleteId) {
-      onDelete(deleteId)
-      setDeleteId(null)
+      try {
+        await fetchWithAuth(`/courses/${deleteId}`, {
+          method: "DELETE",
+        })
+
+        setCourses((prev) => prev.filter((course) => course.id !== deleteId))
+
+        toast({
+          title: "Course deleted",
+          description: "The course has been successfully deleted.",
+        })
+      } catch (error) {
+        console.error("Failed to delete course:", error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to delete course. Please try again.",
+        })
+      } finally {
+        setDeleteId(null)
+      }
     }
   }
 
@@ -156,7 +194,7 @@ export function CoursesTable({ courses, isLoading, onDelete }: CoursesTableProps
         </Table>
       </div>
 
-      <AlertDialog open={!!deleteId} onOpenChange={(open: boolean) => !open && setDeleteId(null)}>
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>

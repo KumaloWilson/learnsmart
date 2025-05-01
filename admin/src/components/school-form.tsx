@@ -2,46 +2,28 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { fetchWithAuth } from "../lib/api-helpers"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { fetchWithAuth } from "@/lib/api-helpers"
 import { useToast } from "./ui/use-toast"
 
-
 const formSchema = z.object({
-  name: z
-    .string()
-    .min(2, {
-      message: "School name must be at least 2 characters.",
-    })
-    .max(100, {
-      message: "School name must not exceed 100 characters.",
-    }),
-  code: z
-    .string()
-    .max(20, {
-      message: "Code must not exceed 20 characters.",
-    })
-    .optional(),
-  description: z
-    .string()
-    .max(500, {
-      message: "Description must not exceed 500 characters.",
-    })
-    .optional(),
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  code: z.string().min(2, { message: "Code must be at least 2 characters" }),
+  description: z.string().optional(),
 })
 
 interface SchoolFormProps {
   school?: {
     id: string
     name: string
-    code?: string
+    code: string
     description?: string
   }
 }
@@ -84,11 +66,12 @@ export function SchoolForm({ school }: SchoolFormProps) {
 
         toast({
           title: "School created",
-          description: "The new school has been successfully created.",
+          description: "The school has been successfully created.",
         })
       }
 
       router.push("/schools")
+      router.refresh()
     } catch (error) {
       console.error("Failed to save school:", error)
       toast({
@@ -103,9 +86,15 @@ export function SchoolForm({ school }: SchoolFormProps) {
 
   return (
     <Card>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4 pt-6">
+      <CardHeader>
+        <CardTitle>{school ? "Edit School" : "Create School"}</CardTitle>
+        <CardDescription>
+          {school ? "Update the school details below." : "Enter the details for the new school."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -113,9 +102,9 @@ export function SchoolForm({ school }: SchoolFormProps) {
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="School of Engineering" {...field} />
+                    <Input placeholder="e.g., School of Engineering" {...field} />
                   </FormControl>
-                  <FormDescription>The official name of the school.</FormDescription>
+                  <FormDescription>The full name of the school.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -128,9 +117,9 @@ export function SchoolForm({ school }: SchoolFormProps) {
                 <FormItem>
                   <FormLabel>Code</FormLabel>
                   <FormControl>
-                    <Input placeholder="ENG" {...field} />
+                    <Input placeholder="e.g., ENG" {...field} />
                   </FormControl>
-                  <FormDescription>A short code or abbreviation for the school (optional).</FormDescription>
+                  <FormDescription>A short code or abbreviation for the school.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -143,25 +132,25 @@ export function SchoolForm({ school }: SchoolFormProps) {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="A brief description of the school..." className="min-h-[100px]" {...field} />
+                    <Textarea placeholder="Enter a description of the school..." className="min-h-[100px]" {...field} />
                   </FormControl>
                   <FormDescription>A brief description of the school (optional).</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </CardContent>
 
-          <CardFooter className="flex justify-between">
-            <Button type="button" variant="outline" onClick={() => router.push("/schools")}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : school ? "Update School" : "Create School"}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" type="button" onClick={() => router.back()} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : school ? "Update School" : "Create School"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
     </Card>
   )
 }

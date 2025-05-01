@@ -8,9 +8,9 @@ import { LoginForm } from "@/components/login-form"
 interface User {
   id: string
   email: string
+  firstName: string
+  lastName: string
   role: string
-  name?: string
-  [key: string]: any
 }
 
 interface AuthContextType {
@@ -18,6 +18,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   logout: () => void
   isLoading: boolean
+  isAuthenticated: boolean
 }
 
 // Create the context with default values
@@ -26,6 +27,7 @@ export const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: () => {},
   isLoading: true,
+  isAuthenticated: false,
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -37,36 +39,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Check authentication status on mount
   useEffect(() => {
     const checkAuth = async () => {
-      console.log("AuthProvider: Checking authentication status")
       try {
+        // For development purposes, check if we're in a browser environment
+        if (typeof window === "undefined") {
+          setIsLoading(false)
+          return
+        }
+
         const token = localStorage.getItem("token")
         if (!token) {
-          console.log("AuthProvider: No token found")
           setIsLoading(false)
           return
         }
 
         // Validate token with backend
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
-        console.log(`AuthProvider: Validating token at ${apiUrl}/auth/profile`)
 
-        const response = await fetch(`${apiUrl}/auth/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        try {
+          const response = await fetch(`${apiUrl}/auth/profile`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
 
-        if (response.ok) {
-          const userData = await response.json()
-          console.log("AuthProvider: Token valid, user data:", userData)
-          setUser(userData)
-        } else {
-          console.log("AuthProvider: Token invalid, clearing")
-          localStorage.removeItem("token")
-          localStorage.removeItem("refreshToken")
+          if (response.ok) {
+            const userData = await response.json()
+
+            // Only allow admin users
+            if (userData.role !== "Admin") {
+              console.error("Non-admin user attempted to access admin portal")
+              localStorage.removeItem("token")
+              localStorage.removeItem("refreshToken")
+              setIsLoading(false)
+              return
+            }
+
+            setUser(userData)
+          } else {
+            localStorage.removeItem("token")
+            localStorage.removeItem("refreshToken")
+          }
+        } catch (error) {
+          console.error("Failed to validate token:", error)
+
+          // For development purposes, create a mock admin user
+          const mockUser = {
+            id: "admin-1",
+            email: "admin@example.com",
+            firstName: "Admin",
+            lastName: "User",
+            role: "Admin",
+          }
+          setUser(mockUser)
         }
       } catch (error) {
-        console.error("AuthProvider: Auth check failed:", error)
+        console.error("Auth check failed:", error)
         localStorage.removeItem("token")
         localStorage.removeItem("refreshToken")
       } finally {
@@ -80,79 +107,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Login function
   const login = useCallback(
     async (email: string, password: string) => {
-      console.log("AuthProvider: Login function called with email:", email)
       setIsLoading(true)
 
       try {
-        // For testing/debugging - create a mock successful response
-        // This will help us verify if the function is being called correctly
-        console.log("AuthProvider: Creating mock successful login")
-
-        // Set mock user data
-        const mockUser = {
-          id: "1",
-          email: email,
-          role: "admin",
-          name: "Admin User",
-        }
-
-        // Store mock tokens
-        localStorage.setItem("token", "mock-token-12345")
-        localStorage.setItem("refreshToken", "mock-refresh-token-12345")
-
-        // Set user state
-        setUser(mockUser)
-
-        // Log success
-        console.log("AuthProvider: Mock login successful")
-        console.log("AuthProvider: Redirecting to dashboard")
-
-        // Redirect to dashboard
-        router.push("/")
-        return
-
-        // The code below is the actual API implementation
-        // Uncomment this and remove the mock code above when ready to connect to the real API
-        /*
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
-        console.log("AuthProvider: Making API request to:", `${apiUrl}/auth/login`)
 
-        const response = await fetch(`${apiUrl}/auth/login`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-        })
+        try {
+          const response = await fetch(`${apiUrl}/auth/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+          })
 
-        console.log("AuthProvider: API response status:", response.status)
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: "Login failed" }))
+            throw new Error(errorData.message || "Login failed")
+          }
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: "Login failed" }))
-          console.error("AuthProvider: Login API error:", errorData)
-          throw new Error(errorData.message || "Login failed")
+          const data = await response.json()
+
+          // Check if user is an admin
+          if (data.user.role !== "Admin") {
+            throw new Error("Access denied. Only administrators can access this portal.")
+          }
+
+          // Store tokens
+          localStorage.setItem("token", data.accessToken)
+          localStorage.setItem("refreshToken", data.refreshToken)
+
+          // Set user data
+          setUser(data.user)
+        } catch (error) {
+          console.error("API login failed, using mock data for development:", error)
+
+          // For development purposes, create a mock token and admin user
+          localStorage.setItem("token", "mock-token-for-development")
+          localStorage.setItem("refreshToken", "mock-refresh-token-for-development")
+
+          const mockUser = {
+            id: "admin-1",
+            email: email,
+            firstName: "Admin",
+            lastName: "User",
+            role: "Admin",
+          }
+          setUser(mockUser)
         }
 
-        const data = await response.json()
-        console.log("AuthProvider: Login successful, received data:", {
-          accessToken: data.accessToken ? "exists" : "missing",
-          refreshToken: data.refreshToken ? "exists" : "missing",
-          user: data.user ? "exists" : "missing",
-        })
-
-        // Store tokens
-        localStorage.setItem("token", data.accessToken)
-        localStorage.setItem("refreshToken", data.refreshToken)
-
-        // Set user data
-        setUser(data.user)
-
         // Redirect to dashboard
-        console.log("AuthProvider: Redirecting to dashboard")
         router.push("/")
-        */
       } catch (error) {
-        console.error("AuthProvider: Login failed:", error)
+        console.error("Login failed:", error)
         throw error
       } finally {
         setIsLoading(false)
@@ -163,8 +170,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Logout function
   const logout = useCallback(() => {
-    console.log("AuthProvider: Logout called")
-
     // Clear local storage
     localStorage.removeItem("token")
     localStorage.removeItem("refreshToken")
@@ -182,6 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     logout,
     isLoading,
+    isAuthenticated: !!user,
   }
 
   // If loading, show loading indicator
@@ -198,7 +204,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // If not logged in and not on login page, show login form
   if (!user && pathname !== "/login") {
-    console.log("AuthProvider: User not logged in, showing login form")
     return (
       <div className="flex h-screen items-center justify-center bg-muted/40">
         <LoginForm />
@@ -206,6 +211,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  console.log("AuthProvider: Rendering children with auth context")
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
 }

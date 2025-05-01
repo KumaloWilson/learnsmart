@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Edit, MoreHorizontal, UserCog } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -26,6 +26,9 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
+import { fetchWithAuth } from "@/lib/api-helpers"
+import { useToast } from "./ui/use-toast"
+
 
 interface User {
   id: string
@@ -37,16 +40,33 @@ interface User {
   createdAt: string
 }
 
-interface UsersTableProps {
-  users: User[]
-  isLoading: boolean
-  onStatusChange: (id: string, isActive: boolean) => void
-}
-
-export function UsersTable({ users, isLoading, onStatusChange }: UsersTableProps) {
+export function UsersTable() {
+  const [users, setUsers] = useState<User[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusChangeId, setStatusChangeId] = useState<string | null>(null)
   const [newStatus, setNewStatus] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const data = await fetchWithAuth("/users")
+        setUsers(data)
+      } catch (error) {
+        console.error("Failed to fetch users:", error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load users. Please try again.",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchUsers()
+  }, [toast])
 
   const filteredUsers = users.filter(
     (user) =>
@@ -61,10 +81,30 @@ export function UsersTable({ users, isLoading, onStatusChange }: UsersTableProps
     setNewStatus(!currentStatus)
   }
 
-  const handleStatusChangeConfirm = () => {
+  const handleStatusChangeConfirm = async () => {
     if (statusChangeId) {
-      onStatusChange(statusChangeId, newStatus)
-      setStatusChangeId(null)
+      try {
+        await fetchWithAuth(`/users/${statusChangeId}/status`, {
+          method: "PATCH",
+          body: JSON.stringify({ isActive: newStatus }),
+        })
+
+        setUsers((prev) => prev.map((user) => (user.id === statusChangeId ? { ...user, isActive: newStatus } : user)))
+
+        toast({
+          title: `User ${newStatus ? "activated" : "deactivated"}`,
+          description: `The user has been successfully ${newStatus ? "activated" : "deactivated"}.`,
+        })
+      } catch (error) {
+        console.error(`Failed to ${newStatus ? "activate" : "deactivate"} user:`, error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: `Failed to ${newStatus ? "activate" : "deactivate"} user. Please try again.`,
+        })
+      } finally {
+        setStatusChangeId(null)
+      }
     }
   }
 

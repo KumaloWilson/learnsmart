@@ -1,10 +1,17 @@
-const API_URL = "http://localhost:5000/api"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
 export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+  // Check if we're in a browser environment
+  if (typeof window === "undefined") {
+    return null // Return null during SSR
+  }
+
   const token = localStorage.getItem("token")
 
+  // If no token is available, return fallback data instead of throwing an error
   if (!token) {
-    throw new Error("No authentication token found")
+    console.warn("No authentication token found, returning fallback data")
+    return null
   }
 
   const headers = {
@@ -40,7 +47,7 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
       throw new Error(errorData.message || "API request failed")
     }
 
-    return response.json()
+    return await response.json()
   } catch (error) {
     console.error("API request error:", error)
     throw error

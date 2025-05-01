@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Edit, MoreHorizontal, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { fetchWithAuth } from "@/lib/api-helpers"
+import { useToast } from "./ui/use-toast"
 
 interface Department {
   id: string
@@ -28,15 +30,32 @@ interface Department {
   createdAt: string
 }
 
-interface DepartmentsTableProps {
-  departments: Department[]
-  isLoading: boolean
-  onDelete: (id: string) => void
-}
-
-export function DepartmentsTable({ departments, isLoading, onDelete }: DepartmentsTableProps) {
+export function DepartmentsTable() {
+  const [departments, setDepartments] = useState<Department[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const data = await fetchWithAuth("/departments")
+        setDepartments(data)
+      } catch (error) {
+        console.error("Failed to fetch departments:", error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load departments. Please try again.",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchDepartments()
+  }, [toast])
 
   const filteredDepartments = departments.filter(
     (department) =>
@@ -49,10 +68,29 @@ export function DepartmentsTable({ departments, isLoading, onDelete }: Departmen
     setDeleteId(id)
   }
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (deleteId) {
-      onDelete(deleteId)
-      setDeleteId(null)
+      try {
+        await fetchWithAuth(`/departments/${deleteId}`, {
+          method: "DELETE",
+        })
+
+        setDepartments((prev) => prev.filter((dept) => dept.id !== deleteId))
+
+        toast({
+          title: "Department deleted",
+          description: "The department has been successfully deleted.",
+        })
+      } catch (error) {
+        console.error("Failed to delete department:", error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to delete department. Please try again.",
+        })
+      } finally {
+        setDeleteId(null)
+      }
     }
   }
 
