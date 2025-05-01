@@ -1,5 +1,6 @@
-import axiosInstance from "./axios-instance"
+
 import type { School } from "@/store/slices/schools-slice"
+import { axiosInstance } from "./axios-instance"
 
 export const schoolsApi = {
   getSchools: () => {
