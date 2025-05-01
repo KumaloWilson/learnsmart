@@ -1,5 +1,6 @@
-import axiosInstance from "./axios-instance"
+
 import type { Department } from "@/store/slices/departments-slice"
+import { axiosInstance } from "./axios-instance"
 
 export const departmentsApi = {
   getDepartments: () => {
