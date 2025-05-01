@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -10,9 +11,9 @@ import { CalendarIcon, Download, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { PageHeader } from "../../components/page-header"
-import { cn } from "../../lib/utils"
-import { useToast } from "../../components/ui/use-toast"
+import { cn } from "@/lib/utils"
+import { useToast } from "@/components/ui/use-toast"
+
 
 export default function ReportsPage() {
   const { toast } = useToast()

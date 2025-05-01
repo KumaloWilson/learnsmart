@@ -1,88 +1,103 @@
-"use client"
-
-import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BookOpen, Building2, GraduationCap, Users } from "lucide-react"
-import { fetchWithAuth } from "../lib/api-helpers"
+import { Users, BookOpen, GraduationCap, Building, Library, Calendar } from "lucide-react"
+import { DashboardStatsDto } from "@/lib/api/dashboard-api"
 
-interface StatsData {
-  schoolCount: number
-  departmentCount: number
-  programCount: number
-  courseCount: number
-  studentCount: number
-  lecturerCount: number
+interface DashboardStatsProps {
+  stats: DashboardStatsDto
 }
 
-export function DashboardStats() {
-  const [stats, setStats] = useState<StatsData>({
-    schoolCount: 0,
-    departmentCount: 0,
-    programCount: 0,
-    courseCount: 0,
-    studentCount: 0,
-    lecturerCount: 0,
-  })
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await fetchWithAuth("/dashboard/stats")
-        setStats(data)
-      } catch (error) {
-        console.error("Failed to fetch dashboard stats:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchStats()
-  }, [])
-
+export function DashboardStats({ stats }: DashboardStatsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Schools</CardTitle>
-          <Building2 className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{isLoading ? "..." : stats.schoolCount}</div>
-          <p className="text-xs text-muted-foreground">Total schools in the system</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Programs</CardTitle>
-          <GraduationCap className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{isLoading ? "..." : stats.programCount}</div>
-          <p className="text-xs text-muted-foreground">Academic programs offered</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Courses</CardTitle>
-          <BookOpen className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{isLoading ? "..." : stats.courseCount}</div>
-          <p className="text-xs text-muted-foreground">Total courses available</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Students</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium">Total Students</CardTitle>
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{isLoading ? "..." : stats.studentCount}</div>
-          <p className="text-xs text-muted-foreground">Enrolled students</p>
+          <div className="text-2xl font-bold">{stats.totalStudents.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground">
+            {stats.activeStudents.toLocaleString()} active
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium">Total Lecturers</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.totalLecturers.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground">
+            {stats.activeLecturers.toLocaleString()} active
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
+          <BookOpen className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.totalCourses.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground">Available courses</p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium">Total Programs</CardTitle>
+          <GraduationCap className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.totalPrograms.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground">Academic programs</p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium">Total Departments</CardTitle>
+          <Building className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.totalDepartments.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground">Academic departments</p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium">Total Schools</CardTitle>
+          <Library className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.totalSchools.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground">Academic schools</p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium">Recent Enrollments</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.recentEnrollments.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground">Last 30 days</p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium">Upcoming Assessments</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.upcomingAssessments.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground">Next 7 days</p>
         </CardContent>
       </Card>
     </div>

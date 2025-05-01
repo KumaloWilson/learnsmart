@@ -2,24 +2,18 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
-  // Get the pathname
-  const path = request.nextUrl.pathname
+  // Check for token in cookies (server-side)
+  const token = request.cookies.get("accessToken")?.value
+  const isAuthPage = request.nextUrl.pathname === "/login"
 
-  // Check if the path is the login page
-  const isLoginPage = path === "/login"
-
-  // Check if the user is authenticated
-  const token = request.cookies.get("token")?.value
-  const isAuthenticated = !!token
-
-  // If the user is not authenticated and not on the login page, redirect to login
-  if (!isAuthenticated && !isLoginPage) {
-    return NextResponse.redirect(new URL("/login", request.url))
+  // If trying to access auth page with token, redirect to dashboard
+  if (isAuthPage && token) {
+    return NextResponse.redirect(new URL("/", request.url))
   }
 
-  // If the user is authenticated and on the login page, redirect to dashboard
-  if (isAuthenticated && isLoginPage) {
-    return NextResponse.redirect(new URL("/", request.url))
+  // If trying to access protected page without token, redirect to login
+  if (!isAuthPage && !token) {
+    return NextResponse.redirect(new URL("/login", request.url))
   }
 
   return NextResponse.next()

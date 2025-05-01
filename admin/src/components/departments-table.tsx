@@ -75,8 +75,8 @@ export function DepartmentsTable({ departments, isLoading, onDelete }: Departmen
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>School</TableHead>
               <TableHead>Description</TableHead>
+              <TableHead>School</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
@@ -112,8 +112,8 @@ export function DepartmentsTable({ departments, isLoading, onDelete }: Departmen
               filteredDepartments.map((department) => (
                 <TableRow key={department.id}>
                   <TableCell className="font-medium">{department.name}</TableCell>
-                  <TableCell>{department.schoolName}</TableCell>
                   <TableCell>{department.description}</TableCell>
+                  <TableCell>{department.schoolName}</TableCell>
                   <TableCell>{new Date(department.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -149,7 +149,8 @@ export function DepartmentsTable({ departments, isLoading, onDelete }: Departmen
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the department and all associated data.
+              This action cannot be undone. This will permanently delete the department and may affect related programs
+              and courses.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

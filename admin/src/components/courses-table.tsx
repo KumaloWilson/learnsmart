@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
 
 interface Course {
   id: string
@@ -28,7 +27,6 @@ interface Course {
   credits: number
   programId: string
   programName?: string
-  departmentName?: string
   createdAt: string
 }
 
@@ -46,8 +44,8 @@ export function CoursesTable({ courses, isLoading, onDelete }: CoursesTableProps
     (course) =>
       course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (course.programName && course.programName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (course.departmentName && course.departmentName.toLowerCase().includes(searchTerm.toLowerCase())),
+      course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (course.programName && course.programName.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
   const handleDeleteClick = (id: string) => {
@@ -83,7 +81,6 @@ export function CoursesTable({ courses, isLoading, onDelete }: CoursesTableProps
               <TableHead>Name</TableHead>
               <TableHead>Credits</TableHead>
               <TableHead>Program</TableHead>
-              <TableHead>Department</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -104,16 +101,13 @@ export function CoursesTable({ courses, isLoading, onDelete }: CoursesTableProps
                     <Skeleton className="h-6 w-full" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-6 w-full" />
-                  </TableCell>
-                  <TableCell>
                     <Skeleton className="h-6 w-10" />
                   </TableCell>
                 </TableRow>
               ))
             ) : filteredCourses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   No courses found.
                 </TableCell>
               </TableRow>
@@ -122,11 +116,8 @@ export function CoursesTable({ courses, isLoading, onDelete }: CoursesTableProps
                 <TableRow key={course.id}>
                   <TableCell className="font-medium">{course.code}</TableCell>
                   <TableCell>{course.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{course.credits}</Badge>
-                  </TableCell>
+                  <TableCell>{course.credits}</TableCell>
                   <TableCell>{course.programName}</TableCell>
-                  <TableCell>{course.departmentName}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -156,7 +147,7 @@ export function CoursesTable({ courses, isLoading, onDelete }: CoursesTableProps
         </Table>
       </div>
 
-      <AlertDialog open={!!deleteId} onOpenChange={(open: boolean) => !open && setDeleteId(null)}>
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>

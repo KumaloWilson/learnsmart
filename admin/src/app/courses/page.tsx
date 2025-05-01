@@ -1,43 +1,42 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { CoursesTable } from "../../components/courses-table"
-import { PageHeader } from "../../components/page-header"
-import { fetchWithAuth } from "../../lib/api-helpers"
-import { useToast } from "../../components/ui/use-toast"
+import { PageHeader } from "@/components/page-header"
+import { CoursesTable } from "@/components/courses-table"
+import { useAppDispatch, useAppSelector } from "@/store"
+import { fetchCourses, deleteCourse } from "@/store/slices/courses-slice"
+import { useToast } from "@/components/ui/use-toast"
+import { AdminSidebar } from "@/components/admin-sidebar"
 
 export default function CoursesPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [courses, setCourses] = useState([])
+  const dispatch = useAppDispatch()
+  const { courses, isLoading, error } = useAppSelector((state) => state.courses)
   const { toast } = useToast()
 
-  const loadCourses = async () => {
-    setIsLoading(true)
-    try {
-      const data = await fetchWithAuth("/courses")
-      setCourses(data)
-    } catch (error) {
+  useEffect(() => {
+    dispatch(fetchCourses())
+  }, [dispatch])
+
+  useEffect(() => {
+    if (error) {
       toast({
         title: "Error",
-        description: "Failed to load courses",
+        description: error,
         variant: "destructive",
       })
-    } finally {
-      setIsLoading(false)
     }
-  }
+  }, [error, toast])
 
   const handleDelete = async (id: string) => {
     try {
-      await fetchWithAuth(`/courses/${id}`, { method: "DELETE" })
+      await dispatch(deleteCourse(id)).unwrap()
       toast({
         title: "Success",
         description: "Course deleted successfully",
       })
-      loadCourses()
     } catch (error) {
       toast({
         title: "Error",
@@ -47,17 +46,14 @@ export default function CoursesPage() {
     }
   }
 
-  // Load courses on component mount
-  useEffect(() => {
-    loadCourses()
-  }, [])
-
   return (
-    <div className="container mx-auto py-6">
+    <div className="flex min-h-screen bg-gray-100">
+      <AdminSidebar />
+      <div className="flex-1 p-8">
       <PageHeader
-        heading="Courses"
-        text="Manage courses across all programs"
-        children={
+        title="Courses"
+        description="Manage academic courses across all programs"
+        actions={
           <Link href="/courses/new">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -67,8 +63,19 @@ export default function CoursesPage() {
         }
       />
       <div className="mt-6">
-        <CoursesTable courses={courses} isLoading={isLoading} onDelete={handleDelete} />
+        <CoursesTable 
+          courses={courses.map(course => ({
+            ...course,
+            description: course.description || '',
+            createdAt: course.createdAt || '',
+            updatedAt: course.updatedAt || ''
+          }))} 
+          isLoading={isLoading} 
+          onDelete={handleDelete} 
+        />
       </div>
+      </div>
+    
     </div>
   )
 }

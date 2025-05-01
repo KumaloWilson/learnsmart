@@ -2,125 +2,76 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { PageHeader } from "@/components/page-header"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CourseForm } from "../../../components/course-form"
-import { fetchWithAuth } from "../../../lib/api-helpers"
-import { PageHeader } from "../../../components/page-header"
-import { useToast } from "../../../components/ui/use-toast"
+import { useAppDispatch, useAppSelector } from "@/store"
+import { fetchCourseById, updateCourse } from "@/store/slices/courses-slice"
+import { useToast } from "@/components/ui/use-toast"
+import { CourseForm } from "@/components/course-form"
 
-interface CoursePageProps {
-  params: {
-    id: string
-  }
-}
-
-export default function CoursePage({ params }: CoursePageProps) {
+export default function EditCoursePage({ params }: { params: { id: string } }) {
+  const [isSaving, setIsSaving] = useState(false)
   const router = useRouter()
+  const dispatch = useAppDispatch()
+  const { currentCourse, isLoading, error } = useAppSelector((state) => state.courses)
   const { toast } = useToast()
-  const [course, setCourse] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    const fetchCourse = async () => {
-      try {
-        const response = await fetchWithAuth(`/api/courses/${params.id}`)
-        if (!response.ok) {
-          throw new Error("Failed to fetch course")
-        }
-        const data = await response.json()
-        setCourse(data)
-      } catch (error) {
-        console.error("Error fetching course:", error)
-        toast({
-          title: "Error",
-          description: "Failed to fetch course details",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
+    dispatch(fetchCourseById(params.id))
+  }, [dispatch, params.id])
 
-    fetchCourse()
-  }, [params.id, toast])
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+      router.push("/courses")
+    }
+  }, [error, router, toast])
 
   const handleSubmit = async (data: any) => {
-    setIsSubmitting(true)
+    setIsSaving(true)
     try {
-      const response = await fetchWithAuth(`/api/courses/${params.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to update course")
-      }
+      await dispatch(updateCourse({ id: params.id, courseData: data })).unwrap()
 
       toast({
         title: "Success",
         description: "Course updated successfully",
       })
+
       router.push("/courses")
-      router.refresh()
     } catch (error) {
-      console.error("Error updating course:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update course",
+        description: "Failed to update course",
         variant: "destructive",
       })
     } finally {
-      setIsSubmitting(false)
+      setIsSaving(false)
     }
   }
 
   if (isLoading) {
     return (
       <div className="container mx-auto py-6">
-        <Skeleton className="h-12 w-[250px] mb-4" />
-        <Skeleton className="h-6 w-[350px] mb-8" />
+        <Skeleton className="h-12 w-1/3 mb-4" />
+        <Skeleton className="h-6 w-1/2 mb-8" />
         <div className="space-y-6">
-          <Skeleton className="h-10 w-full max-w-md" />
-          <Skeleton className="h-10 w-full max-w-md" />
-          <Skeleton className="h-32 w-full max-w-md" />
-          <Skeleton className="h-10 w-full max-w-md" />
-          <div className="flex gap-4">
-            <Skeleton className="h-10 w-[100px]" />
-            <Skeleton className="h-10 w-[100px]" />
-          </div>
+          <Skeleton className="h-10 w-full max-w-2xl" />
+          <Skeleton className="h-10 w-full max-w-2xl" />
+          <Skeleton className="h-32 w-full max-w-2xl" />
         </div>
-      </div>
-    )
-  }
-
-  if (!course) {
-    return (
-      <div className="container mx-auto py-6">
-        <PageHeader heading="Course Not Found" text="The requested course could not be found" />
       </div>
     )
   }
 
   return (
     <div className="container mx-auto py-6">
-      <PageHeader heading={`Edit Course: ${course.name}`} text="Update course details" />
-      <div className="mt-8">
-        <CourseForm
-          initialData={{
-            code: course.code,
-            name: course.name,
-            description: course.description,
-            credits: course.credits,
-            programId: course.programId,
-          }}
-          onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
-        />
+      <PageHeader title={`Edit Course: ${currentCourse?.name}`} description="Update course information" />
+      <div className="mt-6">
+        <CourseForm initialData={currentCourse ? { ...currentCourse, level: "undergraduate", description: currentCourse.description || "" } : undefined} onSubmit={handleSubmit} isLoading={isSaving} />
       </div>
     </div>
   )

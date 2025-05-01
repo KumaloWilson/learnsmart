@@ -1,57 +1,35 @@
-"use client"
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
 
-import { useEffect, useState } from "react"
-import { fetchWithAuth } from "../lib/api-helpers"
-import { Progress } from "@/components/ui/progress"
-
-
-interface AtRiskData {
-  programName: string
-  count: number
-  percentage: number
+interface AtRiskStudentsChartProps {
+  data: Array<{
+    name: string
+    value: number
+  }>
 }
 
-export function AtRiskStudentsChart() {
-  const [data, setData] = useState<AtRiskData[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+const COLORS = ["#4f46e5", "#ec4899", "#f59e0b", "#10b981", "#6366f1"]
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetchWithAuth("/dashboard/at-risk-students")
-        setData(response || [])
-      } catch (error) {
-        console.error("Failed to fetch at-risk students data:", error)
-        // Fallback data
-        setData([
-          { programName: "Computer Science", count: 12, percentage: 8 },
-          { programName: "Business Administration", count: 8, percentage: 5 },
-          { programName: "Engineering", count: 15, percentage: 10 },
-        ])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [])
-
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-[200px]">Loading chart data...</div>
-  }
-
+export function AtRiskStudentsChart({ data }: AtRiskStudentsChartProps) {
   return (
-    <div className="space-y-4">
-      {data.map((item) => (
-        <div key={item.programName} className="space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">{item.programName}</span>
-            <span className="text-sm text-muted-foreground">{item.count} students</span>
-          </div>
-          <Progress value={item.percentage} className="h-2" />
-          <p className="text-xs text-muted-foreground">{item.percentage}% of program students</p>
-        </div>
-      ))}
-    </div>
+    <ResponsiveContainer width="100%" height={400}>
+      <PieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          labelLine={false}
+          outerRadius={150}
+          fill="#8884d8"
+          dataKey="value"
+          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip formatter={(value) => [`${value} students`, "At Risk"]} />
+        <Legend />
+      </PieChart>
+    </ResponsiveContainer>
   )
 }

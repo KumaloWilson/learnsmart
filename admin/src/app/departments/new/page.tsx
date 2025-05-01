@@ -2,23 +2,22 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { DepartmentForm } from "../../../components/department-form"
-import { PageHeader } from "../../../components/page-header"
-import { fetchWithAuth } from "../../../lib/api-helpers"
-import { useToast } from "../../../components/ui/use-toast"
+import { PageHeader } from "@/components/page-header"
+import { DepartmentForm } from "@/components/department-form"
+import { useAppDispatch } from "@/store"
+import { createDepartment } from "@/store/slices/departments-slice"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function NewDepartmentPage() {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
+  const dispatch = useAppDispatch()
   const { toast } = useToast()
 
   const handleSubmit = async (data: any) => {
-    setIsLoading(true)
+    setIsSubmitting(true)
     try {
-      await fetchWithAuth("/departments", {
-        method: "POST",
-        body: JSON.stringify(data),
-      })
+      await dispatch(createDepartment(data)).unwrap()
 
       toast({
         title: "Success",
@@ -33,15 +32,15 @@ export default function NewDepartmentPage() {
         variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
     }
   }
 
   return (
     <div className="container mx-auto py-6">
-      <PageHeader heading="Create Department" text="Add a new academic department to the system" />
+      <PageHeader title="Create Department" description="Add a new academic department to the system" />
       <div className="mt-6">
-        <DepartmentForm onSubmit={handleSubmit} isLoading={isLoading} />
+        <DepartmentForm onSubmit={handleSubmit} isLoading={isSubmitting} />
       </div>
     </div>
   )

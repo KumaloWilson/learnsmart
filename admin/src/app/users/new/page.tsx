@@ -2,43 +2,34 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { PageHeader } from "../../../components/page-header"
-import { UserForm } from "../../../components/user-form"
-import { fetchWithAuth } from "../../../lib/api-helpers"
-import { useToast } from "../../../components/ui/use-toast"
+import { PageHeader } from "@/components/page-header"
+import { UserForm } from "@/components/user-form"
+import { useToast } from "@/hooks/use-toast"
+import { useAppDispatch } from "@/store"
+import { createUser } from "@/store/slices/users-slice"
 
 export default function NewUserPage() {
   const router = useRouter()
+  const dispatch = useAppDispatch()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true)
     try {
-      const response = await fetchWithAuth("/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to create user")
-      }
+      await dispatch(createUser(data)).unwrap()
 
       toast({
         title: "Success",
         description: "User created successfully",
       })
+
       router.push("/users")
-      router.refresh()
     } catch (error) {
       console.error("Error creating user:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create user",
+        description: "Failed to create user",
         variant: "destructive",
       })
     } finally {

@@ -1,19 +1,24 @@
-import type React from "react"
+import type { ReactNode } from "react"
 
 interface PageHeaderProps {
-  heading: string
+  title?: string
+  heading?: string
+  description?: string
   text?: string
-  children?: React.ReactNode
+  actions?: ReactNode
 }
 
-export function PageHeader({ heading, text, children }: PageHeaderProps) {
+export function PageHeader({ title, heading, description, text, actions }: PageHeaderProps) {
+  const headerTitle = title || heading
+  const headerDescription = description || text
+
   return (
     <div className="flex items-center justify-between">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{heading}</h1>
-        {text && <p className="text-sm text-muted-foreground">{text}</p>}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">{headerTitle}</h1>
+        {headerDescription && <p className="mt-2 text-lg text-muted-foreground">{headerDescription}</p>}
       </div>
-      {children}
+      {actions && <div className="flex items-center gap-4">{actions}</div>}
     </div>
   )
 }

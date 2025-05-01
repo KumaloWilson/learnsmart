@@ -1,88 +1,30 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useAppDispatch, useAppSelector } from "@/store"
+import { getCurrentUser } from "@/store/slices/auth-slice"
 
-interface User {
-  id: string
-  email: string
-  name?: string
-  role: string
-  [key: string]: any
-}
-
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+export function useAuth(requireAdmin = false) {
   const router = useRouter()
+  const dispatch = useAppDispatch()
+  const { user, isAuthenticated, isLoading } = useAppSelector((state) => state.auth)
 
-  // Load user data from localStorage on mount
   useEffect(() => {
-    const loadUser = () => {
-      try {
-        const userData = localStorage.getItem("userData")
-        if (userData) {
-          setUser(JSON.parse(userData))
-        }
-      } catch (error) {
-        console.error("Failed to load user data:", error)
-      } finally {
-        setIsLoading(false)
-      }
+    if (!isAuthenticated && !isLoading) {
+      dispatch(getCurrentUser())
+    }
+  }, [dispatch, isAuthenticated, isLoading])
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login")
     }
 
-    loadUser()
-  }, [])
-
-  // Login function
-  const login = useCallback(async (email: string, password: string) => {
-    console.log("useAuth: Login called with email:", email)
-
-    try {
-      // For demo purposes, accept any credentials
-      const userData = {
-        id: "1",
-        email,
-        name: email.split("@")[0],
-        role: "admin",
-      }
-
-      // Store in localStorage
-      localStorage.setItem("token", "mock-token-12345")
-      localStorage.setItem("refreshToken", "mock-refresh-token-12345")
-      localStorage.setItem("userData", JSON.stringify(userData))
-
-      // Update state
-      setUser(userData)
-
-      return userData
-    } catch (error) {
-      console.error("Login failed:", error)
-      throw error
+    if (!isLoading && isAuthenticated && requireAdmin && user?.role !== "admin") {
+      router.push("/")
     }
-  }, [])
+  }, [isLoading, isAuthenticated, user, router, requireAdmin])
 
-  // Logout function
-  const logout = useCallback(() => {
-    console.log("useAuth: Logout called")
-
-    // Clear localStorage
-    localStorage.removeItem("token")
-    localStorage.removeItem("refreshToken")
-    localStorage.removeItem("userData")
-
-    // Update state
-    setUser(null)
-
-    // Redirect to login
-    router.push("/login")
-  }, [router])
-
-  return {
-    user,
-    isLoading,
-    login,
-    logout,
-    isAuthenticated: !!user,
-  }
+  return { user, isAuthenticated, isLoading }
 }

@@ -1,60 +1,48 @@
-"use client"
-
-import { useEffect, useState } from "react"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
-import { fetchWithAuth } from "../lib/api-helpers"
 
-
-interface EnrollmentData {
-  name: string
-  students: number
+interface CourseEnrollmentChartProps {
+  data: Array<{
+    name: string
+    total: number
+  }>
 }
 
-export function CourseEnrollmentChart() {
-  const [data, setData] = useState<EnrollmentData[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetchWithAuth("/dashboard/course-enrollments")
-        setData(response || [])
-      } catch (error) {
-        console.error("Failed to fetch course enrollment data:", error)
-        // Fallback data
-        setData([
-          { name: "Introduction to Programming", students: 120 },
-          { name: "Data Structures", students: 85 },
-          { name: "Database Systems", students: 95 },
-          { name: "Web Development", students: 110 },
-          { name: "Machine Learning", students: 65 },
-        ])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [])
-
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-[300px]">Loading chart data...</div>
-  }
-
+export function CourseEnrollmentChart({ data }: CourseEnrollmentChartProps) {
+  // Limit the data to top 5 courses for better display
+  const displayData = data.slice(0, 5)
+  
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data}>
-        <XAxis
-          dataKey="name"
-          tickLine={false}
-          axisLine={false}
-          tick={{ fontSize: 12 }}
-          tickFormatter={(value) => (value.length > 15 ? `${value.substring(0, 15)}...` : value)}
-        />
-        <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
-        <Tooltip />
-        <Bar dataKey="students" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+    <>
+      <ResponsiveContainer width="100%" height={350}>
+        <BarChart data={displayData}>
+          <XAxis 
+            dataKey="name" 
+            stroke="#888888" 
+            fontSize={12} 
+            tickLine={false} 
+            axisLine={false} 
+            // Truncate long course names
+            tickFormatter={(value) => value.length > 20 ? `${value.substring(0, 20)}...` : value}
+          />
+          <YAxis 
+            stroke="#888888" 
+            fontSize={12} 
+            tickLine={false} 
+            axisLine={false} 
+            tickFormatter={(value) => `${value}`} 
+          />
+          <Tooltip 
+            formatter={(value) => [`${value} students`, 'Enrollment']}
+            labelFormatter={(label) => `Course: ${label}`}
+          />
+          <Bar dataKey="total" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+      {data.length > 5 && (
+        <p className="text-center text-xs text-muted-foreground mt-2">
+          Showing top 5 of {data.length} courses
+        </p>
+      )}
+    </>
   )
 }

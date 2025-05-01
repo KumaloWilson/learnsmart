@@ -2,46 +2,39 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { PageHeader } from "@/components/page-header"
+import { DepartmentForm } from "@/components/department-form"
 import { Skeleton } from "@/components/ui/skeleton"
-import { DepartmentForm } from "../../../components/department-form"
-import { PageHeader } from "../../../components/page-header"
-import { fetchWithAuth } from "../../../lib/api-helpers"
-import { useToast } from "../../../components/ui/use-toast"
+import { useAppDispatch, useAppSelector } from "@/store"
+import { fetchDepartmentById, updateDepartment } from "@/store/slices/departments-slice"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function EditDepartmentPage({ params }: { params: { id: string } }) {
-  const [department, setDepartment] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const router = useRouter()
+  const dispatch = useAppDispatch()
+  const { currentDepartment, isLoading, error } = useAppSelector((state) => state.departments)
   const { toast } = useToast()
 
   useEffect(() => {
-    const fetchDepartment = async () => {
-      try {
-        const data = await fetchWithAuth(`/departments/${params.id}`)
-        setDepartment(data)
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load department details",
-          variant: "destructive",
-        })
-        router.push("/departments")
-      } finally {
-        setIsLoading(false)
-      }
-    }
+    dispatch(fetchDepartmentById(params.id))
+  }, [dispatch, params.id])
 
-    fetchDepartment()
-  }, [params.id, router, toast])
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+      router.push("/departments")
+    }
+  }, [error, router, toast])
 
   const handleSubmit = async (data: any) => {
     setIsSaving(true)
     try {
-      await fetchWithAuth(`/departments/${params.id}`, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      })
+      await dispatch(updateDepartment({ id: params.id, departmentData: data })).unwrap()
 
       toast({
         title: "Success",
@@ -76,9 +69,16 @@ export default function EditDepartmentPage({ params }: { params: { id: string } 
 
   return (
     <div className="container mx-auto py-6">
-      <PageHeader heading={`Edit Department: ${department?.name}`} text="Update department information" />
+      <PageHeader title={`Edit Department: ${currentDepartment?.name}`} description="Update department information" />
       <div className="mt-6">
-        <DepartmentForm initialData={department} onSubmit={handleSubmit} isLoading={isSaving} />
+        <DepartmentForm 
+          initialData={currentDepartment ? {
+            ...currentDepartment,
+            description: currentDepartment.description || ''
+          } : undefined} 
+          onSubmit={handleSubmit} 
+          isLoading={isSaving} 
+        />
       </div>
     </div>
   )

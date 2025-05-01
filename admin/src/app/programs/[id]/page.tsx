@@ -2,46 +2,39 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { PageHeader } from "@/components/page-header"
+import { ProgramForm } from "@/components/program-form"
 import { Skeleton } from "@/components/ui/skeleton"
-import { PageHeader } from "../../../components/page-header"
-import { ProgramForm } from "../../../components/program-form"
-import { fetchWithAuth } from "../../../lib/api-helpers"
-import { useToast } from "../../../components/ui/use-toast"
+import { useAppDispatch, useAppSelector } from "@/store"
+import { fetchProgramById, updateProgram } from "@/store/slices/programs-slice"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function EditProgramPage({ params }: { params: { id: string } }) {
-  const [program, setProgram] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const router = useRouter()
+  const dispatch = useAppDispatch()
+  const { currentProgram, isLoading, error } = useAppSelector((state) => state.programs)
   const { toast } = useToast()
 
   useEffect(() => {
-    const fetchProgram = async () => {
-      try {
-        const data = await fetchWithAuth(`/programs/${params.id}`)
-        setProgram(data)
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load program details",
-          variant: "destructive",
-        })
-        router.push("/programs")
-      } finally {
-        setIsLoading(false)
-      }
-    }
+    dispatch(fetchProgramById(params.id))
+  }, [dispatch, params.id])
 
-    fetchProgram()
-  }, [params.id, router, toast])
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+      router.push("/programs")
+    }
+  }, [error, router, toast])
 
   const handleSubmit = async (data: any) => {
     setIsSaving(true)
     try {
-      await fetchWithAuth(`/programs/${params.id}`, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      })
+      await dispatch(updateProgram({ id: params.id, programData: data })).unwrap()
 
       toast({
         title: "Success",
@@ -73,12 +66,24 @@ export default function EditProgramPage({ params }: { params: { id: string } }) 
       </div>
     )
   }
-
   return (
     <div className="container mx-auto py-6">
-      <PageHeader heading={`Edit Program: ${program?.name}`} text="Update program information" />
+      <PageHeader title={`Edit Program: ${currentProgram?.name}`} description="Update program information" />
       <div className="mt-6">
-        <ProgramForm initialData={program} onSubmit={handleSubmit} isLoading={isSaving} />
+        {currentProgram && (
+          <ProgramForm
+            initialData={{
+              id: currentProgram.id,
+              name: currentProgram.name,
+              code: currentProgram.code,
+              level: currentProgram.level,
+              duration: currentProgram.durationYears,
+              departmentId: currentProgram.departmentId,
+            }}
+            onSubmit={handleSubmit}
+            isLoading={isSaving}
+          />
+        )}
       </div>
     </div>
   )
