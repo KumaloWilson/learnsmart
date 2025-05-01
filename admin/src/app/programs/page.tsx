@@ -9,6 +9,7 @@ import { ProgramsTable } from "@/components/programs-table"
 import { useAppDispatch, useAppSelector } from "@/store"
 import { fetchPrograms, deleteProgram } from "@/store/slices/programs-slice"
 import { useToast } from "@/components/ui/use-toast"
+import { AdminSidebar } from "@/components/admin-sidebar"
 
 export default function ProgramsPage() {
   const dispatch = useAppDispatch()
@@ -45,21 +46,25 @@ export default function ProgramsPage() {
     }
   }
 
+
   return (
-    <div className="container mx-auto py-6">
-      <PageHeader
-        title="Programs"
-        description="Manage academic programs across all departments"
-        actions={
-          <Link href="/programs/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Program
-            </Button>
-          </Link>
-        }
-      />
-      <div className="mt-6">
+    <div className="flex min-h-screen bg-gray-100">
+      <AdminSidebar />
+      <div className="flex-1 p-8">
+        <PageHeader
+          title="Programs"
+          description="Manage academic programs across all departments"
+          actions={
+            <Link href="/programs/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Program
+              </Button>
+            </Link>
+          }
+        />
+
+<div className="mt-6">
         <ProgramsTable 
           programs={programs.map(p => ({ 
             ...p, 
@@ -71,6 +76,10 @@ export default function ProgramsPage() {
           onDelete={handleDelete} 
         />
       </div>
+      </div>
+
+      
+    
     </div>
   )
 }

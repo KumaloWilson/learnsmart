@@ -1,5 +1,6 @@
-import axiosInstance from "./axios-instance"
+
 import type { Program } from "@/store/slices/programs-slice"
+import { axiosInstance } from "./axios-instance"
 
 export const programsApi = {
   getPrograms: () => {
