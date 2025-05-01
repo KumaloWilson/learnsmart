@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAppDispatch } from "@/store"
+import { useAppDispatch, useAppSelector } from "@/store"
 import { loginUser } from "@/store/slices/auth-slice"
 import { LoginForm } from "@/components/login-form"
 import { useToast } from "@/components/ui/use-toast"
@@ -12,6 +12,16 @@ export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Track authentication state from the Redux store
+  const { isAuthenticated } = useAppSelector((state) => state.auth)
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/")
+    }
+  }, [isAuthenticated, router])
 
   const handleLogin = async (credentials: { email: string; password: string }) => {
     setIsLoading(true)
@@ -22,7 +32,7 @@ export default function LoginPage() {
           title: "Success",
           description: "Logged in successfully",
         })
-        router.push("/")
+        // No need to manually redirect here - the useEffect will handle it
       } else if (loginUser.rejected.match(resultAction)) {
         toast({
           title: "Error",

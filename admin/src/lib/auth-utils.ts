@@ -1,5 +1,5 @@
 // Storage keys
-const TOKEN_KEY = "admin_auth_token"
+const TOKEN_KEY = "authToken" // Changed to match what's used in the auth-slice
 const USER_KEY = "admin_user"
 
 // Get auth token from localStorage

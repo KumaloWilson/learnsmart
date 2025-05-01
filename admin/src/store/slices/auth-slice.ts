@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
 import { authApi } from '../../lib/api/auth-api';
+import Cookies from 'js-cookie';
 
 interface User {
   id: string
@@ -20,7 +21,7 @@ interface AuthState {
 const initialState: AuthState = {
   user: null,
   token: typeof window !== "undefined" ? localStorage.getItem("authToken") : null,
-  isAuthenticated: false,
+  isAuthenticated: typeof window !== "undefined" ? !!localStorage.getItem("authToken") : false,
   isLoading: false,
   error: null,
 }
@@ -64,12 +65,14 @@ const authSlice = createSlice({
       state.token = action.payload.token
       state.isAuthenticated = true
       localStorage.setItem("authToken", action.payload.token)
+      Cookies.set("authToken", action.payload.token, { path: "/" })
     },
     clearCredentials: (state) => {
       state.user = null
       state.token = null
       state.isAuthenticated = false
       localStorage.removeItem("authToken")
+      Cookies.remove("authToken", { path: "/" })
     },
   },
   extraReducers: (builder) => {
@@ -83,7 +86,11 @@ const authSlice = createSlice({
         state.user = action.payload.data.user
         state.token = action.payload.data.token
         state.isAuthenticated = true
+        
+        // Store token in both localStorage and cookies
         localStorage.setItem("authToken", action.payload.data.token)
+        localStorage.setItem("admin_user", JSON.stringify(action.payload.data.user))
+        Cookies.set("authToken", action.payload.data.token, { path: "/" })
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false
@@ -98,6 +105,8 @@ const authSlice = createSlice({
         state.token = null
         state.isAuthenticated = false
         localStorage.removeItem("authToken")
+        localStorage.removeItem("admin_user")
+        Cookies.remove("authToken", { path: "/" })
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.isLoading = false
@@ -111,6 +120,7 @@ const authSlice = createSlice({
         state.isLoading = false
         state.user = action.payload.data
         state.isAuthenticated = true
+        localStorage.setItem("admin_user", JSON.stringify(action.payload.data))
       })
       .addCase(fetchCurrentUser.rejected, (state, action) => {
         state.isLoading = false

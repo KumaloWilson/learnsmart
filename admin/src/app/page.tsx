@@ -8,8 +8,8 @@ import { DashboardStats } from "@/components/dashboard-stats"
 import { RecentActivity } from "@/components/recent-activity"
 import { CourseEnrollmentChart } from "@/components/course-enrollment-chart"
 import { AtRiskStudentsChart } from "@/components/at-risk-students-chart"
-import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch()
@@ -65,7 +65,12 @@ export default function DashboardPage() {
             {isLoading ? (
               <Skeleton className="h-64 w-full" />
             ) : stats?.courseEnrollmentData ? (
-              <CourseEnrollmentChart data={stats.courseEnrollmentData} />
+              <CourseEnrollmentChart
+                data={stats.courseEnrollmentData.map((item) => ({
+                  name: item.courseName,
+                  total: item.enrollmentCount,
+                }))}
+              />
             ) : null}
           </div>
         </div>
@@ -75,7 +80,12 @@ export default function DashboardPage() {
           {isLoading ? (
             <Skeleton className="h-64 w-full" />
           ) : stats?.atRiskStudentsData ? (
-            <AtRiskStudentsChart data={stats.atRiskStudentsData} />
+            <AtRiskStudentsChart
+              data={stats.atRiskStudentsData.map((item) => ({
+                name: item.programName,
+                value: item.atRiskCount,
+              }))}
+            />
           ) : null}
         </div>
       </div>

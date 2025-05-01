@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 
+
 interface ActivityItem {
   id: string
   action: string
