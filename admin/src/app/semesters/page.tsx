@@ -1,54 +1,37 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import Link from "next/link"
+import { PageHeader } from "@/components/page-header"
+import { SemestersTable } from "@/components/semesters-table"
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
 import { Plus } from "lucide-react"
-import { Button } from "react-day-picker"
-import { PageHeader } from "../../components/page-header"
-import { SemestersTable } from "../../components/semesters-table"
-import { fetchWithAuth } from "../../lib/api-helpers"
-import { useToast } from "../../components/ui/use-toast"
+import { useAppDispatch, useAppSelector } from "@/store"
+import { fetchSemesters, deleteSemester } from "@/store/slices/semesters-slice"
 
 export default function SemestersPage() {
+  const dispatch = useAppDispatch()
+  const { semesters, isLoading, error } = useAppSelector((state) => state.semesters)
   const { toast } = useToast()
-  const [semesters, setSemesters] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const fetchSemesters = async () => {
-      try {
-        const response = await fetchWithAuth("/api/semesters")
-        if (!response.ok) {
-          throw new Error("Failed to fetch semesters")
-        }
-        const data = await response.json()
-        setSemesters(data)
-      } catch (error) {
-        console.error("Error fetching semesters:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load semesters",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
+    dispatch(fetchSemesters())
+  }, [dispatch])
 
-    fetchSemesters()
-  }, [toast])
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+    }
+  }, [error, toast])
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetchWithAuth(`/api/semesters/${id}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to delete semester")
-      }
-
-      setSemesters(semesters.filter((semester: any) => semester.id !== id))
+      await dispatch(deleteSemester(id)).unwrap()
       toast({
         title: "Success",
         description: "Semester deleted successfully",

@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { PageHeader } from "@/components/page-header"
+import { UserForm } from "@/components/user-form"
+import { useToast } from "@/hooks/use-toast"
+import { fetchWithAuth } from "@/lib/api-helpers"
 import { Skeleton } from "@/components/ui/skeleton"
-import { PageHeader } from "../../../components/page-header"
-import { UserForm } from "../../../components/user-form"
-import { fetchWithAuth } from "../../../lib/api-helpers"
-import { useToast } from "../../../components/ui/use-toast"
 
 interface UserPageProps {
   params: {

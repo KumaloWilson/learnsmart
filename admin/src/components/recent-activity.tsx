@@ -36,7 +36,8 @@ export function RecentActivity() {
       setError(null)
 
       try {
-        const data = await fetchWithAuth("/dashboard/recent-activity")
+        const response = await fetchWithAuth("/dashboard/recent-activity")
+        const data = await response.json()
         setActivities(data || [])
       } catch (err) {
         console.error("Failed to fetch recent activities:", err)

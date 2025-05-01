@@ -1,14 +1,30 @@
 "use client"
 
-import { useContext } from "react"
-import { AuthContext } from "@/components/auth-provider"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAppDispatch, useAppSelector } from "@/store"
+import { getCurrentUser } from "@/store/slices/auth-slice"
 
-export function useAuth() {
-  const context = useContext(AuthContext)
+export function useAuth(requireAdmin = false) {
+  const router = useRouter()
+  const dispatch = useAppDispatch()
+  const { user, isAuthenticated, isLoading } = useAppSelector((state) => state.auth)
 
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
+  useEffect(() => {
+    if (!isAuthenticated && !isLoading) {
+      dispatch(getCurrentUser())
+    }
+  }, [dispatch, isAuthenticated, isLoading])
 
-  return context
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login")
+    }
+
+    if (!isLoading && isAuthenticated && requireAdmin && user?.role !== "admin") {
+      router.push("/")
+    }
+  }, [isLoading, isAuthenticated, user, router, requireAdmin])
+
+  return { user, isAuthenticated, isLoading }
 }

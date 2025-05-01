@@ -29,7 +29,6 @@ import { Switch } from "@/components/ui/switch"
 import { fetchWithAuth } from "@/lib/api-helpers"
 import { useToast } from "./ui/use-toast"
 
-
 interface User {
   id: string
   email: string
@@ -51,7 +50,8 @@ export function UsersTable() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const data = await fetchWithAuth("/users")
+        const response = await fetchWithAuth("/users")
+        const data = await response.json()
         setUsers(data)
       } catch (error) {
         console.error("Failed to fetch users:", error)

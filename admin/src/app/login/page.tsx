@@ -1,37 +1,55 @@
 "use client"
 
-import { useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useAppDispatch } from "@/store"
+import { loginUser } from "@/store/slices/auth-slice"
 import { LoginForm } from "@/components/login-form"
-import { useAuth } from "@/hooks/use-auth"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function LoginPage() {
+  const dispatch = useAppDispatch()
   const router = useRouter()
-  const { isAuthenticated, isLoading } = useAuth()
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    // If user is already authenticated, redirect to dashboard
-    if (isAuthenticated && !isLoading) {
-      router.push("/")
+  const handleLogin = async (credentials: { email: string; password: string }) => {
+    setIsLoading(true)
+    try {
+      const resultAction = await dispatch(loginUser(credentials))
+      if (loginUser.fulfilled.match(resultAction)) {
+        toast({
+          title: "Success",
+          description: "Logged in successfully",
+        })
+        router.push("/")
+      } else if (loginUser.rejected.match(resultAction)) {
+        toast({
+          title: "Error",
+          description: (resultAction.payload as string) || "Login failed",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
-  }, [isAuthenticated, isLoading, router])
-
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-muted/40">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    )
   }
 
-  // Show login form if not authenticated
   return (
-    <div className="flex h-screen items-center justify-center bg-muted/40">
-      <LoginForm />
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">LearnSmart Admin Portal</h2>
+          <p className="mt-2 text-sm text-gray-600">Sign in to your account</p>
+        </div>
+        <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+      </div>
     </div>
   )
 }

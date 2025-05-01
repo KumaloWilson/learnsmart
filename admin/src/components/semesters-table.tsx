@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Edit, MoreHorizontal, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,8 +19,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { fetchWithAuth } from "@/lib/api-helpers"
-import { useToast } from "./ui/use-toast"
 
 interface Semester {
   id: string
@@ -31,32 +29,15 @@ interface Semester {
   createdAt: string
 }
 
-export function SemestersTable() {
-  const [semesters, setSemesters] = useState<Semester[]>([])
+interface SemestersTableProps {
+  semesters: Semester[]
+  isLoading: boolean
+  onDelete: (id: string) => void
+}
+
+export function SemestersTable({ semesters, isLoading, onDelete }: SemestersTableProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
-
-  useEffect(() => {
-    const fetchSemesters = async () => {
-      try {
-        const data = await fetchWithAuth("/semesters")
-        setSemesters(data)
-      } catch (error) {
-        console.error("Failed to fetch semesters:", error)
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load semesters. Please try again.",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchSemesters()
-  }, [toast])
 
   const filteredSemesters = semesters.filter((semester) =>
     semester.name.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -66,34 +47,19 @@ export function SemestersTable() {
     setDeleteId(id)
   }
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (deleteId) {
-      try {
-        await fetchWithAuth(`/semesters/${deleteId}`, {
-          method: "DELETE",
-        })
-
-        setSemesters((prev) => prev.filter((semester) => semester.id !== deleteId))
-
-        toast({
-          title: "Semester deleted",
-          description: "The semester has been successfully deleted.",
-        })
-      } catch (error) {
-        console.error("Failed to delete semester:", error)
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to delete semester. Please try again.",
-        })
-      } finally {
-        setDeleteId(null)
-      }
+      onDelete(deleteId)
+      setDeleteId(null)
     }
   }
 
   const handleDeleteCancel = () => {
     setDeleteId(null)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString()
   }
 
   return (
@@ -114,7 +80,6 @@ export function SemestersTable() {
               <TableHead>Start Date</TableHead>
               <TableHead>End Date</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -135,16 +100,13 @@ export function SemestersTable() {
                     <Skeleton className="h-6 w-full" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-6 w-full" />
-                  </TableCell>
-                  <TableCell>
                     <Skeleton className="h-6 w-10" />
                   </TableCell>
                 </TableRow>
               ))
             ) : filteredSemesters.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   No semesters found.
                 </TableCell>
               </TableRow>
@@ -152,14 +114,13 @@ export function SemestersTable() {
               filteredSemesters.map((semester) => (
                 <TableRow key={semester.id}>
                   <TableCell className="font-medium">{semester.name}</TableCell>
-                  <TableCell>{new Date(semester.startDate).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Date(semester.endDate).toLocaleDateString()}</TableCell>
+                  <TableCell>{formatDate(semester.startDate)}</TableCell>
+                  <TableCell>{formatDate(semester.endDate)}</TableCell>
                   <TableCell>
                     <Badge variant={semester.isActive ? "default" : "secondary"}>
                       {semester.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
-                  <TableCell>{new Date(semester.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -194,8 +155,8 @@ export function SemestersTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the semester and may affect course enrollments
-              and academic records.
+              This action cannot be undone. This will permanently delete the semester and may affect course schedules
+              and student enrollments.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

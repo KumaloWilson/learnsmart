@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { fetchWithAuth } from "@/lib/api-helpers"
-import { useToast } from "./ui/use-toast"
+import { useAppDispatch, useAppSelector } from "@/store"
+import { fetchDepartments } from "@/store/slices/departments-slice"
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -24,13 +24,8 @@ const formSchema = z.object({
   departmentId: z.string({ required_error: "Please select a department" }),
 })
 
-interface Department {
-  id: string
-  name: string
-}
-
 interface ProgramFormProps {
-  program?: {
+  initialData?: {
     id: string
     name: string
     code: string
@@ -38,99 +33,45 @@ interface ProgramFormProps {
     duration: number
     departmentId: string
   }
+  onSubmit: (data: z.infer<typeof formSchema>) => void
+  isLoading: boolean
 }
 
-export function ProgramForm({ program }: ProgramFormProps) {
+export function ProgramForm({ initialData, onSubmit, isLoading }: ProgramFormProps) {
   const router = useRouter()
-  const { toast } = useToast()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [departments, setDepartments] = useState<Department[]>([])
-  const [isLoadingDepartments, setIsLoadingDepartments] = useState(true)
+  const dispatch = useAppDispatch()
+  const { departments, isLoading: isLoadingDepartments } = useAppSelector((state) => state.departments)
+
+  useEffect(() => {
+    dispatch(fetchDepartments())
+  }, [dispatch])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: program?.name || "",
-      code: program?.code || "",
-      level: program?.level || "",
-      duration: program?.duration || 4,
-      departmentId: program?.departmentId || "",
+      name: initialData?.name || "",
+      code: initialData?.code || "",
+      level: initialData?.level || "",
+      duration: initialData?.duration || 4,
+      departmentId: initialData?.departmentId || "",
     },
   })
 
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const data = await fetchWithAuth("/departments")
-        setDepartments(data)
-      } catch (error) {
-        console.error("Failed to fetch departments:", error)
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load departments. Please try again.",
-        })
-      } finally {
-        setIsLoadingDepartments(false)
-      }
-    }
-
-    fetchDepartments()
-  }, [toast])
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true)
-
-    try {
-      if (program) {
-        // Update existing program
-        await fetchWithAuth(`/programs/${program.id}`, {
-          method: "PUT",
-          body: JSON.stringify(values),
-        })
-
-        toast({
-          title: "Program updated",
-          description: "The program has been successfully updated.",
-        })
-      } else {
-        // Create new program
-        await fetchWithAuth("/programs", {
-          method: "POST",
-          body: JSON.stringify(values),
-        })
-
-        toast({
-          title: "Program created",
-          description: "The program has been successfully created.",
-        })
-      }
-
-      router.push("/programs")
-      router.refresh()
-    } catch (error) {
-      console.error("Failed to save program:", error)
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save program. Please try again.",
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
+  const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
+    onSubmit(values)
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{program ? "Edit Program" : "Create Program"}</CardTitle>
+        <CardTitle>{initialData ? "Edit Program" : "Create Program"}</CardTitle>
         <CardDescription>
-          {program ? "Update the program details below." : "Enter the details for the new program."}
+          {initialData ? "Update the program details below." : "Enter the details for the new program."}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -240,11 +181,11 @@ export function ProgramForm({ program }: ProgramFormProps) {
             />
 
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" type="button" onClick={() => router.back()} disabled={isSubmitting}>
+              <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : program ? "Update Program" : "Create Program"}
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Saving..." : initialData ? "Update Program" : "Create Program"}
               </Button>
             </div>
           </form>

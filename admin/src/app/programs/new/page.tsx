@@ -2,23 +2,22 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { PageHeader } from "../../../components/page-header"
-import { ProgramForm } from "../../../components/program-form"
-import { fetchWithAuth } from "../../../lib/api-helpers"
-import { useToast } from "../../../components/ui/use-toast"
+import { PageHeader } from "@/components/page-header"
+import { ProgramForm } from "@/components/program-form"
+import { useAppDispatch } from "@/store"
+import { createProgram } from "@/store/slices/programs-slice"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function NewProgramPage() {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
+  const dispatch = useAppDispatch()
   const { toast } = useToast()
 
   const handleSubmit = async (data: any) => {
-    setIsLoading(true)
+    setIsSubmitting(true)
     try {
-      await fetchWithAuth("/programs", {
-        method: "POST",
-        body: JSON.stringify(data),
-      })
+      await dispatch(createProgram(data)).unwrap()
 
       toast({
         title: "Success",
@@ -33,15 +32,15 @@ export default function NewProgramPage() {
         variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
     }
   }
 
   return (
     <div className="container mx-auto py-6">
-      <PageHeader heading="Create Program" text="Add a new academic program to the system" />
+      <PageHeader title="Create Program" description="Add a new academic program to the system" />
       <div className="mt-6">
-        <ProgramForm onSubmit={handleSubmit} isLoading={isLoading} />
+        <ProgramForm onSubmit={handleSubmit} isLoading={isSubmitting} />
       </div>
     </div>
   )

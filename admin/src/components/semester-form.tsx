@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { z } from "zod"
@@ -10,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-
 import { fetchWithAuth } from "@/lib/api-helpers"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
@@ -48,7 +46,7 @@ export function SemesterForm({ semester }: SemesterFormProps) {
       name: semester?.name || "",
       startDate: semester?.startDate ? new Date(semester.startDate) : new Date(),
       endDate: semester?.endDate ? new Date(semester.endDate) : new Date(),
-      isActive: Boolean(semester?.isActive),
+      isActive: semester?.isActive || false,
     },
   })
 

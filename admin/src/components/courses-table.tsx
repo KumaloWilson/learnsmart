@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Edit, MoreHorizontal, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,9 +18,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
-import { fetchWithAuth } from "@/lib/api-helpers"
-import { useToast } from "./ui/use-toast"
 
 interface Course {
   id: string
@@ -30,72 +27,35 @@ interface Course {
   credits: number
   programId: string
   programName?: string
-  departmentName?: string
   createdAt: string
 }
 
-export function CoursesTable() {
-  const [courses, setCourses] = useState<Course[]>([])
+interface CoursesTableProps {
+  courses: Course[]
+  isLoading: boolean
+  onDelete: (id: string) => void
+}
+
+export function CoursesTable({ courses, isLoading, onDelete }: CoursesTableProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
-
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const data = await fetchWithAuth("/courses")
-        setCourses(data)
-      } catch (error) {
-        console.error("Failed to fetch courses:", error)
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load courses. Please try again.",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchCourses()
-  }, [toast])
 
   const filteredCourses = courses.filter(
     (course) =>
       course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (course.programName && course.programName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (course.departmentName && course.departmentName.toLowerCase().includes(searchTerm.toLowerCase())),
+      course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (course.programName && course.programName.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
   const handleDeleteClick = (id: string) => {
     setDeleteId(id)
   }
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (deleteId) {
-      try {
-        await fetchWithAuth(`/courses/${deleteId}`, {
-          method: "DELETE",
-        })
-
-        setCourses((prev) => prev.filter((course) => course.id !== deleteId))
-
-        toast({
-          title: "Course deleted",
-          description: "The course has been successfully deleted.",
-        })
-      } catch (error) {
-        console.error("Failed to delete course:", error)
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to delete course. Please try again.",
-        })
-      } finally {
-        setDeleteId(null)
-      }
+      onDelete(deleteId)
+      setDeleteId(null)
     }
   }
 
@@ -121,7 +81,6 @@ export function CoursesTable() {
               <TableHead>Name</TableHead>
               <TableHead>Credits</TableHead>
               <TableHead>Program</TableHead>
-              <TableHead>Department</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -142,16 +101,13 @@ export function CoursesTable() {
                     <Skeleton className="h-6 w-full" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-6 w-full" />
-                  </TableCell>
-                  <TableCell>
                     <Skeleton className="h-6 w-10" />
                   </TableCell>
                 </TableRow>
               ))
             ) : filteredCourses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   No courses found.
                 </TableCell>
               </TableRow>
@@ -160,11 +116,8 @@ export function CoursesTable() {
                 <TableRow key={course.id}>
                   <TableCell className="font-medium">{course.code}</TableCell>
                   <TableCell>{course.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{course.credits}</Badge>
-                  </TableCell>
+                  <TableCell>{course.credits}</TableCell>
                   <TableCell>{course.programName}</TableCell>
-                  <TableCell>{course.departmentName}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

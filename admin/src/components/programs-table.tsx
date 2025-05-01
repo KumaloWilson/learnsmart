@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Edit, MoreHorizontal, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,8 +19,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { fetchWithAuth } from "@/lib/api-helpers"
-import { useToast } from "./ui/use-toast"
 
 interface Program {
   id: string
@@ -33,32 +31,15 @@ interface Program {
   createdAt: string
 }
 
-export function ProgramsTable() {
-  const [programs, setPrograms] = useState<Program[]>([])
+interface ProgramsTableProps {
+  programs: Program[]
+  isLoading: boolean
+  onDelete: (id: string) => void
+}
+
+export function ProgramsTable({ programs, isLoading, onDelete }: ProgramsTableProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
-
-  useEffect(() => {
-    const fetchPrograms = async () => {
-      try {
-        const data = await fetchWithAuth("/programs")
-        setPrograms(data)
-      } catch (error) {
-        console.error("Failed to fetch programs:", error)
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load programs. Please try again.",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchPrograms()
-  }, [toast])
 
   const filteredPrograms = programs.filter(
     (program) =>
@@ -72,29 +53,10 @@ export function ProgramsTable() {
     setDeleteId(id)
   }
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (deleteId) {
-      try {
-        await fetchWithAuth(`/programs/${deleteId}`, {
-          method: "DELETE",
-        })
-
-        setPrograms((prev) => prev.filter((program) => program.id !== deleteId))
-
-        toast({
-          title: "Program deleted",
-          description: "The program has been successfully deleted.",
-        })
-      } catch (error) {
-        console.error("Failed to delete program:", error)
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to delete program. Please try again.",
-        })
-      } finally {
-        setDeleteId(null)
-      }
+      onDelete(deleteId)
+      setDeleteId(null)
     }
   }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
@@ -11,8 +11,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { fetchWithAuth } from "@/lib/api-helpers"
-import { useToast } from "./ui/use-toast"
+import { useAppDispatch, useAppSelector } from "@/store"
+import { fetchSchools } from "@/store/slices/schools-slice"
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -20,109 +20,50 @@ const formSchema = z.object({
   schoolId: z.string({ required_error: "Please select a school" }),
 })
 
-interface School {
-  id: string
-  name: string
-}
-
 interface DepartmentFormProps {
-  department?: {
+  initialData?: {
     id: string
     name: string
     description: string
     schoolId: string
   }
+  onSubmit: (data: z.infer<typeof formSchema>) => void
+  isLoading: boolean
 }
 
-export function DepartmentForm({ department }: DepartmentFormProps) {
+export function DepartmentForm({ initialData, onSubmit, isLoading }: DepartmentFormProps) {
   const router = useRouter()
-  const { toast } = useToast()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [schools, setSchools] = useState<School[]>([])
-  const [isLoadingSchools, setIsLoadingSchools] = useState(true)
+  const dispatch = useAppDispatch()
+  const { schools, isLoading: isLoadingSchools } = useAppSelector((state) => state.schools)
+
+  useEffect(() => {
+    dispatch(fetchSchools())
+  }, [dispatch])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: department?.name || "",
-      description: department?.description || "",
-      schoolId: department?.schoolId || "",
+      name: initialData?.name || "",
+      description: initialData?.description || "",
+      schoolId: initialData?.schoolId || "",
     },
   })
 
-  useEffect(() => {
-    const fetchSchools = async () => {
-      try {
-        const data = await fetchWithAuth("/schools")
-        setSchools(data)
-      } catch (error) {
-        console.error("Failed to fetch schools:", error)
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load schools. Please try again.",
-        })
-      } finally {
-        setIsLoadingSchools(false)
-      }
-    }
-
-    fetchSchools()
-  }, [toast])
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true)
-
-    try {
-      if (department) {
-        // Update existing department
-        await fetchWithAuth(`/departments/${department.id}`, {
-          method: "PUT",
-          body: JSON.stringify(values),
-        })
-
-        toast({
-          title: "Department updated",
-          description: "The department has been successfully updated.",
-        })
-      } else {
-        // Create new department
-        await fetchWithAuth("/departments", {
-          method: "POST",
-          body: JSON.stringify(values),
-        })
-
-        toast({
-          title: "Department created",
-          description: "The department has been successfully created.",
-        })
-      }
-
-      router.push("/departments")
-      router.refresh()
-    } catch (error) {
-      console.error("Failed to save department:", error)
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save department. Please try again.",
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
+  const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
+    onSubmit(values)
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{department ? "Edit Department" : "Create Department"}</CardTitle>
+        <CardTitle>{initialData ? "Edit Department" : "Create Department"}</CardTitle>
         <CardDescription>
-          {department ? "Update the department details below." : "Enter the details for the new department."}
+          {initialData ? "Update the department details below." : "Enter the details for the new department."}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -133,6 +74,25 @@ export function DepartmentForm({ department }: DepartmentFormProps) {
                     <Input placeholder="e.g., Computer Science" {...field} />
                   </FormControl>
                   <FormDescription>The name of the department.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="e.g., The Department of Computer Science focuses on..."
+                      className="min-h-32"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>A brief description of the department.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -174,31 +134,12 @@ export function DepartmentForm({ department }: DepartmentFormProps) {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Enter a description of the department..."
-                      className="min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>A brief description of the department.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" type="button" onClick={() => router.back()} disabled={isSubmitting}>
+              <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : department ? "Update Department" : "Create Department"}
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Saving..." : initialData ? "Update Department" : "Create Department"}
               </Button>
             </div>
           </form>
