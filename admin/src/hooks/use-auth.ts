@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAppDispatch, useAppSelector } from "@/store"
-import { getCurrentUser } from "@/store/slices/auth-slice"
+import { fetchCurrentUser } from "@/store/slices/auth-slice"
 
 export function useAuth(requireAdmin = false) {
   const router = useRouter()
@@ -12,7 +12,7 @@ export function useAuth(requireAdmin = false) {
 
   useEffect(() => {
     if (!isAuthenticated && !isLoading) {
-      dispatch(getCurrentUser())
+      dispatch(fetchCurrentUser())
     }
   }, [dispatch, isAuthenticated, isLoading])
 

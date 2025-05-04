@@ -9,6 +9,7 @@ import { UsersTable } from "@/components/users-table"
 import { useAppDispatch, useAppSelector } from "@/store"
 import { fetchUsers, updateUserStatus } from "@/store/slices/users-slice"
 import { useToast } from "@/components/ui/use-toast"
+import { AdminSidebar } from "@/components/admin-sidebar"
 
 export default function UsersPage() {
   const dispatch = useAppDispatch()
@@ -46,22 +47,22 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <PageHeader
-        title="Users"
-        description="Manage system users including students, lecturers, and administrators"
-        actions={
+    <div className="flex min-h-screen bg-gray-100">
+      <AdminSidebar />
+      <div className="flex-1 p-8">
+        <div className="flex justify-between items-center mb-4">
+          <PageHeader heading="Users" text="Manage users in the system" />
           <Link href="/users/new">
             <Button>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2" />
               Add User
             </Button>
           </Link>
-        }
-      />
-      <div className="mt-6">
-        <UsersTable />
-      </div>
+        </div>
+        <UsersTable
+         
+        />
+        </div>
     </div>
   )
 }

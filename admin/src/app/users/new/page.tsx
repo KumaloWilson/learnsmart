@@ -4,9 +4,9 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { PageHeader } from "@/components/page-header"
 import { UserForm } from "@/components/user-form"
-import { useToast } from "@/hooks/use-toast"
 import { useAppDispatch } from "@/store"
 import { createUser } from "@/store/slices/users-slice"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function NewUserPage() {
   const router = useRouter()
