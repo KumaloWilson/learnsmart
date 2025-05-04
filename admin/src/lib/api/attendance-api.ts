@@ -1,4 +1,4 @@
-import axiosInstance from "./axios-instance"
+import {axiosInstance} from "./axios-instance"
 
 export const attendanceApi = {
   getPhysicalAttendance: (courseId: string, date?: string) => {

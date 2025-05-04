@@ -1,4 +1,4 @@
-import axiosInstance from "./axios-instance"
+import {axiosInstance }from "./axios-instance"
 import type { Semester } from "@/store/slices/semesters-slice"
 
 export const semestersApi = {
