@@ -12,6 +12,7 @@ import quizzesReducer from "./slices/quiz-slice"
 import virtualClassesReducer from "./slices/virtual-class-slice"
 import attendanceReducer from "./slices/attendance-slice"
 import studentPerformanceReducer from "./slices/student-performance-slice"
+import studentsReducer from "./slices/students-slice"
 
 export const store = configureStore({
   reducer: {
@@ -27,6 +28,7 @@ export const store = configureStore({
     virtualClasses: virtualClassesReducer,
     attendance: attendanceReducer,
     studentPerformance: studentPerformanceReducer,
+    students: studentsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

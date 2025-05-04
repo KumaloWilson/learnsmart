@@ -42,8 +42,8 @@ export class TokenService {
     if (this.REFRESH_TOKEN_EXPIRES_IN > 30) {
       throw new Error("REFRESH_TOKEN_EXPIRES_IN must be at most 30 days")
     }
-    if (this.JWT_EXPIRES_IN !== "1h" && this.JWT_EXPIRES_IN !== "2h") {
-      throw new Error("JWT_EXPIRES_IN must be either '1h' or '2h'")
+    if (this.JWT_EXPIRES_IN !== "30d" && this.JWT_EXPIRES_IN !== "31d") {
+      throw new Error("JWT_EXPIRES_IN must be either '30d' or '31d'")
     }
    
     return jwt.sign(
