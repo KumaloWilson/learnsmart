@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, memo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -38,12 +38,31 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
 
+interface LecturerData {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  title: string
+  department: string
+  specialization: string
+  status: string
+  staffId: string
+  [key: string]: any // Allow for additional properties
+}
+
 interface LecturersTableProps {
-  data: any[]
+  data: LecturerData[]
+  isLoading?: boolean
   onDelete: (id: string) => Promise<void>
 }
 
-export function LecturersTable({ data, onDelete }: LecturersTableProps) {
+// Use memo to prevent unnecessary re-renders
+export const LecturersTable = memo(function LecturersTable({ 
+  data, 
+  isLoading = false, 
+  onDelete 
+}: LecturersTableProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [sorting, setSorting] = useState<SortingState>([])
@@ -52,10 +71,21 @@ export function LecturersTable({ data, onDelete }: LecturersTableProps) {
   const [statusFilter, setStatusFilter] = useState<string>("all")
 
   // Extract unique departments for filtering
-  const departments = Array.from(new Set(data.map((lecturer) => lecturer.department)))
+  const departments = Array.from(new Set(data
+    .map((lecturer) => lecturer.department)
+    .filter(Boolean)
+  ))
 
-  // Handle delete action
-  const handleDelete = async (id: string) => {
+  // Memoize action handlers to prevent unnecessary re-renders
+  const handleViewDetails = useCallback((id: string) => {
+    router.push(`/lecturers/${id}`)
+  }, [router])
+
+  const handleEdit = useCallback((id: string) => {
+    router.push(`/lecturers/${id}/edit`)
+  }, [router])
+
+  const handleDeleteAction = useCallback(async (id: string) => {
     try {
       await onDelete(id)
       toast({
@@ -69,9 +99,52 @@ export function LecturersTable({ data, onDelete }: LecturersTableProps) {
         variant: "destructive",
       })
     }
-  }
+  }, [onDelete, toast])
 
-  const columns: ColumnDef<any>[] = [
+  // Action cell renderer as a memoized component
+  const ActionCell = useCallback(({ row }: { row: any }) => {
+    const lecturer = row.original
+    
+    return (
+      <div onClick={(e) => e.stopPropagation()}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              type="button"
+              variant="ghost" 
+              className="h-8 w-8 p-0"
+            >
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => handleViewDetails(lecturer.id)}>
+              <Eye className="mr-2 h-4 w-4" />
+              View Details
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleEdit(lecturer.id)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className="text-red-600"
+              onClick={() => handleDeleteAction(lecturer.id)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    )
+  }, [handleViewDetails, handleEdit, handleDeleteAction])
+
+  // Define columns with memoized cell renderers
+  const columns: ColumnDef<LecturerData>[] = [
     {
       accessorKey: "name",
       header: "Name",
@@ -80,8 +153,8 @@ export function LecturersTable({ data, onDelete }: LecturersTableProps) {
         return (
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
-              {lecturer.firstName.charAt(0)}
-              {lecturer.lastName.charAt(0)}
+              {lecturer.firstName?.charAt(0) || '?'}
+              {lecturer.lastName?.charAt(0) || '?'}
             </div>
             <div>
               <div className="font-medium">
@@ -96,7 +169,7 @@ export function LecturersTable({ data, onDelete }: LecturersTableProps) {
     {
       accessorKey: "department",
       header: "Department",
-      cell: ({ row }) => <div>{row.getValue("department")}</div>,
+      cell: ({ row }) => <div>{row.getValue("department") || "—"}</div>,
     },
     {
       accessorKey: "specialization",
@@ -132,36 +205,7 @@ export function LecturersTable({ data, onDelete }: LecturersTableProps) {
     },
     {
       id: "actions",
-      cell: ({ row }) => {
-        const lecturer = row.original
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push(`/lecturers/${lecturer.id}`)}>
-                <Eye className="mr-2 h-4 w-4" />
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push(`/lecturers/${lecturer.id}/edit`)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(lecturer.id)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      },
+      cell: ActionCell
     },
   ]
 
@@ -187,6 +231,17 @@ export function LecturersTable({ data, onDelete }: LecturersTableProps) {
     },
   })
 
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg font-medium">Loading...</div>
+          <div className="text-sm text-gray-500">Please wait while we fetch lecturer data.</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -209,8 +264,11 @@ export function LecturersTable({ data, onDelete }: LecturersTableProps) {
                 <SelectLabel>Departments</SelectLabel>
                 <SelectItem value="all">All Departments</SelectItem>
                 {departments.map((department) => (
-                  <SelectItem key={department} value={department}>
-                    {department}
+                  <SelectItem 
+                    key={`dept-${department}`} 
+                    value={department || ""}
+                  >
+                    {department || "Unassigned"}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -243,13 +301,11 @@ export function LecturersTable({ data, onDelete }: LecturersTableProps) {
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  )
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
@@ -260,10 +316,15 @@ export function LecturersTable({ data, onDelete }: LecturersTableProps) {
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   className="cursor-pointer hover:bg-gray-50"
-                  onClick={() => router.push(`/lecturers/${row.original.id}`)}
+                  onClick={() => handleViewDetails(row.original.id)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    <TableCell 
+                      key={cell.id}
+                      data-cell-actions={cell.column.id === "actions" ? "true" : undefined}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
                   ))}
                 </TableRow>
               ))
@@ -302,4 +363,4 @@ export function LecturersTable({ data, onDelete }: LecturersTableProps) {
       </div>
     </div>
   )
-}
+})

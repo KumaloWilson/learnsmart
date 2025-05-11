@@ -10,7 +10,7 @@ export default function StudentsPage() {
 
       <div className="flex-1 p-8">
 
-      <PageHeader heading="Student Management" text="View and manage all students in the system." />
+      <PageHeader title="Student Management" description="View and manage all students in the system." />
       <div className="mt-8">
         <StudentsTable />
       </div>

@@ -37,7 +37,7 @@ export default function ProgramsPage() {
         title: "Success",
         description: "Program deleted successfully",
       })
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to delete program",
