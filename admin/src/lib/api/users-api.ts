@@ -1,4 +1,4 @@
-import { axiosInstance } from "./axios-instance"
+import axiosInstance from "./axios-instance"
 
 export interface User {
   id: string

@@ -1,8 +1,5 @@
-import Cookies from 'js-cookie';
-
 // Storage keys - ensure consistency
 const TOKEN_KEY = "accessToken"
-const COOKIE_TOKEN_KEY = "token"  // For middleware compatibility
 const USER_KEY = "admin_user"
 
 // Get auth token from localStorage
@@ -11,18 +8,16 @@ export const getAuthToken = (): string | null => {
   return localStorage.getItem(TOKEN_KEY)
 }
 
-// Set auth token in localStorage and cookies
+// Set auth token in localStorage
 export const setAuthToken = (token: string): void => {
   if (typeof window === "undefined") return
   localStorage.setItem(TOKEN_KEY, token)
-  Cookies.set(COOKIE_TOKEN_KEY, token, { path: "/" })
 }
 
-// Remove auth token from localStorage and cookies
+// Remove auth token from localStorage
 export const removeAuthToken = (): void => {
   if (typeof window === "undefined") return
   localStorage.removeItem(TOKEN_KEY)
-  Cookies.remove(COOKIE_TOKEN_KEY, { path: "/" })
 }
 
 // Get user from localStorage
@@ -58,5 +53,5 @@ export const isAuthenticated = (): boolean => {
 // Check if user has admin role
 export const isAdmin = (): boolean => {
   const user = getUser()
-  return user && user.role === "admin" 
+  return user && user.role === "admin"
 }

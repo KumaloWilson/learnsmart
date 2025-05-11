@@ -1,4 +1,4 @@
-import { axiosInstance } from "./axios-instance"
+import  axiosInstance  from "./axios-instance"
 
 // Lecturer profile endpoints
 export const getAllLecturers = async () => {

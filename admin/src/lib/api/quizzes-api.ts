@@ -1,5 +1,5 @@
 import { AxiosResponse } from "axios"
-import { axiosInstance } from "./axios-instance"
+import axiosInstance from "./axios-instance"
 
 
 export interface Quiz {

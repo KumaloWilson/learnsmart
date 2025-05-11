@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { EyeIcon, EyeOffIcon } from "lucide-react"
+import { EyeIcon, EyeOffIcon, LockIcon, MailIcon } from "lucide-react"
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -46,7 +46,10 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your email" {...field} disabled={isLoading} />
+                <div className="relative">
+                  <MailIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  <Input placeholder="Enter your email" className="pl-10" {...field} disabled={isLoading} />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -61,9 +64,11 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
               <FormLabel>Password</FormLabel>
               <FormControl>
                 <div className="relative">
+                  <LockIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                   <Input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
+                    className="pl-10"
                     {...field}
                     disabled={isLoading}
                   />

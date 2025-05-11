@@ -1,48 +1,56 @@
+"use client"
+
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
 
 interface CourseEnrollmentChartProps {
-  data: Array<{
+  data: {
     name: string
     total: number
-  }>
+  }[]
 }
 
 export function CourseEnrollmentChart({ data }: CourseEnrollmentChartProps) {
-  // Limit the data to top 5 courses for better display
-  const displayData = data.slice(0, 5)
-  
+  // Sort data by enrollment count (highest first)
+  const sortedData = [...data].sort((a, b) => b.total - a.total).slice(0, 5)
+
   return (
-    <>
-      <ResponsiveContainer width="100%" height={350}>
-        <BarChart data={displayData}>
-          <XAxis 
-            dataKey="name" 
-            stroke="#888888" 
-            fontSize={12} 
-            tickLine={false} 
-            axisLine={false} 
-            // Truncate long course names
-            tickFormatter={(value) => value.length > 20 ? `${value.substring(0, 20)}...` : value}
+    <div className="h-[300px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={sortedData} layout="vertical" margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+          <XAxis type="number" />
+          <YAxis
+            dataKey="name"
+            type="category"
+            scale="band"
+            width={120}
+            tickLine={false}
+            axisLine={false}
+            tick={{ fontSize: 12 }}
           />
-          <YAxis 
-            stroke="#888888" 
-            fontSize={12} 
-            tickLine={false} 
-            axisLine={false} 
-            tickFormatter={(value) => `${value}`} 
-          />
-          <Tooltip 
-            formatter={(value) => [`${value} students`, 'Enrollment']}
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "white",
+              borderRadius: "0.5rem",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+              border: "none",
+            }}
+            formatter={(value: number) => [`${value} students`, "Enrollment"]}
             labelFormatter={(label) => `Course: ${label}`}
           />
-          <Bar dataKey="total" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+          <Bar
+            dataKey="total"
+            fill="#6366f1"
+            radius={[0, 4, 4, 0]}
+            barSize={30}
+            label={{
+              position: "right",
+              formatter: (value: any) => value,
+              fill: "#6366f1",
+              fontSize: 12,
+            }}
+          />
         </BarChart>
       </ResponsiveContainer>
-      {data.length > 5 && (
-        <p className="text-center text-xs text-muted-foreground mt-2">
-          Showing top 5 of {data.length} courses
-        </p>
-      )}
-    </>
+    </div>
   )
 }

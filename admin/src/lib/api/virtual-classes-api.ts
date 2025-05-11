@@ -1,6 +1,6 @@
 
 import type { VirtualClass } from "@/store/slices/virtual-class-slice"
-import { axiosInstance } from "./axios-instance"
+import  axiosInstance from "./axios-instance"
 
 export const virtualClassesApi = {
   getVirtualClasses: () => {

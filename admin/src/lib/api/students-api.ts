@@ -1,5 +1,5 @@
 import { StudentFilterDto, CreateStudentProfileDto, UpdateStudentProfileDto, EnrollStudentInCourseDto, UpdateCourseEnrollmentDto, CreateAcademicRecordDto, UpdateAcademicRecordDto } from "@/types/student"
-import { axiosInstance } from "./axios-instance"
+import  axiosInstance  from "./axios-instance"
 
 
 export interface StudentProfile {

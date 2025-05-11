@@ -1,4 +1,4 @@
-import { axiosInstance } from "./axios-instance"
+import axiosInstance from "./axios-instance"
 import { handleApiResponse, handleApiError } from "./axios-instance"
 
 export interface DashboardStatsDto {
@@ -163,7 +163,7 @@ export const dashboardApi = {
       return handleApiError(error)
     }
   },
-  
+
   getEnrollmentStats: async (): Promise<EnrollmentStatsDto> => {
     try {
       const response = await axiosInstance.get<EnrollmentStatsDto>("/dashboard/enrollments")
@@ -172,7 +172,7 @@ export const dashboardApi = {
       return handleApiError(error)
     }
   },
-  
+
   getAcademicPerformance: async (): Promise<AcademicPerformanceDto> => {
     try {
       const response = await axiosInstance.get<AcademicPerformanceDto>("/dashboard/performance")
@@ -181,7 +181,7 @@ export const dashboardApi = {
       return handleApiError(error)
     }
   },
-  
+
   getUserActivity: async (): Promise<UserActivityDto> => {
     try {
       const response = await axiosInstance.get<UserActivityDto>("/dashboard/user-activity")
@@ -190,7 +190,7 @@ export const dashboardApi = {
       return handleApiError(error)
     }
   },
-  
+
   getCourseStats: async (): Promise<CourseStatsDto> => {
     try {
       const response = await axiosInstance.get<CourseStatsDto>("/dashboard/courses")
@@ -199,7 +199,7 @@ export const dashboardApi = {
       return handleApiError(error)
     }
   },
-  
+
   getRecentActivity: async (limit = 10): Promise<RecentActivityDto> => {
     try {
       const response = await axiosInstance.get<RecentActivityDto>(`/dashboard/recent-activity?limit=${limit}`)
@@ -208,7 +208,7 @@ export const dashboardApi = {
       return handleApiError(error)
     }
   },
-  
+
   getUpcomingEvents: async (days = 7): Promise<UpcomingEventsDto> => {
     try {
       const response = await axiosInstance.get<UpcomingEventsDto>(`/dashboard/upcoming-events?days=${days}`)
@@ -217,7 +217,7 @@ export const dashboardApi = {
       return handleApiError(error)
     }
   },
-  
+
   getSystemHealth: async (): Promise<SystemHealthDto> => {
     try {
       const response = await axiosInstance.get<SystemHealthDto>("/dashboard/system-health")
@@ -226,7 +226,7 @@ export const dashboardApi = {
       return handleApiError(error)
     }
   },
-  
+
   getAllDashboardData: async (): Promise<AllDashboardDataDto> => {
     try {
       const response = await axiosInstance.get<AllDashboardDataDto>("/dashboard/all")

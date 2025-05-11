@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useAppDispatch, useAppSelector } from "@/store"
-import { 
-  fetchOverviewStats, 
-  fetchEnrollmentStats, 
-  fetchCourseStats, 
-  fetchRecentActivity 
+import {
+  fetchOverviewStats,
+  fetchEnrollmentStats,
+  fetchCourseStats,
+  fetchRecentActivity,
 } from "@/store/slices/dashboard-slice"
 import { AdminSidebar } from "@/components/admin-sidebar"
 import { DashboardStats } from "@/components/dashboard-stats"
@@ -15,33 +16,53 @@ import { CourseEnrollmentChart } from "@/components/course-enrollment-chart"
 import { AtRiskStudentsChart } from "@/components/at-risk-students-chart"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/ui/use-toast"
+import { isAuthenticated } from "@/lib/auth-utils"
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch()
-  const { 
-    overviewStats, 
-    enrollmentStats, 
-    courseStats, 
-    recentActivity, 
-    isLoading, 
-    error 
-  } = useAppSelector((state) => state.dashboard)
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [authenticated, setAuthenticated] = useState(false)
+  const { overviewStats, enrollmentStats, courseStats, recentActivity, isLoading, error } = useAppSelector(
+    (state) => state.dashboard,
+  )
   const { toast } = useToast()
 
-  // Fix: Adding proper dependency array to prevent infinite fetching
+  // Check authentication on mount only
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      await dispatch(fetchOverviewStats())
-      await dispatch(fetchEnrollmentStats())
-      await dispatch(fetchCourseStats())
-      await dispatch(fetchRecentActivity(5))
+    const checkAuth = () => {
+      const authStatus = isAuthenticated()
+      setAuthenticated(authStatus)
+
+      if (!authStatus) {
+        router.push("/login")
+      }
+
+      setLoading(false)
     }
-    
-    fetchDashboardData()
-    // Empty dependency array means this runs only once on mount
-  }, [dispatch])
-  
-  // Separated error handling to its own effect
+
+    checkAuth()
+  }, [router])
+
+  // Fetch dashboard data only when authenticated
+  useEffect(() => {
+    if (authenticated && !loading) {
+      const fetchDashboardData = async () => {
+        try {
+          await dispatch(fetchOverviewStats())
+          await dispatch(fetchEnrollmentStats())
+          await dispatch(fetchCourseStats())
+          await dispatch(fetchRecentActivity(5))
+        } catch (err) {
+          console.error("Error fetching dashboard data:", err)
+        }
+      }
+
+      fetchDashboardData()
+    }
+  }, [dispatch, authenticated, loading])
+
+  // Handle errors
   useEffect(() => {
     if (error) {
       toast({
@@ -53,38 +74,60 @@ export default function DashboardPage() {
   }, [error, toast])
 
   // Process activities only when needed
-  const processedActivities = recentActivity ? [
-    ...(recentActivity.recentEnrollments || []).map(item => ({
-      id: item.id,
-      type: 'enrollment',
-      description: `Enrolled in ${item.course.name}`,
-      timestamp: item.createdAt,
-      userId: '',
-      userName: `${item.studentProfile.user.firstName} ${item.studentProfile.user.lastName}`
-    })),
-    ...(recentActivity.recentAssessments || []).map(item => ({
-      id: item.id,
-      type: 'assessment',
-      description: `Created assessment "${item.title}" for ${item.course.name}`,
-      timestamp: item.createdAt,
-      userId: '',
-      userName: `${item.lecturerProfile.user.firstName} ${item.lecturerProfile.user.lastName}`
-    })),
-    ...(recentActivity.recentUsers || []).map(item => ({
-      id: item.id,
-      type: 'user',
-      description: `New ${item.role} registered`,
-      timestamp: item.createdAt,
-      userId: item.id,
-      userName: `${item.firstName} ${item.lastName}`
-    }))
-  ] : [];
+  const processedActivities = recentActivity
+    ? [
+        ...(recentActivity.recentEnrollments || []).map((item) => ({
+          id: item.id,
+          type: "enrollment",
+          description: `Enrolled in ${item.course.name}`,
+          timestamp: item.createdAt,
+          userId: "",
+          userName: `${item.studentProfile.user.firstName} ${item.studentProfile.user.lastName}`,
+        })),
+        ...(recentActivity.recentAssessments || []).map((item) => ({
+          id: item.id,
+          type: "assessment",
+          description: `Created assessment "${item.title}" for ${item.course.name}`,
+          timestamp: item.createdAt,
+          userId: "",
+          userName: `${item.lecturerProfile.user.firstName} ${item.lecturerProfile.user.lastName}`,
+        })),
+        ...(recentActivity.recentUsers || []).map((item) => ({
+          id: item.id,
+          type: "user",
+          description: `New ${item.role} registered`,
+          timestamp: item.createdAt,
+          userId: item.id,
+          userName: `${item.firstName} ${item.lastName}`,
+        })),
+      ]
+    : []
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Skeleton className="mx-auto h-12 w-12 rounded-full" />
+          <p className="mt-4 text-gray-500">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // If not authenticated, don't render anything (redirect happens in useEffect)
+  if (!authenticated) {
+    return null
+  }
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />
       <div className="flex-1 p-8">
-        <h1 className="mb-6 text-3xl font-bold">Dashboard</h1>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="mt-1 text-gray-600">Welcome to the LearnSmart admin portal</p>
+        </div>
 
         {isLoading && !overviewStats ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -97,8 +140,8 @@ export default function DashboardPage() {
         ) : null}
 
         <div className="mt-8 grid gap-6 md:grid-cols-2">
-          <div className="rounded-lg bg-white p-6 shadow">
-            <h2 className="mb-4 text-xl font-semibold">Recent Activity</h2>
+          <div className="rounded-lg bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-xl font-semibold text-gray-900">Recent Activity</h2>
             {isLoading && !recentActivity ? (
               <div className="space-y-4">
                 {[...Array(5)].map((_, i) => (
@@ -110,8 +153,8 @@ export default function DashboardPage() {
             ) : null}
           </div>
 
-          <div className="rounded-lg bg-white p-6 shadow">
-            <h2 className="mb-4 text-xl font-semibold">Course Enrollment</h2>
+          <div className="rounded-lg bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-xl font-semibold text-gray-900">Course Enrollment</h2>
             {isLoading && !courseStats ? (
               <Skeleton className="h-64 w-full" />
             ) : courseStats ? (
@@ -125,8 +168,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-lg bg-white p-6 shadow">
-          <h2 className="mb-4 text-xl font-semibold">Enrollment by Program</h2>
+        <div className="mt-8 rounded-lg bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">Enrollment by Program</h2>
           {isLoading && !enrollmentStats ? (
             <Skeleton className="h-64 w-full" />
           ) : enrollmentStats ? (
