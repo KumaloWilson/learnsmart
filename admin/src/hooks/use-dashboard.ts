@@ -1,4 +1,5 @@
 import { useSelector, useDispatch } from "react-redux"
+import { useCallback } from "react"
 import type { RootState, AppDispatch } from "@/lib/store"
 import {
   fetchOverview,
@@ -13,6 +14,7 @@ export const useDashboard = () => {
   const dashboardState = useSelector((state: RootState) => state.dashboard)
 
   // Provide default values to prevent null access
+  
   const {
     overview = {
       totalStudents: 0,
@@ -40,52 +42,52 @@ export const useDashboard = () => {
     error = null,
   } = dashboardState || {}
 
-  const loadOverview = async () => {
+  const loadOverview = useCallback(async () => {
     try {
       return await dispatch(fetchOverview()).unwrap()
     } catch (error) {
       console.error("Failed to load overview:", error)
       return null
     }
-  }
+  }, [dispatch])
 
-  const loadEnrollments = async () => {
+  const loadEnrollments = useCallback(async () => {
     try {
       return await dispatch(fetchEnrollments()).unwrap()
     } catch (error) {
       console.error("Failed to load enrollments:", error)
       return null
     }
-  }
+  }, [dispatch])
 
-  const loadUserActivity = async () => {
+  const loadUserActivity = useCallback(async () => {
     try {
       return await dispatch(fetchUserActivity()).unwrap()
     } catch (error) {
       console.error("Failed to load user activity:", error)
       return null
     }
-  }
+  }, [dispatch])
 
-  const loadRecentActivity = async () => {
+  const loadRecentActivity = useCallback(async () => {
     try {
       return await dispatch(fetchRecentActivity()).unwrap()
     } catch (error) {
       console.error("Failed to load recent activity:", error)
       return null
     }
-  }
+  }, [dispatch])
 
-  const loadSystemHealth = async () => {
+  const loadSystemHealth = useCallback(async () => {
     try {
       return await dispatch(fetchSystemHealth()).unwrap()
     } catch (error) {
       console.error("Failed to load system health:", error)
       return null
     }
-  }
+  }, [dispatch])
 
-  const loadAllDashboardData = async () => {
+  const loadAllDashboardData = useCallback(async () => {
     try {
       await Promise.all([
         dispatch(fetchOverview()),
@@ -97,7 +99,7 @@ export const useDashboard = () => {
     } catch (error) {
       console.error("Failed to load dashboard data:", error)
     }
-  }
+  }, [dispatch])
 
   return {
     overview,

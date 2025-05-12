@@ -1,40 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, BookOpen, GraduationCap, UserCog } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useDashboard } from "@/hooks/use-dashboard"
 
-export default function Dashboard() {
-  // Use local state instead of Redux for initial load
-  const [isLoading, setIsLoading] = useState(true)
-  const [overview, setOverview] = useState({
-    totalStudents: 0,
-    totalLecturers: 0,
-    totalCourses: 0,
-    totalPrograms: 0,
-    totalDepartments: 0,
-    activeStudents: 0,
-    activeLecturers: 0,
-  })
+export default function DashboardPage() {
+  const { overview, recentActivity, systemHealth, isLoading, loadOverview } = useDashboard()
 
+  // Remove loadOverview from the dependency array
   useEffect(() => {
-    // Simulate data loading
-    const timer = setTimeout(() => {
-      setOverview({
-        totalStudents: 250,
-        totalLecturers: 45,
-        totalCourses: 120,
-        totalPrograms: 15,
-        totalDepartments: 8,
-        activeStudents: 230,
-        activeLecturers: 40,
-      })
-      setIsLoading(false)
-    }, 1000)
-
-    return () => clearTimeout(timer)
-  }, [])
+    loadOverview()
+  }, []) // Empty dependency array
 
   return (
     <div className="space-y-6">
@@ -50,12 +28,12 @@ export default function Dashboard() {
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {isLoading.overview ? (
               <Skeleton className="h-8 w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{overview.totalStudents}</div>
-                <p className="text-xs text-muted-foreground">{overview.activeStudents} active students</p>
+                <div className="text-2xl font-bold">{overview?.totalStudents || 0}</div>
+                <p className="text-xs text-muted-foreground">{overview?.activeStudents || 0} active students</p>
               </>
             )}
           </CardContent>
@@ -67,12 +45,12 @@ export default function Dashboard() {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {isLoading.overview ? (
               <Skeleton className="h-8 w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{overview.totalCourses}</div>
-                <p className="text-xs text-muted-foreground">Across {overview.totalPrograms} programs</p>
+                <div className="text-2xl font-bold">{overview?.totalCourses || 0}</div>
+                <p className="text-xs text-muted-foreground">Across {overview?.totalPrograms || 0} programs</p>
               </>
             )}
           </CardContent>
@@ -84,12 +62,12 @@ export default function Dashboard() {
             <UserCog className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {isLoading.overview ? (
               <Skeleton className="h-8 w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{overview.totalLecturers}</div>
-                <p className="text-xs text-muted-foreground">{overview.activeLecturers} active lecturers</p>
+                <div className="text-2xl font-bold">{overview?.totalLecturers || 0}</div>
+                <p className="text-xs text-muted-foreground">{overview?.activeLecturers || 0} active lecturers</p>
               </>
             )}
           </CardContent>
@@ -101,12 +79,12 @@ export default function Dashboard() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {isLoading.overview ? (
               <Skeleton className="h-8 w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{overview.totalPrograms}</div>
-                <p className="text-xs text-muted-foreground">Across {overview.totalDepartments} departments</p>
+                <div className="text-2xl font-bold">{overview?.totalPrograms || 0}</div>
+                <p className="text-xs text-muted-foreground">Across {overview?.totalDepartments || 0} departments</p>
               </>
             )}
           </CardContent>
@@ -120,7 +98,7 @@ export default function Dashboard() {
             <CardDescription>System activities in the last 24 hours</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {isLoading.overview ? (
               <div className="space-y-4">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="border-b pb-2">
@@ -129,36 +107,40 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : recentActivity ? (
               <div className="space-y-4">
-                <div className="border-b pb-2">
-                  <p className="text-sm font-medium">New student registration</p>
-                  <p className="text-xs text-muted-foreground">2 hours ago</p>
-                </div>
-                <div className="border-b pb-2">
-                  <p className="text-sm font-medium">Course schedule updated</p>
-                  <p className="text-xs text-muted-foreground">5 hours ago</p>
-                </div>
-                <div className="border-b pb-2">
-                  <p className="text-sm font-medium">New lecturer added</p>
-                  <p className="text-xs text-muted-foreground">Yesterday</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Department meeting scheduled</p>
-                  <p className="text-xs text-muted-foreground">Yesterday</p>
-                </div>
+                {recentActivity.recentEnrollments?.map((enrollment) => (
+                  <div key={enrollment.id} className="border-b pb-2">
+                    <p className="text-sm font-medium">New enrollment: {enrollment.studentName}</p>
+                    <p className="text-xs text-muted-foreground">Program: {enrollment.programName}</p>
+                  </div>
+                ))}
+                {recentActivity.recentAssessments?.map((assessment) => (
+                  <div key={assessment.id} className="border-b pb-2">
+                    <p className="text-sm font-medium">{assessment.title}</p>
+                    <p className="text-xs text-muted-foreground">Course: {assessment.courseName} - Due: {assessment.dueDate}</p>
+                  </div>
+                ))}
+                {recentActivity.recentUsers?.map((user) => (
+                  <div key={user.id} className="border-b pb-2">
+                    <p className="text-sm font-medium">New {user.role}: {user.firstName} {user.lastName}</p>
+                    <p className="text-xs text-muted-foreground">Added: {user.createdAt}</p>
+                  </div>
+                ))}
               </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No recent activity</p>
             )}
           </CardContent>
         </Card>
 
         <Card className="col-span-3">
           <CardHeader>
-            <CardTitle>Upcoming Events</CardTitle>
-            <CardDescription>Events scheduled for this week</CardDescription>
+            <CardTitle>System Health</CardTitle>
+            <CardDescription>Current system status and metrics</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {isLoading.overview ? (
               <div className="space-y-4">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="border-b pb-2">
@@ -170,16 +152,26 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-4">
                 <div className="border-b pb-2">
-                  <p className="text-sm font-medium">Faculty Meeting</p>
-                  <p className="text-xs text-muted-foreground">Tomorrow, 10:00 AM</p>
+                  <p className="text-sm font-medium">System Status</p>
+                  <p className="text-xs text-muted-foreground">{systemHealth?.status || 'Unknown'}</p>
                 </div>
                 <div className="border-b pb-2">
-                  <p className="text-sm font-medium">End of Semester Review</p>
-                  <p className="text-xs text-muted-foreground">Friday, 2:00 PM</p>
+                  <p className="text-sm font-medium">API Requests</p>
+                  <p className="text-xs text-muted-foreground">
+                    Success: {systemHealth?.apiRequests?.successful || 0} | 
+                    Failed: {systemHealth?.apiRequests?.failed || 0}
+                  </p>
+                </div>
+                <div className="border-b pb-2">
+                  <p className="text-sm font-medium">Memory Usage</p>
+                  <p className="text-xs text-muted-foreground">
+                    {Math.round((systemHealth?.memoryUsage?.heapUsed || 0) / 1024 / 1024)}MB / 
+                    {Math.round((systemHealth?.memoryUsage?.heapTotal || 0) / 1024 / 1024)}MB
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">New Student Orientation</p>
-                  <p className="text-xs text-muted-foreground">Saturday, 9:00 AM</p>
+                  <p className="text-sm font-medium">Last Backup</p>
+                  <p className="text-xs text-muted-foreground">{systemHealth?.lastBackup || 'Never'}</p>
                 </div>
               </div>
             )}
