@@ -13,22 +13,24 @@ import {
   clearError,
 } from "@/lib/redux/courseSlice"
 import type { CreateCourseDto, UpdateCourseDto } from "@/types/course"
+import { useCallback } from "react"
 
 export const useCourses = () => {
   const dispatch = useDispatch<AppDispatch>()
   const { courses, programCourses, currentCourse, isLoading, error } = useSelector((state: RootState) => state.courses)
 
-  const loadCourses = async () => {
+  // Use useCallback to prevent infinite loops with useEffect
+  const loadCourses = useCallback(async () => {
     return await dispatch(fetchCourses()).unwrap()
-  }
+  }, [dispatch])
 
-  const loadCourse = async (id: string) => {
+  const loadCourse = useCallback(async (id: string) => {
     return await dispatch(fetchCourse(id)).unwrap()
-  }
+  }, [dispatch])
 
-  const loadCoursesByProgram = async (programId: string) => {
+  const loadCoursesByProgram = useCallback(async (programId: string) => {
     return await dispatch(fetchCoursesByProgram(programId)).unwrap()
-  }
+  }, [dispatch])
 
   const addCourse = async (data: CreateCourseDto) => {
     return await dispatch(createCourse(data)).unwrap()

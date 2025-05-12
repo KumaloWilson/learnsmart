@@ -14,13 +14,10 @@ import { useToast } from "@/hooks/use-toast"
 export function CourseTable() {
   const router = useRouter()
   const { toast } = useToast()
-  const { courses, isLoading, error, loadCourses, removeCourse } = useCourses()
+  const { courses, isLoading, error, removeCourse } = useCourses()
   const [searchTerm, setSearchTerm] = useState("")
 
-  useEffect(() => {
-    loadCourses()
-  }, [loadCourses])
-
+  // Remove loadCourses call as it's now handled in the parent component
   useEffect(() => {
     if (error) {
       toast({
@@ -35,7 +32,7 @@ export function CourseTable() {
     (course) =>
       course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.program?.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      (course.program?.name && course.program.name.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
   const handleDelete = async (id: string) => {
@@ -54,7 +51,7 @@ export function CourseTable() {
     }
   }
 
-  if (isLoading.courses) {
+  if (isLoading?.courses) {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">

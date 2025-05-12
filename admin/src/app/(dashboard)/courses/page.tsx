@@ -14,15 +14,17 @@ export default function CoursesManagement() {
   const { loadCourses, error } = useCourses()
 
   useEffect(() => {
-    loadCourses().catch((err) => {
-      toast({
-        title: "Error",
-        description: "Failed to load courses. Please try again.",
-        variant: "destructive",
+    // Call loadCourses without wrapping in another async function
+    loadCourses()
+      .catch((err) => {
+        toast({
+          title: "Error",
+          description: "Failed to load courses. Please try again.",
+          variant: "destructive",
+        })
+        console.error("Failed to load courses:", err)
       })
-      console.error("Failed to load courses:", err)
-    })
-  }, [loadCourses, toast])
+  }, []) // Remove loadCourses from dependency array to prevent infinite loop
 
   useEffect(() => {
     if (error) {
