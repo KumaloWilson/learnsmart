@@ -1,22 +1,22 @@
-import { AdminSidebar } from "@/components/admin-sidebar"
-import { PageHeader } from "@/components/page-header"
-import { StudentsTable } from "@/components/student-table"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-
-export default function StudentsPage() {
+export default function StudentsManagement() {
   return (
-      <div className="flex min-h-screen bg-gray-100">
-        <AdminSidebar />
-
-      <div className="flex-1 p-8">
-
-      <PageHeader title="Student Management" description="View and manage all students in the system." />
-      <div className="mt-8">
-        <StudentsTable />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Students Management</h1>
+        <p className="text-muted-foreground">Manage student information and records</p>
       </div>
 
-
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Students</CardTitle>
+          <CardDescription>View and manage student records</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Students management content will be implemented here.</p>
+        </CardContent>
+      </Card>
     </div>
   )
 }
