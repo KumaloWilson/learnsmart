@@ -24,15 +24,15 @@ export default function EnrollmentTable({ studentId }: EnrollmentTableProps) {
   const { toast } = useToast()
   const { enrollments, loading, error, getStudentEnrollments, getStudentEnrollmentsBySemester, deleteEnrollment } =
     useStudents()
-  const { semesters, getSemesters } = useSemesters()
+  const { semesters, loadSemesters } = useSemesters()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSemester, setSelectedSemester] = useState<string>("")
   const [filteredEnrollments, setFilteredEnrollments] = useState<Enrollment[]>([])
 
   useEffect(() => {
     getStudentEnrollments(studentId)
-    getSemesters()
-  }, [studentId, getStudentEnrollments, getSemesters])
+    loadSemesters()
+  }, [studentId, getStudentEnrollments, loadSemesters])
 
   useEffect(() => {
     if (enrollments) {
@@ -62,7 +62,7 @@ export default function EnrollmentTable({ studentId }: EnrollmentTableProps) {
         title: "Enrollment deleted",
         description: "Enrollment has been deleted successfully",
       })
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to delete enrollment",

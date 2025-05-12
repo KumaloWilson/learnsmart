@@ -7,5 +7,5 @@ interface StudentPageProps {
 }
 
 export default function StudentPage({ params }: StudentPageProps) {
-  return <StudentDetail id={params.id} />
+  return <StudentDetail studentId={params.id} />
 }

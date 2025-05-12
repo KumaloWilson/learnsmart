@@ -19,14 +19,14 @@ export default function StudentTable() {
   const router = useRouter()
   const { toast } = useToast()
   const { students, loading, error, getStudents, deleteStudent } = useStudents()
-  const { programs, getPrograms } = usePrograms()
+  const { loadPrograms } = usePrograms()
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([])
 
   useEffect(() => {
     getStudents()
-    getPrograms()
-  }, [getStudents, getPrograms])
+    loadPrograms()
+  }, [getStudents, loadPrograms])
 
   useEffect(() => {
     if (students) {
@@ -49,7 +49,7 @@ export default function StudentTable() {
         title: "Student deleted",
         description: "Student has been deleted successfully",
       })
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to delete student",

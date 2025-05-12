@@ -9,11 +9,11 @@ import { Plus } from "lucide-react"
 
 export default function StudentsManagement() {
   const router = useRouter()
-  const { loadStudents } = useStudents()
+  const { getStudents } = useStudents()
 
   useEffect(() => {
-    loadStudents()
-  }, [loadStudents])
+    getStudents()
+  }, [getStudents])
 
   return (
     <div className="space-y-6">
