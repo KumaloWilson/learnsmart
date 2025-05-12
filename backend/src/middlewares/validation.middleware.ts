@@ -160,7 +160,6 @@ export const studentValidation = {
     firstName: Joi.string().required(),
     lastName: Joi.string().required(),
     email: Joi.string().email().required(),
-    password: Joi.string().min(6).required(),
     studentId: Joi.string().optional(),
     dateOfBirth: Joi.date().optional(),
     gender: Joi.string().optional(),
@@ -168,7 +167,7 @@ export const studentValidation = {
     phoneNumber: Joi.string().optional(),
     programId: Joi.string().uuid().required(),
     enrollmentDate: Joi.date().required(),
-    currentLevel: Joi.number().integer().min(1).optional(),
+    currentLevel: Joi.number().min(1.1).optional(),
   }),
 
   updateStudent: Joi.object({
@@ -177,7 +176,7 @@ export const studentValidation = {
     address: Joi.string().optional(),
     phoneNumber: Joi.string().optional(),
     status: Joi.string().valid("active", "suspended", "graduated", "withdrawn").optional(),
-    currentLevel: Joi.number().integer().min(1).optional(),
+    currentLevel: Joi.number().min(1.1).optional(),
     programId: Joi.string().uuid().optional(),
     graduationDate: Joi.date().optional(),
   }),

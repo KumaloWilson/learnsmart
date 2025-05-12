@@ -35,7 +35,7 @@ export class Course extends Model {
   code!: string
 
   @Column({
-    type: DataType.INTEGER,
+    type: DataType.NUMBER,
     allowNull: false,
     defaultValue: 1,
   })

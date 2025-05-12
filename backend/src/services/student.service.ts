@@ -114,7 +114,7 @@ export class StudentService {
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
-      password: data.password,
+      password: "password123", // Default password, should be changed by the user
       role: "student",
     })
 
