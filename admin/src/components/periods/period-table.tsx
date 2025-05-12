@@ -17,12 +17,8 @@ import { Period } from "@/types/period"
 export function PeriodTable() {
   const router = useRouter()
   const { toast } = useToast()
-  const { periods, isLoading, error, loadPeriods, removePeriod } = usePeriods()
+  const { periods, isLoading, error, removePeriod } = usePeriods()
   const [searchTerm, setSearchTerm] = useState("")
-
-  useEffect(() => {
-    loadPeriods()
-  }, [loadPeriods])
 
   useEffect(() => {
     if (error) {
@@ -37,7 +33,7 @@ export function PeriodTable() {
   const filteredPeriods = periods.filter(
     (period) =>
       period.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      period.semester?.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      (period.semester?.name && period.semester.name.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
   const handleDelete = async (id: string) => {
@@ -47,12 +43,13 @@ export function PeriodTable() {
         title: "Success",
         description: "Period deleted successfully",
       })
-    } catch {
+    } catch (err) {
       toast({
         title: "Error",
         description: "Failed to delete period",
         variant: "destructive",
       })
+      console.error("Error deleting period:", err)
     }
   }
 
@@ -70,7 +67,7 @@ export function PeriodTable() {
     }
   }
 
-  if (isLoading.periods) {
+  if (isLoading?.periods) {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">

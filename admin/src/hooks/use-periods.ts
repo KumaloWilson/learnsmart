@@ -1,4 +1,5 @@
 import { useSelector, useDispatch } from "react-redux"
+import { useCallback } from "react"
 import type { RootState, AppDispatch } from "@/lib/store"
 import {
   fetchPeriods,
@@ -16,17 +17,18 @@ export const usePeriods = () => {
   const dispatch = useDispatch<AppDispatch>()
   const { periods, semesterPeriods, currentPeriod, isLoading, error } = useSelector((state: RootState) => state.periods)
 
-  const loadPeriods = async () => {
+  // Use useCallback to prevent useEffect dependency issues
+  const loadPeriods = useCallback(async () => {
     return await dispatch(fetchPeriods()).unwrap()
-  }
+  }, [dispatch])
 
-  const loadPeriod = async (id: string) => {
+  const loadPeriod = useCallback(async (id: string) => {
     return await dispatch(fetchPeriod(id)).unwrap()
-  }
+  }, [dispatch])
 
-  const loadPeriodsBySemester = async (semesterId: string) => {
+  const loadPeriodsBySemester = useCallback(async (semesterId: string) => {
     return await dispatch(fetchPeriodsBySemester(semesterId)).unwrap()
-  }
+  }, [dispatch])
 
   const addPeriod = async (data: CreatePeriodDto) => {
     return await dispatch(createPeriod(data)).unwrap()
