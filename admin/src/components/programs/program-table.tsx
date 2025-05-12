@@ -14,13 +14,10 @@ import { useToast } from "@/hooks/use-toast"
 export function ProgramTable() {
   const router = useRouter()
   const { toast } = useToast()
-  const { programs, isLoading, error, loadPrograms, removeProgram } = usePrograms()
+  const { programs, isLoading, error, removeProgram } = usePrograms()
   const [searchTerm, setSearchTerm] = useState("")
 
-  useEffect(() => {
-    loadPrograms()
-  }, [loadPrograms])
-
+  // Remove the loadPrograms call here since it's being handled in the parent component
   useEffect(() => {
     if (error) {
       toast({
@@ -46,16 +43,17 @@ export function ProgramTable() {
         title: "Success",
         description: "Program deleted successfully",
       })
-    } catch {
+    } catch (err) {
       toast({
         title: "Error",
         description: "Failed to delete program",
         variant: "destructive",
       })
+      console.error("Failed to delete program:", err)
     }
   }
 
-  if (isLoading.programs) {
+  if (isLoading?.programs) {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">

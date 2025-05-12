@@ -14,15 +14,17 @@ export default function ProgramsManagement() {
   const { loadPrograms, error } = usePrograms()
 
   useEffect(() => {
-    loadPrograms().catch((err) => {
-      toast({
-        title: "Error",
-        description: "Failed to load programs. Please try again.",
-        variant: "destructive",
+    // Call loadPrograms without wrapping in another async function
+    loadPrograms()
+      .catch((err) => {
+        toast({
+          title: "Error",
+          description: "Failed to load programs. Please try again.",
+          variant: "destructive",
+        })
+        console.error("Failed to load programs:", err)
       })
-      console.error("Failed to load programs:", err)
-    })
-  }, [loadPrograms, toast])
+  }, []) // Remove loadPrograms from dependency array to prevent infinite loop
 
   useEffect(() => {
     if (error) {

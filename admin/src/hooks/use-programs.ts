@@ -10,18 +10,20 @@ import {
   clearError,
 } from "@/lib/redux/programSlice"
 import type { CreateProgramDto, UpdateProgramDto } from "@/types/program"
+import { useCallback } from "react"
 
 export const usePrograms = () => {
   const dispatch = useDispatch<AppDispatch>()
   const { programs, currentProgram, isLoading, error } = useSelector((state: RootState) => state.programs)
 
-  const loadPrograms = async () => {
+  // Use useCallback to prevent useEffect dependency issues
+  const loadPrograms = useCallback(async () => {
     return await dispatch(fetchPrograms()).unwrap()
-  }
+  }, [dispatch])
 
-  const loadProgram = async (id: string) => {
+  const loadProgram = useCallback(async (id: string) => {
     return await dispatch(fetchProgram(id)).unwrap()
-  }
+  }, [dispatch])
 
   const addProgram = async (data: CreateProgramDto) => {
     return await dispatch(createProgram(data)).unwrap()
