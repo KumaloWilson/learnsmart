@@ -27,6 +27,7 @@ export default function StudentTable() {
     getStudents()
     loadPrograms()
   }, [getStudents, loadPrograms])
+  
 
   useEffect(() => {
     if (students) {

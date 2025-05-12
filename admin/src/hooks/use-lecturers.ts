@@ -1,4 +1,5 @@
 import { useSelector, useDispatch } from "react-redux"
+import { useCallback } from "react"
 import type { RootState, AppDispatch } from "@/lib/store"
 import {
   fetchLecturers,
@@ -27,53 +28,53 @@ export const useLecturers = () => {
     (state: RootState) => state.lecturers,
   )
 
-  const loadLecturers = async () => {
+  const loadLecturers = useCallback(async () => {
     return await dispatch(fetchLecturers()).unwrap()
-  }
+  }, [dispatch])
 
-  const loadLecturer = async (id: string) => {
+  const loadLecturer = useCallback(async (id: string) => {
     return await dispatch(fetchLecturer(id)).unwrap()
-  }
+  }, [dispatch])
 
-  const loadLecturerByUserId = async (userId: string) => {
+  const loadLecturerByUserId = useCallback(async (userId: string) => {
     return await dispatch(fetchLecturerByUserId(userId)).unwrap()
-  }
+  }, [dispatch])
 
-  const addLecturer = async (data: CreateLecturerDto) => {
+  const addLecturer = useCallback(async (data: CreateLecturerDto) => {
     return await dispatch(createLecturer(data)).unwrap()
-  }
+  }, [dispatch])
 
-  const editLecturer = async (id: string, data: UpdateLecturerDto) => {
+  const editLecturer = useCallback(async (id: string, data: UpdateLecturerDto) => {
     return await dispatch(updateLecturer({ id, data })).unwrap()
-  }
+  }, [dispatch])
 
-  const removeLecturer = async (id: string) => {
+  const removeLecturer = useCallback(async (id: string) => {
     return await dispatch(deleteLecturer(id)).unwrap()
-  }
+  }, [dispatch])
 
-  const loadCourseAssignments = async (lecturerId: string) => {
+  const loadCourseAssignments = useCallback(async (lecturerId: string) => {
     return await dispatch(fetchLecturerCourseAssignments(lecturerId)).unwrap()
-  }
+  }, [dispatch])
 
-  const addCourseAssignment = async (data: CreateCourseAssignmentDto) => {
+  const addCourseAssignment = useCallback(async (data: CreateCourseAssignmentDto) => {
     return await dispatch(createCourseAssignment(data)).unwrap()
-  }
+  }, [dispatch])
 
-  const editCourseAssignment = async (id: string, data: UpdateCourseAssignmentDto) => {
+  const editCourseAssignment = useCallback(async (id: string, data: UpdateCourseAssignmentDto) => {
     return await dispatch(updateCourseAssignment({ id, data })).unwrap()
-  }
+  }, [dispatch])
 
-  const removeCourseAssignment = async (id: string) => {
+  const removeCourseAssignment = useCallback(async (id: string) => {
     return await dispatch(deleteCourseAssignment(id)).unwrap()
-  }
+  }, [dispatch])
 
-  const resetCurrentLecturer = () => {
+  const resetCurrentLecturer = useCallback(() => {
     dispatch(clearCurrentLecturer())
-  }
+  }, [dispatch])
 
-  const resetError = () => {
+  const resetError = useCallback(() => {
     dispatch(clearError())
-  }
+  }, [dispatch])
 
   return {
     lecturers,

@@ -11,9 +11,10 @@ export default function LecturersManagement() {
   const router = useRouter()
   const { loadLecturers } = useLecturers()
 
+  // Remove loadLecturers from the dependency array
   useEffect(() => {
     loadLecturers()
-  }, [loadLecturers])
+  }, []) // Empty dependency array
 
   return (
     <div className="space-y-6">

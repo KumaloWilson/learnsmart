@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, } from "react"
 import { useRouter } from "next/navigation"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -12,15 +12,17 @@ import { MoreHorizontal, Search } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 
+
 export function LecturerTable() {
   const router = useRouter()
   const { toast } = useToast()
   const { lecturers, isLoading, error, loadLecturers, removeLecturer } = useLecturers()
   const [searchTerm, setSearchTerm] = useState("")
 
+  // Remove loadLecturers from the dependency array
   useEffect(() => {
     loadLecturers()
-  }, [loadLecturers])
+  }, []) // Empty dependency array
 
   useEffect(() => {
     if (error) {
