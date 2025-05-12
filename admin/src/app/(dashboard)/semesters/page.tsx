@@ -6,14 +6,35 @@ import { Button } from "@/components/ui/button"
 import { SemesterTable } from "@/components/semesters/semester-table"
 import { useSemesters } from "@/hooks/use-semesters"
 import { Plus } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SemestersManagement() {
   const router = useRouter()
-  const { loadSemesters } = useSemesters()
+  const { toast } = useToast()
+  const { loadSemesters, error } = useSemesters()
 
   useEffect(() => {
+    // Call loadSemesters without wrapping in another async function
     loadSemesters()
-  }, [loadSemesters])
+      .catch((err) => {
+        toast({
+          title: "Error",
+          description: "Failed to load semesters. Please try again.",
+          variant: "destructive",
+        })
+        console.error("Failed to load semesters:", err)
+      })
+  }, []) // Remove loadSemesters from dependency array to prevent infinite loop
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+    }
+  }, [error, toast])
 
   return (
     <div className="space-y-6">

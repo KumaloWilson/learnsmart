@@ -17,13 +17,10 @@ import { Semester } from "@/types/semester"
 export function SemesterTable() {
   const router = useRouter()
   const { toast } = useToast()
-  const { semesters, isLoading, error, loadSemesters, removeSemester } = useSemesters()
+  const { semesters, isLoading, error, removeSemester } = useSemesters()
   const [searchTerm, setSearchTerm] = useState("")
 
-  useEffect(() => {
-    loadSemesters()
-  }, [loadSemesters])
-
+  // We don't need to load semesters here anymore, as it's handled in the parent component
   useEffect(() => {
     if (error) {
       toast({
@@ -47,12 +44,13 @@ export function SemesterTable() {
         title: "Success",
         description: "Semester deleted successfully",
       })
-    } catch {
+    } catch (err) {
       toast({
         title: "Error",
         description: "Failed to delete semester",
         variant: "destructive",
       })
+      console.error("Delete semester error:", err)
     }
   }
 
@@ -70,7 +68,7 @@ export function SemesterTable() {
     }
   }
 
-  if (isLoading.semesters) {
+  if (isLoading?.semesters) {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">
