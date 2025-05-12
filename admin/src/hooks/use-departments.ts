@@ -1,4 +1,5 @@
 import { useSelector, useDispatch } from "react-redux"
+import { useCallback } from "react"
 import type { RootState, AppDispatch } from "@/lib/store"
 import {
   fetchDepartments,
@@ -15,13 +16,14 @@ export const useDepartments = () => {
   const dispatch = useDispatch<AppDispatch>()
   const { departments, currentDepartment, isLoading, error } = useSelector((state: RootState) => state.departments)
 
-  const loadDepartments = async () => {
+  // Use useCallback to prevent useEffect dependency issues
+  const loadDepartments = useCallback(async () => {
     return await dispatch(fetchDepartments()).unwrap()
-  }
+  }, [dispatch])
 
-  const loadDepartment = async (id: string) => {
+  const loadDepartment = useCallback(async (id: string) => {
     return await dispatch(fetchDepartment(id)).unwrap()
-  }
+  }, [dispatch])
 
   const addDepartment = async (data: CreateDepartmentDto) => {
     return await dispatch(createDepartment(data)).unwrap()

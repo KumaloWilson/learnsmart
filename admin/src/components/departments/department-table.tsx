@@ -14,12 +14,13 @@ import { useToast } from "@/hooks/use-toast"
 export function DepartmentTable() {
   const router = useRouter()
   const { toast } = useToast()
-  const { departments, isLoading, error, loadDepartments, removeDepartment } = useDepartments()
+  const { departments, isLoading, error, removeDepartment } = useDepartments()
   const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
-    loadDepartments()
-  }, [loadDepartments])
+    // We don't need to call loadDepartments here anymore,
+    // as it's being handled in the parent component
+  }, [])
 
   useEffect(() => {
     if (error) {
@@ -35,7 +36,7 @@ export function DepartmentTable() {
     (department) =>
       department.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       department.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      department.school?.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      (department.school?.name && department.school.name.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
   const handleDelete = async (id: string) => {
@@ -45,7 +46,7 @@ export function DepartmentTable() {
         title: "Success",
         description: "Department deleted successfully",
       })
-    } catch {
+    } catch{
       toast({
         title: "Error",
         description: "Failed to delete department",
@@ -54,7 +55,7 @@ export function DepartmentTable() {
     }
   }
 
-  if (isLoading.departments) {
+  if (isLoading?.departments) {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">

@@ -14,15 +14,17 @@ export default function DepartmentsManagement() {
   const { loadDepartments, error } = useDepartments()
 
   useEffect(() => {
-    loadDepartments().catch((err) => {
-      toast({
-        title: "Error",
-        description: "Failed to load departments. Please try again.",
-        variant: "destructive",
+    // Call loadDepartments without wrapping in another async function
+    loadDepartments()
+      .catch((err) => {
+        toast({
+          title: "Error",
+          description: "Failed to load departments. Please try again.",
+          variant: "destructive",
+        })
+        console.error("Failed to load departments:", err)
       })
-      console.error("Failed to load departments:", err)
-    })
-  }, [loadDepartments, toast])
+  }, []) // Remove loadDepartments from dependency array to prevent infinite loop
 
   useEffect(() => {
     if (error) {
