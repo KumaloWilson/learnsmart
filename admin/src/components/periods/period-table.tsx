@@ -154,8 +154,8 @@ export function PeriodTable() {
                 <TableRow key={period.id}>
                   <TableCell className="font-medium">{period.name}</TableCell>
                   <TableCell>{period.semester?.name || "N/A"}</TableCell>
-                  <TableCell>{format(new Date(period.startTime), "MMM d, yyyy")}</TableCell>
-                  <TableCell>{format(new Date(period.endTime), "MMM d, yyyy")}</TableCell>
+                  <TableCell>{format(new Date(`1970-01-01T${period.startTime}Z`), "hh:mm a")}</TableCell>
+                  <TableCell>{format(new Date(`1970-01-01T${period.endTime}Z`), "hh:mm a")}</TableCell>
                   <TableCell>{getPeriodStatus(period)}</TableCell>
                   <TableCell>
                     <DropdownMenu>
