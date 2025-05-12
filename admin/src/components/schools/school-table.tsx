@@ -14,12 +14,13 @@ import { useToast } from "@/hooks/use-toast"
 export function SchoolTable() {
   const router = useRouter()
   const { toast } = useToast()
-  const { schools, isLoading, error, loadSchools, removeSchool } = useSchools()
+  const { schools, isLoading, error, removeSchool } = useSchools()
   const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
-    loadSchools()
-  }, [loadSchools])
+    // We don't need to call loadSchools here anymore,
+    // as it's being handled in the parent component
+  }, [])
 
   useEffect(() => {
     if (error) {
@@ -37,7 +38,8 @@ export function SchoolTable() {
       school.code.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleDelete = async (id: string) => {
+
+  const handleDelete = async (id: string): Promise<void> => {
     try {
       await removeSchool(id)
       toast({
@@ -53,7 +55,8 @@ export function SchoolTable() {
     }
   }
 
-  if (isLoading.schools) {
+  // Check if schools data is loading
+  if (isLoading?.schools) {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">

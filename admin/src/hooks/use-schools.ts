@@ -10,18 +10,20 @@ import {
   clearError,
 } from "@/lib/redux/schoolSlice"
 import type { CreateSchoolDto, UpdateSchoolDto } from "@/types/school"
+import { useCallback } from "react"
 
 export const useSchools = () => {
   const dispatch = useDispatch<AppDispatch>()
   const { schools, currentSchool, isLoading, error } = useSelector((state: RootState) => state.schools)
 
-  const loadSchools = async () => {
+  // Use useCallback to prevent useEffect dependency issues
+  const loadSchools = useCallback(async () => {
     return await dispatch(fetchSchools()).unwrap()
-  }
+  }, [dispatch])
 
-  const loadSchool = async (id: string) => {
+  const loadSchool = useCallback(async (id: string) => {
     return await dispatch(fetchSchool(id)).unwrap()
-  }
+  }, [dispatch])
 
   const addSchool = async (data: CreateSchoolDto) => {
     return await dispatch(createSchool(data)).unwrap()

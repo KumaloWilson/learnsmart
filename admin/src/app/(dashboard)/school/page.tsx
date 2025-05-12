@@ -14,15 +14,17 @@ export default function SchoolManagement() {
   const { loadSchools, error } = useSchools()
 
   useEffect(() => {
-    loadSchools().catch((err) => {
-      toast({
-        title: "Error",
-        description: "Failed to load schools. Please try again.",
-        variant: "destructive",
+    // Call loadSchools without wrapping in another async function
+    loadSchools()
+      .catch((err) => {
+        toast({
+          title: "Error",
+          description: "Failed to load schools. Please try again.",
+          variant: "destructive",
+        })
+        console.error("Failed to load schools:", err)
       })
-      console.error("Failed to load schools:", err)
-    })
-  }, [loadSchools, toast])
+  }, []) // Remove loadSchools from dependency array to prevent infinite loop
 
   useEffect(() => {
     if (error) {

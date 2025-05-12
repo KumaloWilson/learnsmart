@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useDashboard } from "@/hooks/use-dashboard"
 
 export default function Dashboard() {
-  const { overview, isLoading, loadOverview } = useDashboard()
+  const { overview,recentActivity, systemHealth, isLoading, loadOverview } = useDashboard()
 
   useEffect(() => {
     loadOverview()
@@ -97,6 +97,7 @@ export default function Dashboard() {
             <CardDescription>System activities in the last 24 hours</CardDescription>
           </CardHeader>
           <CardContent>
+            
             {isLoading.overview ? (
               <div className="space-y-4">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -107,35 +108,32 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : (
-              <div className="space-y-4">
-                {overview?.recentActivity?.length > 0 ? (
-                  overview.recentActivity.map((activity, index) => (
-                    <div key={index} className="border-b pb-2">
-                      <p className="text-sm font-medium">{activity.description}</p>
-                      <p className="text-xs text-muted-foreground">{activity.timeAgo}</p>
-                    </div>
-                  ))
-                ) : (
+                <div className="space-y-4">
+                {recentActivity ? (
                   <>
-                    <div className="border-b pb-2">
-                      <p className="text-sm font-medium">New student registration</p>
-                      <p className="text-xs text-muted-foreground">2 hours ago</p>
+                  {recentActivity.recentEnrollments.map((enrollment) => (
+                    <div key={enrollment.id} className="border-b pb-2">
+                    <p className="text-sm font-medium">New enrollment: {enrollment.studentName}</p>
+                    <p className="text-xs text-muted-foreground">Program: {enrollment.programName}</p>
                     </div>
-                    <div className="border-b pb-2">
-                      <p className="text-sm font-medium">Course schedule updated</p>
-                      <p className="text-xs text-muted-foreground">5 hours ago</p>
+                  ))}
+                  {recentActivity.recentAssessments.map((assessment) => (
+                    <div key={assessment.id} className="border-b pb-2">
+                    <p className="text-sm font-medium">{assessment.title}</p>
+                    <p className="text-xs text-muted-foreground">Course: {assessment.courseName} - Due: {assessment.dueDate}</p>
                     </div>
-                    <div className="border-b pb-2">
-                      <p className="text-sm font-medium">New lecturer added</p>
-                      <p className="text-xs text-muted-foreground">Yesterday</p>
+                  ))}
+                  {recentActivity.recentUsers.map((user) => (
+                    <div key={user.id} className="border-b pb-2">
+                    <p className="text-sm font-medium">New {user.role}: {user.firstName} {user.lastName}</p>
+                    <p className="text-xs text-muted-foreground">Added: {user.createdAt}</p>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">Department meeting scheduled</p>
-                      <p className="text-xs text-muted-foreground">Yesterday</p>
-                    </div>
+                  ))}
                   </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No recent activity</p>
                 )}
-              </div>
+                </div>
             )}
           </CardContent>
         </Card>
@@ -148,38 +146,37 @@ export default function Dashboard() {
           <CardContent>
             {isLoading.overview ? (
               <div className="space-y-4">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="border-b pb-2">
-                    <Skeleton className="h-4 w-3/4 mb-1" />
-                    <Skeleton className="h-3 w-1/4" />
-                  </div>
-                ))}
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="border-b pb-2">
+                <Skeleton className="h-4 w-3/4 mb-1" />
+                <Skeleton className="h-3 w-1/4" />
+                </div>
+              ))}
               </div>
             ) : (
               <div className="space-y-4">
-                {overview?.upcomingEvents?.length > 0 ? (
-                  overview.upcomingEvents.map((event, index) => (
-                    <div key={index} className={index < overview.upcomingEvents.length - 1 ? "border-b pb-2" : ""}>
-                      <p className="text-sm font-medium">{event.title}</p>
-                      <p className="text-xs text-muted-foreground">{event.dateTime}</p>
-                    </div>
-                  ))
-                ) : (
-                  <>
-                    <div className="border-b pb-2">
-                      <p className="text-sm font-medium">Faculty Meeting</p>
-                      <p className="text-xs text-muted-foreground">Tomorrow, 10:00 AM</p>
-                    </div>
-                    <div className="border-b pb-2">
-                      <p className="text-sm font-medium">End of Semester Review</p>
-                      <p className="text-xs text-muted-foreground">Friday, 2:00 PM</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">New Student Orientation</p>
-                      <p className="text-xs text-muted-foreground">Saturday, 9:00 AM</p>
-                    </div>
-                  </>
-                )}
+              <div className="border-b pb-2">
+                <p className="text-sm font-medium">System Status</p>
+                <p className="text-xs text-muted-foreground">{systemHealth?.status || 'Unknown'}</p>
+              </div>
+              <div className="border-b pb-2">
+                <p className="text-sm font-medium">API Requests</p>
+                <p className="text-xs text-muted-foreground">
+                Success: {systemHealth?.apiRequests.successful || 0} | 
+                Failed: {systemHealth?.apiRequests.failed || 0}
+                </p>
+              </div>
+              <div className="border-b pb-2">
+                <p className="text-sm font-medium">Memory Usage</p>
+                <p className="text-xs text-muted-foreground">
+                {Math.round((systemHealth?.memoryUsage.heapUsed || 0) / 1024 / 1024)}MB / 
+                {Math.round((systemHealth?.memoryUsage.heapTotal || 0) / 1024 / 1024)}MB
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Last Backup</p>
+                <p className="text-xs text-muted-foreground">{systemHealth?.lastBackup || 'Never'}</p>
+              </div>
               </div>
             )}
           </CardContent>
