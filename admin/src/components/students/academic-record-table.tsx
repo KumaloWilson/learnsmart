@@ -43,7 +43,7 @@ export default function AcademicRecordTable({ studentId }: AcademicRecordTablePr
         title: "Academic record deleted",
         description: "Academic record has been deleted successfully",
       })
-    } catch (error) {
+    } catch  {
       toast({
         title: "Error",
         description: "Failed to delete academic record",

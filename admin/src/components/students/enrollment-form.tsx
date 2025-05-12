@@ -33,11 +33,12 @@ export default function EnrollmentForm({ studentId, enrollmentId }: EnrollmentFo
   const router = useRouter()
   const { toast } = useToast()
   const { enrollments, getStudentEnrollments, createEnrollment, updateEnrollment } = useStudents()
-  const { courses, getCourses } = useCourses()
-  const { semesters, getSemesters } = useSemesters()
+  const { courses, loadCourses } = useCourses()
+  const { semesters, loadSemesters } = useSemesters()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  type FormData = z.infer<typeof formSchema>
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       courseId: "",
@@ -48,13 +49,13 @@ export default function EnrollmentForm({ studentId, enrollmentId }: EnrollmentFo
   })
 
   useEffect(() => {
-    getCourses()
-    getSemesters()
+    loadCourses()
+    loadSemesters()
 
     if (studentId) {
       getStudentEnrollments(studentId)
     }
-  }, [studentId, getCourses, getSemesters, getStudentEnrollments])
+  }, [studentId, loadCourses, loadSemesters, getStudentEnrollments])
 
   useEffect(() => {
     if (enrollmentId && enrollments.length > 0) {

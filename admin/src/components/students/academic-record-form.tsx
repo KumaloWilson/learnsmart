@@ -42,7 +42,7 @@ export default function AcademicRecordForm({ studentId, recordId }: AcademicReco
     createAcademicRecord,
     updateAcademicRecord,
   } = useStudents()
-  const { semesters, getSemesters } = useSemesters()
+  const { semesters, loadSemesters } = useSemesters()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -58,7 +58,7 @@ export default function AcademicRecordForm({ studentId, recordId }: AcademicReco
   })
 
   useEffect(() => {
-    getSemesters()
+    loadSemesters()
 
     if (studentId) {
       getStudentAcademicRecords(studentId)
@@ -67,7 +67,7 @@ export default function AcademicRecordForm({ studentId, recordId }: AcademicReco
     if (recordId) {
       getAcademicRecordById(recordId)
     }
-  }, [studentId, recordId, getSemesters, getStudentAcademicRecords, getAcademicRecordById])
+  }, [studentId, recordId, loadSemesters, getStudentAcademicRecords, getAcademicRecordById])
 
   useEffect(() => {
     if (recordId && currentAcademicRecord) {
