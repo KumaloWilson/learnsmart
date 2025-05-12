@@ -2,6 +2,7 @@ import { Table, Column, Model, DataType, BelongsToMany, HasMany } from "sequeliz
 import { Course } from "./Course"
 import { CourseSemester } from "./CourseSemester"
 import { Period } from "./Period"
+import { AcademicRecord } from "./AcademicRecord"
 
 @Table({
   tableName: "semesters",
@@ -54,4 +55,7 @@ export class Semester extends Model {
 
   @HasMany(() => Period)
   periods?: Period[]
+  
+  @HasMany(() => AcademicRecord)
+  academicRecords?: AcademicRecord[]
 }
