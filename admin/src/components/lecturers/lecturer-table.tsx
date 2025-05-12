@@ -1,116 +1,159 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Eye, MoreHorizontal, Pencil, Trash2, BookOpen } from "lucide-react"
 import { useLecturers } from "@/hooks/use-lecturers"
+import { MoreHorizontal, Search } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 
 export function LecturerTable() {
   const router = useRouter()
-  const { lecturers, isLoading, removeLecturer } = useLecturers()
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const { toast } = useToast()
+  const { lecturers, isLoading, error, loadLecturers, removeLecturer } = useLecturers()
+  const [searchTerm, setSearchTerm] = useState("")
 
-  const handleView = (id: string) => {
-    router.push(`/lecturers/${id}`)
-  }
+  useEffect(() => {
+    loadLecturers()
+  }, [loadLecturers])
 
-  const handleEdit = (id: string) => {
-    router.push(`/lecturers/edit/${id}`)
-  }
-
-  const handleCourseAssignments = (id: string) => {
-    router.push(`/lecturers/${id}/courses`)
-  }
-
-  const handleDelete = async () => {
-    if (deleteId) {
-      await removeLecturer(deleteId)
-      setDeleteId(null)
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
     }
-  }
+  }, [error, toast])
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "active":
-        return "default"
-      case "inactive":
-        return "secondary"
-      case "on_leave":
-        return "outline"
-      default:
-        return "default"
+  const filteredLecturers = lecturers.filter(
+    (lecturer) =>
+      lecturer.user!.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lecturer.user!.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lecturer.user!.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lecturer.department?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lecturer.specialization.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  const handleDelete = async (id: string) => {
+    try {
+      await removeLecturer(id)
+      toast({
+        title: "Success",
+        description: "Lecturer deleted successfully",
+      })
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to delete lecturer",
+        variant: "destructive",
+      })
     }
   }
 
   if (isLoading.lecturers) {
     return (
-      <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="w-full p-4 border rounded-md">
-            <Skeleton className="h-6 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        ))}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Department</TableHead>
+                <TableHead>Specialization</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[150px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[180px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[120px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[100px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[80px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[40px]" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     )
   }
 
   return (
-    <>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search lecturers..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Staff ID</TableHead>
-              <TableHead>Specialization</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Department</TableHead>
+              <TableHead>Specialization</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {lecturers.length === 0 ? (
+            {filteredLecturers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                  No lecturers found. Create your first lecturer.
+                <TableCell colSpan={6} className="h-24 text-center">
+                  No lecturers found.
                 </TableCell>
               </TableRow>
             ) : (
-              lecturers.map((lecturer) => (
+              filteredLecturers.map((lecturer) => (
                 <TableRow key={lecturer.id}>
                   <TableCell className="font-medium">
-                    {lecturer.title} {lecturer.user?.firstName} {lecturer.user?.lastName}
+                    {lecturer.user!.firstName} {lecturer.user!.lastName}
                   </TableCell>
-                  <TableCell>{lecturer.staffId}</TableCell>
+                  <TableCell>{lecturer.user!.email}</TableCell>
+                  <TableCell>{lecturer.department?.name || "N/A"}</TableCell>
                   <TableCell>{lecturer.specialization}</TableCell>
-                  <TableCell>{lecturer.department?.name || "Unknown Department"}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusBadgeVariant(lecturer.status)} className="capitalize">
-                      {lecturer.status.replace("_", " ")}
-                    </Badge>
+                    {lecturer.status ? (
+                      <Badge variant="default">Active</Badge>
+                    ) : (
+                      <Badge variant="secondary">Inactive</Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -121,28 +164,16 @@ export function LecturerTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleView(lecturer.id)}>
-                          <Eye className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem onClick={() => router.push(`/lecturers/${lecturer.id}`)}>
                           View
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEdit(lecturer.id)}>
-                          <Pencil className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem onClick={() => router.push(`/lecturers/edit/${lecturer.id}`)}>
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleCourseAssignments(lecturer.id)}>
-                          <BookOpen className="mr-2 h-4 w-4" />
-                          Course Assignments
+                        <DropdownMenuItem onClick={() => router.push(`/lecturers/${lecturer.id}/courses`)}>
+                          Courses
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setDeleteId(lecturer.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(lecturer.id)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -152,27 +183,6 @@ export function LecturerTable() {
           </TableBody>
         </Table>
       </div>
-
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the lecturer profile and remove all associated
-              course assignments.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </div>
   )
 }

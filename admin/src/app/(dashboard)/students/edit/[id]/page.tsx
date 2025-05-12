@@ -1,6 +1,27 @@
-import StudentForm from "@/components/students/student-form"
+"use client"
 
-export default function EditStudentPage({ params }: { params: { id: string } }) {
+import { useEffect } from "react"
+import StudentForm from "@/components/students/student-form"
+import { useStudents } from "@/hooks/use-students"
+
+interface EditStudentPageProps {
+  params: {
+    id: string
+  }
+}
+
+export default function EditStudentPage({ params }: EditStudentPageProps) {
+  const { id } = params
+  const { currentStudent, loadStudentById } = useStudents()
+
+  useEffect(() => {
+    loadStudentById(id)
+  }, [id, loadStudentById])
+
+  if (!currentStudent) {
+    return <div className="flex justify-center p-8">Loading student...</div>
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -8,7 +29,7 @@ export default function EditStudentPage({ params }: { params: { id: string } }) 
         <p className="text-muted-foreground">Update student information</p>
       </div>
 
-      <StudentForm studentId={params.id} />
+      <StudentForm student={currentStudent} />
     </div>
   )
 }

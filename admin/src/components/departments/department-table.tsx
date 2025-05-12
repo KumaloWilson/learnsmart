@@ -1,66 +1,118 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { useDepartments } from "@/hooks/use-departments"
+import { MoreHorizontal, Search } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export function DepartmentTable() {
   const router = useRouter()
-  const { departments, isLoading, removeDepartment } = useDepartments()
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const { toast } = useToast()
+  const { departments, isLoading, error, loadDepartments, removeDepartment } = useDepartments()
+  const [searchTerm, setSearchTerm] = useState("")
 
-  const handleView = (id: string) => {
-    router.push(`/departments/${id}`)
-  }
+  useEffect(() => {
+    loadDepartments()
+  }, [loadDepartments])
 
-  const handleEdit = (id: string) => {
-    router.push(`/departments/edit/${id}`)
-  }
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+    }
+  }, [error, toast])
 
-  const handleDelete = async () => {
-    if (deleteId) {
-      await removeDepartment(deleteId)
-      setDeleteId(null)
+  const filteredDepartments = departments.filter(
+    (department) =>
+      department.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      department.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      department.school?.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  const handleDelete = async (id: string) => {
+    try {
+      await removeDepartment(id)
+      toast({
+        title: "Success",
+        description: "Department deleted successfully",
+      })
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to delete department",
+        variant: "destructive",
+      })
     }
   }
 
   if (isLoading.departments) {
     return (
-      <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="w-full p-4 border rounded-md">
-            <Skeleton className="h-6 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        ))}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>School</TableHead>
+                <TableHead>Programs</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[150px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[80px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[120px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[50px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[40px]" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     )
   }
 
   return (
-    <>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search departments..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -69,22 +121,22 @@ export function DepartmentTable() {
               <TableHead>Code</TableHead>
               <TableHead>School</TableHead>
               <TableHead>Programs</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {departments.length === 0 ? (
+            {filteredDepartments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                  No departments found. Create your first department.
+                <TableCell colSpan={5} className="h-24 text-center">
+                  No departments found.
                 </TableCell>
               </TableRow>
             ) : (
-              departments.map((department) => (
+              filteredDepartments.map((department) => (
                 <TableRow key={department.id}>
                   <TableCell className="font-medium">{department.name}</TableCell>
                   <TableCell>{department.code}</TableCell>
-                  <TableCell>{department.school?.name || "Unknown School"}</TableCell>
+                  <TableCell>{department.school?.name || "N/A"}</TableCell>
                   <TableCell>{department.programs?.length || 0}</TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -95,23 +147,13 @@ export function DepartmentTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleView(department.id)}>
-                          <Eye className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem onClick={() => router.push(`/departments/${department.id}`)}>
                           View
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEdit(department.id)}>
-                          <Pencil className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem onClick={() => router.push(`/departments/edit/${department.id}`)}>
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setDeleteId(department.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(department.id)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -121,26 +163,6 @@ export function DepartmentTable() {
           </TableBody>
         </Table>
       </div>
-
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the department and all associated programs.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </div>
   )
 }

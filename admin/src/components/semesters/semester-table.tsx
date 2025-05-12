@@ -1,98 +1,165 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { useSemesters } from "@/hooks/use-semesters"
+import { MoreHorizontal, Search } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
+import { format } from "date-fns"
+import { Semester } from "@/types/semester"
 
 export function SemesterTable() {
   const router = useRouter()
-  const { semesters, isLoading, removeSemester } = useSemesters()
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const { toast } = useToast()
+  const { semesters, isLoading, error, loadSemesters, removeSemester } = useSemesters()
+  const [searchTerm, setSearchTerm] = useState("")
 
-  const handleView = (id: string) => {
-    router.push(`/semesters/${id}`)
+  useEffect(() => {
+    loadSemesters()
+  }, [loadSemesters])
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+    }
+  }, [error, toast])
+
+  const filteredSemesters = semesters.filter(
+    (semester) =>
+      semester.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      semester.academicYear.toString().toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  const handleDelete = async (id: string) => {
+    try {
+      await removeSemester(id)
+      toast({
+        title: "Success",
+        description: "Semester deleted successfully",
+      })
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to delete semester",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleEdit = (id: string) => {
-    router.push(`/semesters/edit/${id}`)
-  }
+  const getSemesterStatus = (semester: Semester) => {
+    const now = new Date()
+    const startDate = new Date(semester.startDate)
+    const endDate = new Date(semester.endDate)
 
-  const handleDelete = async () => {
-    if (deleteId) {
-      await removeSemester(deleteId)
-      setDeleteId(null)
+    if (now < startDate) {
+      return <Badge variant="outline">Upcoming</Badge>
+    } else if (now > endDate) {
+      return <Badge variant="secondary">Completed</Badge>
+    } else {
+      return <Badge variant="default">Active</Badge>
     }
   }
 
   if (isLoading.semesters) {
     return (
-      <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="w-full p-4 border rounded-md">
-            <Skeleton className="h-6 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        ))}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Academic Year</TableHead>
+                <TableHead>Start Date</TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[150px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[100px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[100px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[100px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[80px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[40px]" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     )
   }
 
   return (
-    <>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search semesters..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Academic Year</TableHead>
               <TableHead>Start Date</TableHead>
               <TableHead>End Date</TableHead>
-              <TableHead>Academic Year</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {semesters.length === 0 ? (
+            {filteredSemesters.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                  No semesters found. Create your first semester.
+                <TableCell colSpan={6} className="h-24 text-center">
+                  No semesters found.
                 </TableCell>
               </TableRow>
             ) : (
-              semesters.map((semester) => (
+              filteredSemesters.map((semester) => (
                 <TableRow key={semester.id}>
                   <TableCell className="font-medium">{semester.name}</TableCell>
-                  <TableCell>{new Date(semester.startDate).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Date(semester.endDate).toLocaleDateString()}</TableCell>
                   <TableCell>{semester.academicYear}</TableCell>
-                  <TableCell>
-                    <Badge variant={semester.isActive ? "default" : "outline"}>
-                      {semester.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
+                  <TableCell>{format(new Date(semester.startDate), "MMM d, yyyy")}</TableCell>
+                  <TableCell>{format(new Date(semester.endDate), "MMM d, yyyy")}</TableCell>
+                  <TableCell>{getSemesterStatus(semester)}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -102,23 +169,13 @@ export function SemesterTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleView(semester.id)}>
-                          <Eye className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem onClick={() => router.push(`/semesters/${semester.id}`)}>
                           View
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEdit(semester.id)}>
-                          <Pencil className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem onClick={() => router.push(`/semesters/edit/${semester.id}`)}>
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setDeleteId(semester.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(semester.id)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -128,27 +185,6 @@ export function SemesterTable() {
           </TableBody>
         </Table>
       </div>
-
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the semester and remove all associated courses
-              and periods.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </div>
   )
 }

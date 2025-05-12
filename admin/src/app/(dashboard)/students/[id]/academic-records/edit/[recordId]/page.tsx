@@ -1,6 +1,30 @@
-import AcademicRecordForm from "@/components/students/academic-record-form"
+"use client"
 
-export default function EditAcademicRecordPage({ params }: { params: { id: string; recordId: string } }) {
+import { useEffect } from "react"
+import AcademicRecordForm from "@/components/students/academic-record-form"
+import { useStudents } from "@/hooks/use-students"
+
+interface EditAcademicRecordPageProps {
+  params: {
+    id: string
+    recordId: string
+  }
+}
+
+export default function EditAcademicRecordPage({ params }: EditAcademicRecordPageProps) {
+  const { id, recordId } = params
+  const { academicRecords, loadAcademicRecordById } = useStudents()
+
+  useEffect(() => {
+    loadAcademicRecordById(recordId)
+  }, [recordId, loadAcademicRecordById])
+
+  const academicRecord = academicRecords.find((record) => record.id === recordId)
+
+  if (!academicRecord) {
+    return <div className="flex justify-center p-8">Loading academic record...</div>
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -8,7 +32,7 @@ export default function EditAcademicRecordPage({ params }: { params: { id: strin
         <p className="text-muted-foreground">Update academic record information</p>
       </div>
 
-      <AcademicRecordForm studentId={params.id} recordId={params.recordId} />
+      <AcademicRecordForm studentId={id} academicRecord={academicRecord} />
     </div>
   )
 }

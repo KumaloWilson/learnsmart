@@ -6,14 +6,33 @@ import { Button } from "@/components/ui/button"
 import { DepartmentTable } from "@/components/departments/department-table"
 import { useDepartments } from "@/hooks/use-departments"
 import { Plus } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function DepartmentsManagement() {
   const router = useRouter()
-  const { loadDepartments } = useDepartments()
+  const { toast } = useToast()
+  const { loadDepartments, error } = useDepartments()
 
   useEffect(() => {
-    loadDepartments()
-  }, [loadDepartments])
+    loadDepartments().catch((err) => {
+      toast({
+        title: "Error",
+        description: "Failed to load departments. Please try again.",
+        variant: "destructive",
+      })
+      console.error("Failed to load departments:", err)
+    })
+  }, [loadDepartments, toast])
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+    }
+  }, [error, toast])
 
   return (
     <div className="space-y-6">

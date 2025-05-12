@@ -1,88 +1,141 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { useSchools } from "@/hooks/use-schools"
+import { MoreHorizontal, Search } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export function SchoolTable() {
   const router = useRouter()
-  const { schools, isLoading, removeSchool } = useSchools()
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const { toast } = useToast()
+  const { schools, isLoading, error, loadSchools, removeSchool } = useSchools()
+  const [searchTerm, setSearchTerm] = useState("")
 
-  const handleView = (id: string) => {
-    router.push(`/school/${id}`)
-  }
+  useEffect(() => {
+    loadSchools()
+  }, [loadSchools])
 
-  const handleEdit = (id: string) => {
-    router.push(`/school/edit/${id}`)
-  }
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+    }
+  }, [error, toast])
 
-  const handleDelete = async () => {
-    if (deleteId) {
-      await removeSchool(deleteId)
-      setDeleteId(null)
+  const filteredSchools = schools.filter(
+    (school) =>
+      school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      school.code.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const handleDelete = async (id: string) => {
+    try {
+      await removeSchool(id)
+      toast({
+        title: "Success",
+        description: "School deleted successfully",
+      })
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to delete school",
+        variant: "destructive",
+      })
     }
   }
 
   if (isLoading.schools) {
     return (
-      <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="w-full p-4 border rounded-md">
-            <Skeleton className="h-6 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        ))}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Departments</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[150px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[80px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[120px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[50px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[40px]" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     )
   }
 
   return (
-    <>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search schools..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Code</TableHead>
+              <TableHead>Location</TableHead>
               <TableHead>Departments</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {schools.length === 0 ? (
+            {filteredSchools.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
-                  No schools found. Create your first school.
+                <TableCell colSpan={5} className="h-24 text-center">
+                  No schools found.
                 </TableCell>
               </TableRow>
             ) : (
-              schools.map((school) => (
+              filteredSchools.map((school) => (
                 <TableRow key={school.id}>
                   <TableCell className="font-medium">{school.name}</TableCell>
                   <TableCell>{school.code}</TableCell>
+                  <TableCell>{school.description}</TableCell>
                   <TableCell>{school.departments?.length || 0}</TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -93,23 +146,11 @@ export function SchoolTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleView(school.id)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEdit(school.id)}>
-                          <Pencil className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem onClick={() => router.push(`/school/${school.id}`)}>View</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/school/edit/${school.id}`)}>
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setDeleteId(school.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(school.id)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -119,26 +160,6 @@ export function SchoolTable() {
           </TableBody>
         </Table>
       </div>
-
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the school and all associated departments.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </div>
   )
 }

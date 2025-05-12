@@ -6,14 +6,33 @@ import { Button } from "@/components/ui/button"
 import { ProgramTable } from "@/components/programs/program-table"
 import { usePrograms } from "@/hooks/use-programs"
 import { Plus } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function ProgramsManagement() {
   const router = useRouter()
-  const { loadPrograms } = usePrograms()
+  const { toast } = useToast()
+  const { loadPrograms, error } = usePrograms()
 
   useEffect(() => {
-    loadPrograms()
-  }, [loadPrograms])
+    loadPrograms().catch((err) => {
+      toast({
+        title: "Error",
+        description: "Failed to load programs. Please try again.",
+        variant: "destructive",
+      })
+      console.error("Failed to load programs:", err)
+    })
+  }, [loadPrograms, toast])
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+    }
+  }, [error, toast])
 
   return (
     <div className="space-y-6">

@@ -1,6 +1,12 @@
 import EnrollmentTable from "@/components/students/enrollment-table"
 
-export default function StudentEnrollmentsPage({ params }: { params: { id: string } }) {
+interface EnrollmentsPageProps {
+  params: {
+    id: string
+  }
+}
+
+export default function EnrollmentsPage({ params }: EnrollmentsPageProps) {
   return (
     <div className="space-y-6">
       <div>

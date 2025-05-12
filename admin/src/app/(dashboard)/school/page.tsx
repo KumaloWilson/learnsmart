@@ -6,14 +6,33 @@ import { Button } from "@/components/ui/button"
 import { SchoolTable } from "@/components/schools/school-table"
 import { useSchools } from "@/hooks/use-schools"
 import { Plus } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SchoolManagement() {
   const router = useRouter()
-  const { loadSchools } = useSchools()
+  const { toast } = useToast()
+  const { loadSchools, error } = useSchools()
 
   useEffect(() => {
-    loadSchools()
-  }, [loadSchools])
+    loadSchools().catch((err) => {
+      toast({
+        title: "Error",
+        description: "Failed to load schools. Please try again.",
+        variant: "destructive",
+      })
+      console.error("Failed to load schools:", err)
+    })
+  }, [loadSchools, toast])
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+    }
+  }, [error, toast])
 
   return (
     <div className="space-y-6">

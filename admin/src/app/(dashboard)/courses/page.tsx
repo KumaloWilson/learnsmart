@@ -6,14 +6,33 @@ import { Button } from "@/components/ui/button"
 import { CourseTable } from "@/components/courses/course-table"
 import { useCourses } from "@/hooks/use-courses"
 import { Plus } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function CoursesManagement() {
   const router = useRouter()
-  const { loadCourses } = useCourses()
+  const { toast } = useToast()
+  const { loadCourses, error } = useCourses()
 
   useEffect(() => {
-    loadCourses()
-  }, [loadCourses])
+    loadCourses().catch((err) => {
+      toast({
+        title: "Error",
+        description: "Failed to load courses. Please try again.",
+        variant: "destructive",
+      })
+      console.error("Failed to load courses:", err)
+    })
+  }, [loadCourses, toast])
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+    }
+  }, [error, toast])
 
   return (
     <div className="space-y-6">

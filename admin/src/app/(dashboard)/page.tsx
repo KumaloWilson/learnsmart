@@ -4,17 +4,14 @@ import { useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, BookOpen, GraduationCap, UserCog } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useSelector, useDispatch } from "react-redux"
-import type { AppDispatch, RootState } from "@/lib/store"
-import { fetchOverview } from "@/lib/redux/dashboardSlice"
+import { useDashboard } from "@/hooks/use-dashboard"
 
 export default function Dashboard() {
-  const dispatch = useDispatch<AppDispatch>()
-  const { overview, isLoading } = useSelector((state: RootState) => state.dashboard)
+  const { overview, isLoading, loadOverview } = useDashboard()
 
   useEffect(() => {
-    dispatch(fetchOverview())
-  }, [dispatch])
+    loadOverview()
+  }, [loadOverview])
 
   return (
     <div className="space-y-6">
@@ -111,22 +108,33 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="border-b pb-2">
-                  <p className="text-sm font-medium">New student registration</p>
-                  <p className="text-xs text-muted-foreground">2 hours ago</p>
-                </div>
-                <div className="border-b pb-2">
-                  <p className="text-sm font-medium">Course schedule updated</p>
-                  <p className="text-xs text-muted-foreground">5 hours ago</p>
-                </div>
-                <div className="border-b pb-2">
-                  <p className="text-sm font-medium">New lecturer added</p>
-                  <p className="text-xs text-muted-foreground">Yesterday</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Department meeting scheduled</p>
-                  <p className="text-xs text-muted-foreground">Yesterday</p>
-                </div>
+                {overview?.recentActivity?.length > 0 ? (
+                  overview.recentActivity.map((activity, index) => (
+                    <div key={index} className="border-b pb-2">
+                      <p className="text-sm font-medium">{activity.description}</p>
+                      <p className="text-xs text-muted-foreground">{activity.timeAgo}</p>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="border-b pb-2">
+                      <p className="text-sm font-medium">New student registration</p>
+                      <p className="text-xs text-muted-foreground">2 hours ago</p>
+                    </div>
+                    <div className="border-b pb-2">
+                      <p className="text-sm font-medium">Course schedule updated</p>
+                      <p className="text-xs text-muted-foreground">5 hours ago</p>
+                    </div>
+                    <div className="border-b pb-2">
+                      <p className="text-sm font-medium">New lecturer added</p>
+                      <p className="text-xs text-muted-foreground">Yesterday</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Department meeting scheduled</p>
+                      <p className="text-xs text-muted-foreground">Yesterday</p>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </CardContent>
@@ -149,18 +157,29 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="border-b pb-2">
-                  <p className="text-sm font-medium">Faculty Meeting</p>
-                  <p className="text-xs text-muted-foreground">Tomorrow, 10:00 AM</p>
-                </div>
-                <div className="border-b pb-2">
-                  <p className="text-sm font-medium">End of Semester Review</p>
-                  <p className="text-xs text-muted-foreground">Friday, 2:00 PM</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">New Student Orientation</p>
-                  <p className="text-xs text-muted-foreground">Saturday, 9:00 AM</p>
-                </div>
+                {overview?.upcomingEvents?.length > 0 ? (
+                  overview.upcomingEvents.map((event, index) => (
+                    <div key={index} className={index < overview.upcomingEvents.length - 1 ? "border-b pb-2" : ""}>
+                      <p className="text-sm font-medium">{event.title}</p>
+                      <p className="text-xs text-muted-foreground">{event.dateTime}</p>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="border-b pb-2">
+                      <p className="text-sm font-medium">Faculty Meeting</p>
+                      <p className="text-xs text-muted-foreground">Tomorrow, 10:00 AM</p>
+                    </div>
+                    <div className="border-b pb-2">
+                      <p className="text-sm font-medium">End of Semester Review</p>
+                      <p className="text-xs text-muted-foreground">Friday, 2:00 PM</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">New Student Orientation</p>
+                      <p className="text-xs text-muted-foreground">Saturday, 9:00 AM</p>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </CardContent>

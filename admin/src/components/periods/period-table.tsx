@@ -1,102 +1,165 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { usePeriods } from "@/hooks/use-periods"
+import { MoreHorizontal, Search } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { Badge } from "@/components/ui/badge"
+import { format } from "date-fns"
+import { Period } from "@/types/period"
 
 export function PeriodTable() {
   const router = useRouter()
-  const { periods, isLoading, removePeriod } = usePeriods()
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const { toast } = useToast()
+  const { periods, isLoading, error, loadPeriods, removePeriod } = usePeriods()
+  const [searchTerm, setSearchTerm] = useState("")
 
-  const handleView = (id: string) => {
-    router.push(`/periods/${id}`)
-  }
+  useEffect(() => {
+    loadPeriods()
+  }, [loadPeriods])
 
-  const handleEdit = (id: string) => {
-    router.push(`/periods/edit/${id}`)
-  }
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
+    }
+  }, [error, toast])
 
-  const handleDelete = async () => {
-    if (deleteId) {
-      await removePeriod(deleteId)
-      setDeleteId(null)
+  const filteredPeriods = periods.filter(
+    (period) =>
+      period.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      period.semester?.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  const handleDelete = async (id: string) => {
+    try {
+      await removePeriod(id)
+      toast({
+        title: "Success",
+        description: "Period deleted successfully",
+      })
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to delete period",
+        variant: "destructive",
+      })
     }
   }
 
-  const formatTime = (timeString: string) => {
-    const [hours, minutes] = timeString.split(":")
-    return `${hours}:${minutes}`
-  }
+  const getPeriodStatus = (period: Period) => {
+    const now = new Date()
+    const startDate = new Date(period.startTime)
+    const endDate = new Date(period.endTime)
 
-  const formatDayOfWeek = (day: string) => {
-    return day.charAt(0).toUpperCase() + day.slice(1)
+    if (now < startDate) {
+      return <Badge variant="outline">Upcoming</Badge>
+    } else if (now > endDate) {
+      return <Badge variant="secondary">Completed</Badge>
+    } else {
+      return <Badge variant="default">Active</Badge>
+    }
   }
 
   if (isLoading.periods) {
     return (
-      <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="w-full p-4 border rounded-md">
-            <Skeleton className="h-6 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        ))}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Semester</TableHead>
+                <TableHead>Start Date</TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[150px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[100px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[100px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[100px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[80px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-[40px]" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     )
   }
 
   return (
-    <>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search periods..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Day</TableHead>
-              <TableHead>Start Time</TableHead>
-              <TableHead>End Time</TableHead>
               <TableHead>Semester</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead>Start Date</TableHead>
+              <TableHead>End Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {periods.length === 0 ? (
+            {filteredPeriods.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                  No periods found. Create your first period.
+                <TableCell colSpan={6} className="h-24 text-center">
+                  No periods found.
                 </TableCell>
               </TableRow>
             ) : (
-              periods.map((period) => (
+              filteredPeriods.map((period) => (
                 <TableRow key={period.id}>
                   <TableCell className="font-medium">{period.name}</TableCell>
-                  <TableCell className="capitalize">{formatDayOfWeek(period.dayOfWeek)}</TableCell>
-                  <TableCell>{formatTime(period.startTime)}</TableCell>
-                  <TableCell>{formatTime(period.endTime)}</TableCell>
-                  <TableCell>{period.semester?.name || "Unknown Semester"}</TableCell>
+                  <TableCell>{period.semester?.name || "N/A"}</TableCell>
+                  <TableCell>{format(new Date(period.startTime), "MMM d, yyyy")}</TableCell>
+                  <TableCell>{format(new Date(period.endTime), "MMM d, yyyy")}</TableCell>
+                  <TableCell>{getPeriodStatus(period)}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -106,23 +169,11 @@ export function PeriodTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleView(period.id)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEdit(period.id)}>
-                          <Pencil className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem onClick={() => router.push(`/periods/${period.id}`)}>View</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/periods/edit/${period.id}`)}>
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setDeleteId(period.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(period.id)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -132,26 +183,6 @@ export function PeriodTable() {
           </TableBody>
         </Table>
       </div>
-
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the period.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </div>
   )
 }

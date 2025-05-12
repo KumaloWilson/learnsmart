@@ -1,14 +1,11 @@
 import StudentDetail from "@/components/students/student-detail"
 
-export default function StudentDetailPage({ params }: { params: { id: string } }) {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Student Details</h1>
-        <p className="text-muted-foreground">View student information</p>
-      </div>
+interface StudentPageProps {
+  params: {
+    id: string
+  }
+}
 
-      <StudentDetail studentId={params.id} />
-    </div>
-  )
+export default function StudentPage({ params }: StudentPageProps) {
+  return <StudentDetail id={params.id} />
 }
