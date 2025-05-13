@@ -8,7 +8,10 @@ const router = Router()
 const virtualClassController = new VirtualClassController()
 
 // Get all virtual classes with optional filters
-router.get("/", authMiddleware, validateQuery(virtualClassValidation.getVirtualClassesQuery), (req, res) =>
+router.get(
+  "/",
+  authMiddleware,
+  (req, res) =>
   virtualClassController.findAll(req, res),
 )
 

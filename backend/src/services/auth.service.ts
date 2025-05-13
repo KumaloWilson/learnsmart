@@ -2,6 +2,10 @@ import bcrypt from "bcrypt"
 import { TokenService } from "./token.service"
 import type { RegisterUserDto, LoginDto, AuthResponseDto, ChangePasswordDto } from "../dto/auth.dto"
 import { User } from "../models/User"
+import { StudentProfile } from "../models/StudentProfile"
+import { Program } from "../models/Program"
+import { LecturerProfile } from "../models/LecturerProfile"
+import { Department } from "../models/Department"
 
 export class AuthService {
   private tokenService: TokenService
@@ -49,24 +53,25 @@ export class AuthService {
       where: {
         email: loginData.email,
       },
-    })
-
+    });
+  
     if (!user) {
-      throw new Error("Invalid email or password")
+      throw new Error("Invalid email or password");
     }
-
+  
     // Verify password
-    const isPasswordValid = await user.comparePassword(loginData.password)
-
+    const isPasswordValid = await user.comparePassword(loginData.password);
+  
     if (!isPasswordValid) {
-      throw new Error("Invalid email or password")
+      throw new Error("Invalid email or password");
     }
-
+  
     // Generate tokens
-    const accessToken = this.tokenService.generateAccessToken(user)
-    const refreshToken = await this.tokenService.generateRefreshToken(user)
-
-    return {
+    const accessToken = this.tokenService.generateAccessToken(user);
+    const refreshToken = await this.tokenService.generateRefreshToken(user);
+  
+    // Prepare base response
+    const baseResponse = {
       user: {
         id: user.id,
         firstName: user.firstName,
@@ -76,8 +81,65 @@ export class AuthService {
       },
       accessToken,
       refreshToken,
+    };
+  
+    // Fetch additional profile data based on user role
+    if (user.role === 'student') {
+      const studentProfile = await StudentProfile.findOne({
+        where: { userId: user.id },
+        include: [{ model: Program }]
+      });
+  
+      if (studentProfile) {
+        return {
+          ...baseResponse,
+          studentProfile: {
+            id: studentProfile.id,
+            studentId: studentProfile.studentId,
+            status: studentProfile.status,
+            currentLevel: studentProfile.currentLevel,
+            enrollmentDate: studentProfile.enrollmentDate,
+            graduationDate: studentProfile.graduationDate,
+            programId: studentProfile.programId,
+            program: studentProfile.program ? studentProfile.program : undefined,
+            dateOfBirth: studentProfile.dateOfBirth,
+            gender: studentProfile.gender,
+            address: studentProfile.address,
+            phoneNumber: studentProfile.phoneNumber
+          }
+        };
+      }
+    } else if (user.role === 'lecturer') {
+      const lecturerProfile = await LecturerProfile.findOne({
+        where: { userId: user.id },
+        include: [{ model: Department }]
+      });
+  
+      if (lecturerProfile) {
+        return {
+          ...baseResponse,
+          lecturerProfile: {
+            id: lecturerProfile.id,
+            staffId: lecturerProfile.staffId,
+            title: lecturerProfile.title,
+            specialization: lecturerProfile.specialization,
+            status: lecturerProfile.status,
+            joinDate: lecturerProfile.joinDate,
+            departmentId: lecturerProfile.departmentId,
+            department: lecturerProfile.department ? lecturerProfile.department : undefined,
+            bio: lecturerProfile.bio,
+            officeLocation: lecturerProfile.officeLocation,
+            officeHours: lecturerProfile.officeHours,
+            phoneNumber: lecturerProfile.phoneNumber
+          }
+        };
+      }
     }
+  
+    // For admin users or if profile not found, return the base response
+    return baseResponse;
   }
+
 
   async refreshToken(token: string): Promise<AuthResponseDto | null> {
     const user = await this.tokenService.verifyRefreshToken(token)
