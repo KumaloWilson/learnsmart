@@ -1,11 +1,14 @@
+"use client"
+
 import { SemesterDetail } from "@/components/semesters/semester-detail"
+import { useParams } from "next/navigation"
 
-interface SemesterPageProps {
-  params: {
-    id: string
-  }
-}
+export default function SemesterPage() {
 
-export default function SemesterPage({ params }: SemesterPageProps) {
-  return <SemesterDetail id={params.id} />
+    const params = useParams()
+  
+    const id = params.id as string
+
+
+  return <SemesterDetail id={id} />
 }

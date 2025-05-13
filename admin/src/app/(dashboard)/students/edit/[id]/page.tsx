@@ -3,15 +3,16 @@
 import { useEffect } from "react"
 import StudentForm from "@/components/students/student-form"
 import { useStudents } from "@/hooks/use-students"
+import { useParams } from "next/navigation"
 
-interface EditStudentPageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function EditStudentPage({ params }: EditStudentPageProps) {
-  const { id } = params
+export default function EditStudentPage() {
+
+
+  const params = useParams()
+  const id = params.id as string
+ 
+  
   const { currentStudent, getStudentById } = useStudents()
 
   useEffect(() => {

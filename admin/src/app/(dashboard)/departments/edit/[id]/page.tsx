@@ -4,15 +4,14 @@ import { useEffect } from "react"
 import { DepartmentForm } from "@/components/departments/department-form"
 import { useDepartments } from "@/hooks/use-departments"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useParams } from "next/navigation"
 
-interface EditDepartmentPageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function EditDepartmentPage({ params }: EditDepartmentPageProps) {
-  const { id } = params
+export default function EditDepartmentPage() {
+    const params = useParams()
+  
+    const id = params.id as string
+
   const { currentDepartment, loadDepartment, isLoading } = useDepartments()
 
   useEffect(() => {

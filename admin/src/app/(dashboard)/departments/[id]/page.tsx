@@ -1,11 +1,13 @@
+"use client"
+
 import { DepartmentDetail } from "@/components/departments/department-detail"
+import { useParams } from "next/navigation"
 
-interface DepartmentPageProps {
-  params: {
-    id: string
-  }
-}
+export default function DepartmentPage() {
 
-export default function DepartmentPage({ params }: DepartmentPageProps) {
-  return <DepartmentDetail id={params.id} />
+    const params = useParams()
+  
+    const id = params.id as string
+
+  return <DepartmentDetail id={id} />
 }

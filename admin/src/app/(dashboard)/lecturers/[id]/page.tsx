@@ -1,11 +1,14 @@
+"use client"
+
 import { LecturerDetail } from "@/components/lecturers/lecturer-detail"
+import { useParams } from "next/navigation"
 
-interface LecturerPageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function LecturerPage({ params }: LecturerPageProps) {
-  return <LecturerDetail id={params.id} />
+export default function LecturerPage() {
+
+    const params = useParams()
+  
+    const id = params.id as string
+
+  return <LecturerDetail id={id} />
 }

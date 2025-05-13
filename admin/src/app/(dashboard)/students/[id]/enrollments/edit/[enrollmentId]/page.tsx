@@ -3,16 +3,16 @@
 import { useEffect } from "react"
 import EnrollmentForm from "@/components/students/enrollment-form"
 import { useStudents } from "@/hooks/use-students"
+import { useParams } from "next/navigation"
 
-interface EditEnrollmentPageProps {
-  params: {
-    id: string
-    enrollmentId: string
-  }
-}
 
-export default function EditEnrollmentPage({ params }: EditEnrollmentPageProps) {
-  const { id, enrollmentId } = params
+export default function EditEnrollmentPage() {
+  
+  const params = useParams()
+  const id = params.id as string
+  const enrollmentId = params.enrollmentId as string
+  
+
   const { enrollments, getStudentEnrollments } = useStudents()
 
   useEffect(() => {

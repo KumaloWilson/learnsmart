@@ -4,15 +4,14 @@ import { useEffect } from "react"
 import { SchoolForm } from "@/components/schools/school-form"
 import { useSchools } from "@/hooks/use-schools"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useParams } from "next/navigation"
 
-interface EditSchoolPageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function EditSchoolPage({ params }: EditSchoolPageProps) {
-  const { id } = params
+
+export default function EditSchoolPage() {
+    const params = useParams()
+  
+    const id = params.id as string
   const { currentSchool, loadSchool, isLoading } = useSchools()
 
   useEffect(() => {

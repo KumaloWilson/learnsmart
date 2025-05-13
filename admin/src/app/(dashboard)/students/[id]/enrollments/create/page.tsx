@@ -1,12 +1,16 @@
+"use client"
 import EnrollmentForm from "@/components/students/enrollment-form"
+import { useParams } from "next/navigation"
 
-interface CreateEnrollmentPageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function CreateEnrollmentPage({ params }: CreateEnrollmentPageProps) {
+
+export default function CreateEnrollmentPage() {
+
+    const params = useParams()
+  
+    const id = params.id as string
+
+
   return (
     <div className="space-y-6">
       <div>
@@ -14,7 +18,7 @@ export default function CreateEnrollmentPage({ params }: CreateEnrollmentPagePro
         <p className="text-muted-foreground">Enroll the student in a course</p>
       </div>
 
-      <EnrollmentForm studentId={params.id} />
+      <EnrollmentForm studentId={id} />
     </div>
   )
 }

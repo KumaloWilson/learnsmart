@@ -1,11 +1,13 @@
+"use client"
+
 import { CourseDetail } from "@/components/courses/course-detail"
+import { useParams } from "next/navigation"
 
-interface CoursePageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function CoursePage({ params }: CoursePageProps) {
-  return <CourseDetail id={params.id} />
+export default function CoursePage() {
+  const params = useParams()
+
+  const id = params.id as string
+  
+  return <CourseDetail id={id} />
 }
