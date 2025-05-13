@@ -1,51 +1,36 @@
-"use client"
+import { useSelector, useDispatch } from "react-redux"
+import type { RootState, AppDispatch } from "@/lib/store"
+import { login, logout, getProfile, updateProfile } from "@/lib/redux/authSlice"
+import type { LoginCredentials, ProfileUpdateRequest } from "@/types/auth"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAppDispatch, useAppSelector } from "@/store"
-import { fetchCurrentUser } from "@/store/slices/auth-slice"
+export const useAuth = () => {
+  const dispatch = useDispatch<AppDispatch>()
+  const { user, isAuthenticated, isLoading, error } = useSelector((state: RootState) => state.auth)
 
-export function useAuth(requireAdmin = false) {
-  const router = useRouter()
-  const dispatch = useAppDispatch()
-  const { user, isAuthenticated, isLoading } = useAppSelector((state) => state.auth)
-  const [authChecked, setAuthChecked] = useState(false)
+  const loginUser = async (credentials: LoginCredentials) => {
+    return await dispatch(login(credentials)).unwrap()
+  }
 
-  // Check authentication on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (!isAuthenticated && !isLoading) {
-        try {
-          await dispatch(fetchCurrentUser()).unwrap()
-        } catch (error) {
-          console.error("Error fetching current user:", error)
-          // Error handled in the slice
-        } finally {
-          setAuthChecked(true)
-        }
-      } else {
-        setAuthChecked(true)
-      }
-    }
-    
-    checkAuth()
-  }, [dispatch, isAuthenticated, isLoading])
+  const logoutUser = async () => {
+    return await dispatch(logout()).unwrap()
+  }
 
-  // Handle redirects based on auth state
-  useEffect(() => {
-    // Only redirect after we've checked authentication
-    if (!authChecked) return
-    
-    if (!isLoading) {
-      if (!isAuthenticated) {
-        console.log("Not authenticated, redirecting to login")
-        router.push("/login")
-      } else if (requireAdmin && user?.role !== "admin") {
-        console.log("Not an admin, redirecting to home")
-        router.push("/")
-      }
-    }
-  }, [authChecked, isLoading, isAuthenticated, user, router, requireAdmin])
+  const fetchProfile = async () => {
+    return await dispatch(getProfile()).unwrap()
+  }
 
-  return { user, isAuthenticated, isLoading, authChecked }
+  const updateUserProfile = async (data: ProfileUpdateRequest) => {
+    return await dispatch(updateProfile(data)).unwrap()
+  }
+
+  return {
+    user,
+    isAuthenticated,
+    isLoading,
+    error,
+    loginUser,
+    logoutUser,
+    fetchProfile,
+    updateUserProfile,
+  }
 }

@@ -30,13 +30,12 @@ const assessmentIdParam = Joi.object({
 })
 
 const lecturerProfileSchema = Joi.object({
-  userId: Joi.string().uuid().required(),
   title: Joi.string().required(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
   email: Joi.string().email().required(),
   phoneNumber: Joi.string().allow("", null),
-  department: Joi.string().required(),
+  departmentId: Joi.string().uuid().required(),
   specialization: Joi.string().allow("", null),
   bio: Joi.string().allow("", null),
   officeLocation: Joi.string().allow("", null),
@@ -104,14 +103,14 @@ router.get(
 router.get(
   "/:id",
   authMiddleware,
-  validateParams(idParam),
+  //validateParams(idParam),
   lecturerController.getLecturerById
 )
 
 router.get(
   "/user/:userId",
   authMiddleware,
-  validateParams(userIdParam),
+  //validateParams(userIdParam),
   lecturerController.getLecturerByUserId
 )
 
@@ -125,15 +124,15 @@ router.post(
 router.put(
   "/:id",
   authMiddleware,
-  validateParams(idParam),
-  validate(lecturerProfileSchema),
+  // validateParams(idParam),
+  //validate(lecturerProfileSchema),
   lecturerController.updateLecturer
 )
 
 router.delete(
   "/:id",
   authMiddleware,
-  validateParams(idParam),
+  // validateParams(idParam),
   lecturerController.deleteLecturer
 )
 
@@ -141,7 +140,7 @@ router.delete(
 router.get(
   "/:lecturerId/course-assignments",
   authMiddleware,
-  validateParams(lecturerIdParam),
+  //validateParams(lecturerIdParam),
   lecturerController.getLecturerCourseAssignments
 )
 
@@ -155,7 +154,7 @@ router.post(
 router.put(
   "/course-assignments/:id",
   authMiddleware,
-  validateParams(idParam),
+  //validateParams(idParam),
   validate(courseAssignmentSchema),
   lecturerController.updateCourseAssignment
 )
@@ -163,7 +162,7 @@ router.put(
 router.delete(
   "/course-assignments/:id",
   authMiddleware,
-  validateParams(idParam),
+  //validateParams(idParam),
   lecturerController.removeCourseAssignment
 )
 
@@ -171,7 +170,7 @@ router.delete(
 router.get(
   "/:lecturerId/assessments",
   authMiddleware,
-  validateParams(lecturerIdParam),
+  //validateParams(lecturerIdParam),
   lecturerController.getLecturerAssessments
 )
 
@@ -185,7 +184,7 @@ router.post(
 router.put(
   "/assessments/:id",
   authMiddleware,
-  validateParams(idParam),
+  //validateParams(idParam),
   validate(assessmentSchema),
   lecturerController.updateAssessment
 )
@@ -193,7 +192,7 @@ router.put(
 router.delete(
   "/assessments/:id",
   authMiddleware,
-  validateParams(idParam),
+  //validateParams(idParam),
   lecturerController.deleteAssessment
 )
 
@@ -201,14 +200,14 @@ router.delete(
 router.get(
   "/assessments/:assessmentId/submissions",
   authMiddleware,
-  validateParams(assessmentIdParam),
+  //validateParams(assessmentIdParam),
   lecturerController.getAssessmentSubmissions
 )
 
 router.put(
   "/submissions/:id/grade",
   authMiddleware,
-  validateParams(idParam),
+  //validateParams(idParam),
   validate(gradeSubmissionSchema),
   lecturerController.gradeSubmission
 )
