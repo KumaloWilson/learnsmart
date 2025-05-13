@@ -22,7 +22,7 @@ export function LecturerTable() {
   // Remove loadLecturers from the dependency array
   useEffect(() => {
     loadLecturers()
-  }, []) // Empty dependency array
+  }, [loadLecturers]) // Empty dependency array
 
   useEffect(() => {
     if (error) {
