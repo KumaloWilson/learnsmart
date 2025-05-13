@@ -1,3 +1,5 @@
+"use client"
+
 import { LecturerDetail } from "@/components/lecturers/lecturer-detail"
 import { useParams } from "next/navigation"
 

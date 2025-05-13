@@ -1,3 +1,5 @@
+"use client"
+
 import { SemesterDetail } from "@/components/semesters/semester-detail"
 import { useParams } from "next/navigation"
 

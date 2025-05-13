@@ -1,3 +1,4 @@
+"use client"
 import StudentDetail from "@/components/students/student-detail"
 import { useParams } from "next/navigation"
 

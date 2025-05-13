@@ -1,3 +1,5 @@
+"use client"
+
 import AcademicRecordForm from "@/components/students/academic-record-form"
 import { useParams } from "next/navigation"
 

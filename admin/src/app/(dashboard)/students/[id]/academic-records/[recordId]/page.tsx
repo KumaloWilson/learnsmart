@@ -1,3 +1,5 @@
+
+"use client"
 import AcademicRecordDetail from "@/components/students/academic-record-detail"
 import { useParams } from "next/navigation"
 

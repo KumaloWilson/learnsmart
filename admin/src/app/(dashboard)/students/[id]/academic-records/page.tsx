@@ -1,3 +1,4 @@
+"use client"
 import AcademicRecordTable from "@/components/students/academic-record-table"
 import { useParams } from "next/navigation"
 

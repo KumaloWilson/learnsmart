@@ -1,3 +1,4 @@
+"use client"
 import EnrollmentTable from "@/components/students/enrollment-table"
 import { useParams } from "next/navigation"
 

@@ -1,3 +1,4 @@
+"use client"
 import EnrollmentForm from "@/components/students/enrollment-form"
 import { useParams } from "next/navigation"
 
