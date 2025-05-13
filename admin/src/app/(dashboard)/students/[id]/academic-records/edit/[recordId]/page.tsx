@@ -13,11 +13,11 @@ interface EditAcademicRecordPageProps {
 
 export default function EditAcademicRecordPage({ params }: EditAcademicRecordPageProps) {
   const { id, recordId } = params
-  const { academicRecords, loadAcademicRecordById } = useStudents()
+  const { academicRecords, getAcademicRecordById } = useStudents()
 
   useEffect(() => {
-    loadAcademicRecordById(recordId)
-  }, [recordId, loadAcademicRecordById])
+    getAcademicRecordById(recordId)
+  }, [recordId, getAcademicRecordById])
 
   const academicRecord = academicRecords.find((record) => record.id === recordId)
 
@@ -32,7 +32,7 @@ export default function EditAcademicRecordPage({ params }: EditAcademicRecordPag
         <p className="text-muted-foreground">Update academic record information</p>
       </div>
 
-      <AcademicRecordForm studentId={id} academicRecord={academicRecord} />
+      <AcademicRecordForm studentId={id} recordId={academicRecord.id} />
     </div>
   )
 }

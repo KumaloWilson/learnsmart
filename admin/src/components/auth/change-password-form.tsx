@@ -32,12 +32,15 @@ export function ChangePasswordForm() {
 
     try {
       const response = await authService.changePassword(currentPassword, newPassword)
+
+      console.log("Password change response:", response)
       setSuccess("Password has been changed successfully.")
       setCurrentPassword("")
       setNewPassword("")
       setConfirmPassword("")
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to change password. Please try again.")
+    } catch (err: Error | unknown) {
+      const error = err as { response?: { data?: { message?: string } } }
+      setError(error.response?.data?.message || "Failed to change password. Please try again.")
     } finally {
       setIsSubmitting(false)
     }

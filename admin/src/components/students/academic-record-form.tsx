@@ -35,7 +35,7 @@ export default function AcademicRecordForm({ studentId, recordId }: AcademicReco
   const router = useRouter()
   const { toast } = useToast()
   const {
-    academicRecords,
+    //academicRecords,
     currentAcademicRecord,
     getStudentAcademicRecords,
     getAcademicRecordById,

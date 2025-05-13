@@ -30,8 +30,8 @@ export function LoginForm() {
     try {
       await loginUser({ email, password })
       router.push("/")
-    } catch (err: any) {
-      setError(err.message || "Failed to login. Please check your credentials.")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to login. Please check your credentials.")
     } finally {
       setIsSubmitting(false)
     }

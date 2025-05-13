@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import authService from "@/lib/auth-service"
 import { Button } from "@/components/ui/button"
@@ -19,8 +18,7 @@ export function ForgotPasswordForm() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const router = useRouter()
-
+ 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -29,9 +27,11 @@ export function ForgotPasswordForm() {
 
     try {
       const response = await authService.forgotPassword(email)
+      console.log("Password reset response:", response)
       setSuccess("Password reset link has been sent to your email.")
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to send reset link. Please try again.")
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to send reset link. Please try again."
+      setError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -45,7 +45,7 @@ export function ForgotPasswordForm() {
         </div>
         <CardTitle className="text-2xl text-center">Forgot Password</CardTitle>
         <CardDescription className="text-center">
-          Enter your email address and we'll send you a link to reset your password
+          Enter your email address and we`ll send you a link to reset your password
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -13,11 +13,11 @@ interface EditEnrollmentPageProps {
 
 export default function EditEnrollmentPage({ params }: EditEnrollmentPageProps) {
   const { id, enrollmentId } = params
-  const { enrollments, loadStudentEnrollments } = useStudents()
+  const { enrollments, getStudentEnrollments } = useStudents()
 
   useEffect(() => {
-    loadStudentEnrollments(id)
-  }, [id, loadStudentEnrollments])
+    getStudentEnrollments(id)
+  }, [id, getStudentEnrollments])
 
   const enrollment = enrollments.find((e) => e.id === enrollmentId)
 
@@ -32,7 +32,7 @@ export default function EditEnrollmentPage({ params }: EditEnrollmentPageProps) 
         <p className="text-muted-foreground">Update enrollment status and grade</p>
       </div>
 
-      <EnrollmentForm studentId={id} enrollment={enrollment} />
+      <EnrollmentForm studentId={id} enrollmentId={enrollment.id} />
     </div>
   )
 }

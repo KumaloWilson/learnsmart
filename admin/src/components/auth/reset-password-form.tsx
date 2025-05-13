@@ -44,12 +44,14 @@ export function ResetPasswordForm() {
 
     try {
       const response = await authService.resetPassword(token, password)
+      console.log("Password reset response:", response)
       setSuccess("Password has been reset successfully. You can now login with your new password.")
       setTimeout(() => {
         router.push("/login")
       }, 3000)
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to reset password. Please try again.")
+    } catch (err: unknown) {
+      const errorMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
+      setError(errorMessage || "Failed to reset password. Please try again.")
     } finally {
       setIsSubmitting(false)
     }

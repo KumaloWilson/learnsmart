@@ -12,11 +12,11 @@ interface EditStudentPageProps {
 
 export default function EditStudentPage({ params }: EditStudentPageProps) {
   const { id } = params
-  const { currentStudent, loadStudentById } = useStudents()
+  const { currentStudent, getStudentById } = useStudents()
 
   useEffect(() => {
-    loadStudentById(id)
-  }, [id, loadStudentById])
+    getStudentById(id)
+  }, [id, getStudentById])
 
   if (!currentStudent) {
     return <div className="flex justify-center p-8">Loading student...</div>
@@ -29,7 +29,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
         <p className="text-muted-foreground">Update student information</p>
       </div>
 
-      <StudentForm student={currentStudent} />
+      <StudentForm studentId={currentStudent.id} />
     </div>
   )
 }

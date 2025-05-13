@@ -41,8 +41,8 @@ export function ProfileForm() {
     try {
       await updateUserProfile({ firstName, lastName })
       setSuccess("Profile updated successfully.")
-    } catch (err: any) {
-      setError(err.message || "Failed to update profile. Please try again.")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to update profile. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
