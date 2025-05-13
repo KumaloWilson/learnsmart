@@ -24,7 +24,7 @@ export default function SemestersManagement() {
         })
         console.error("Failed to load semesters:", err)
       })
-  }, []) // Remove loadSemesters from dependency array to prevent infinite loop
+  }, [loadSemesters, toast])
 
   useEffect(() => {
     if (error) {

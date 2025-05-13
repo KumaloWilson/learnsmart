@@ -9,10 +9,9 @@ import { useDashboard } from "@/hooks/use-dashboard"
 export default function DashboardPage() {
   const { overview, recentActivity, systemHealth, isLoading, loadOverview } = useDashboard()
 
-  // Remove loadOverview from the dependency array
   useEffect(() => {
     loadOverview()
-  }, []) // Empty dependency array
+  }, [loadOverview])
 
   return (
     <div className="space-y-6">

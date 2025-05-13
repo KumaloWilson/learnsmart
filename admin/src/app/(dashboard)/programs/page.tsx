@@ -24,7 +24,7 @@ export default function ProgramsManagement() {
         })
         console.error("Failed to load programs:", err)
       })
-  }, []) // Remove loadPrograms from dependency array to prevent infinite loop
+  }, [loadPrograms, toast])
 
   useEffect(() => {
     if (error) {
