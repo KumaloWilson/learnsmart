@@ -48,40 +48,45 @@ const initialState: DashboardState = {
 export const fetchOverview = createAsyncThunk("dashboard/fetchOverview", async (_, { rejectWithValue }) => {
   try {
     return await dashboardService.getOverview()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch overview")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch overview")
   }
 })
 
 export const fetchEnrollments = createAsyncThunk("dashboard/fetchEnrollments", async (_, { rejectWithValue }) => {
   try {
     return await dashboardService.getEnrollments()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch enrollments")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch enrollments")
   }
 })
 
 export const fetchUserActivity = createAsyncThunk("dashboard/fetchUserActivity", async (_, { rejectWithValue }) => {
   try {
     return await dashboardService.getUserActivity()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch user activity")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch user activity")
   }
 })
 
 export const fetchRecentActivity = createAsyncThunk("dashboard/fetchRecentActivity", async (_, { rejectWithValue }) => {
   try {
     return await dashboardService.getRecentActivity()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch recent activity")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch recent activity")
   }
 })
 
 export const fetchSystemHealth = createAsyncThunk("dashboard/fetchSystemHealth", async (_, { rejectWithValue }) => {
   try {
     return await dashboardService.getSystemHealth()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch system health")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch system health")
   }
 })
 

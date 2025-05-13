@@ -51,8 +51,9 @@ const initialState: StudentState = {
 export const fetchStudents = createAsyncThunk("students/fetchStudents", async (_, { rejectWithValue }) => {
   try {
     return await getStudents()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch students")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch students")
   }
 })
 
@@ -61,8 +62,9 @@ export const fetchStudentById = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       return await getStudentById(id)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch student")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch student")
     }
   },
 )
@@ -72,8 +74,9 @@ export const fetchStudentByUserId = createAsyncThunk(
   async (userId: string, { rejectWithValue }) => {
     try {
       return await getStudentByUserId(userId)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch student")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch student")
     }
   },
 )
@@ -83,8 +86,9 @@ export const fetchStudentByStudentId = createAsyncThunk(
   async (studentId: string, { rejectWithValue }) => {
     try {
       return await getStudentByStudentId(studentId)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch student")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch student")
     }
   },
 )
@@ -94,8 +98,9 @@ export const addStudent = createAsyncThunk(
   async (data: StudentFormData, { rejectWithValue }) => {
     try {
       return await createStudent(data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to create student")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to create student")
     }
   },
 )
@@ -105,8 +110,9 @@ export const editStudent = createAsyncThunk(
   async ({ id, data }: { id: string; data: Partial<StudentFormData> }, { rejectWithValue }) => {
     try {
       return await updateStudent(id, data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update student")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to update student")
     }
   },
 )
@@ -115,8 +121,9 @@ export const removeStudent = createAsyncThunk("students/removeStudent", async (i
   try {
     await deleteStudent(id)
     return id
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to delete student")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to delete student")
   }
 })
 
@@ -126,8 +133,9 @@ export const fetchStudentEnrollments = createAsyncThunk(
   async (studentId: string, { rejectWithValue }) => {
     try {
       return await getStudentEnrollments(studentId)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch enrollments")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch enrollments")
     }
   },
 )
@@ -137,8 +145,9 @@ export const fetchStudentEnrollmentsBySemester = createAsyncThunk(
   async ({ studentId, semesterId }: { studentId: string; semesterId: string }, { rejectWithValue }) => {
     try {
       return await getStudentEnrollmentsBySemester(studentId, semesterId)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch enrollments")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch enrollments")
     }
   },
 )
@@ -148,8 +157,9 @@ export const addEnrollment = createAsyncThunk(
   async (data: EnrollmentFormData, { rejectWithValue }) => {
     try {
       return await enrollStudent(data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to enroll student")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to enroll student")
     }
   },
 )
@@ -159,8 +169,9 @@ export const editEnrollment = createAsyncThunk(
   async ({ id, data }: { id: string; data: Partial<EnrollmentFormData> }, { rejectWithValue }) => {
     try {
       return await updateEnrollment(id, data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update enrollment")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to update enrollment")
     }
   },
 )
@@ -171,8 +182,9 @@ export const removeEnrollment = createAsyncThunk(
     try {
       await deleteEnrollment(id)
       return id
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to delete enrollment")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to delete enrollment")
     }
   },
 )
@@ -183,8 +195,9 @@ export const fetchAcademicRecordById = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       return await getAcademicRecordById(id)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch academic record")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch academic record")
     }
   },
 )
@@ -194,8 +207,9 @@ export const fetchStudentAcademicRecords = createAsyncThunk(
   async (studentId: string, { rejectWithValue }) => {
     try {
       return await getStudentAcademicRecords(studentId)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch academic records")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch academic records")
     }
   },
 )
@@ -205,8 +219,9 @@ export const addAcademicRecord = createAsyncThunk(
   async (data: AcademicRecordFormData, { rejectWithValue }) => {
     try {
       return await createAcademicRecord(data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to create academic record")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to create academic record")
     }
   },
 )
@@ -216,8 +231,9 @@ export const editAcademicRecord = createAsyncThunk(
   async ({ id, data }: { id: string; data: Partial<AcademicRecordFormData> }, { rejectWithValue }) => {
     try {
       return await updateAcademicRecord(id, data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update academic record")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to update academic record")
     }
   },
 )
@@ -228,8 +244,9 @@ export const removeAcademicRecord = createAsyncThunk(
     try {
       await deleteAcademicRecord(id)
       return id
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to delete academic record")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to delete academic record")
     }
   },
 )

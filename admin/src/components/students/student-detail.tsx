@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { useToast } from "@/components/ui/use-toast"
 import { useStudents } from "@/hooks/use-students"
 import { format } from "date-fns"
 import { Edit, BookOpen, FileText, ArrowLeft } from "lucide-react"
@@ -17,7 +16,6 @@ interface StudentDetailProps {
 
 export default function StudentDetail({ studentId }: StudentDetailProps) {
   const router = useRouter()
-  const { toast } = useToast()
   const { currentStudent, loading, error, getStudentById } = useStudents()
 
   useEffect(() => {

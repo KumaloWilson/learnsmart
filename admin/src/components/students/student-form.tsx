@@ -33,7 +33,7 @@ const formSchema = z.object({
   programId: z.string().min(1, "Program is required"),
   enrollmentDate: z.date(),
   currentLevel: z.coerce.number().min(1, "Level is required"),
-  status: z.enum(["active", "inactive", "graduated", "suspended"]).default("active"),
+  status: z.enum(["active", "inactive", "graduated", "suspended"]),
 })
 
 type StudentFormProps = {
@@ -43,29 +43,30 @@ type StudentFormProps = {
 export default function StudentForm({ studentId }: StudentFormProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const { currentStudent, loading, error, getStudentById, createStudent, updateStudent, resetCurrentStudent } =
+  const { currentStudent, getStudentById, createStudent, updateStudent, resetCurrentStudent } =
     useStudents()
-  const { programs, getPrograms } = usePrograms()
+  const { programs, loadPrograms } = usePrograms()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      studentId: "",
-      gender: "",
-      address: "",
-      phoneNumber: "",
-      programId: "",
-      currentLevel: 1,
-      status: "active",
-    },
+        firstName: "",
+        lastName: "",
+        email: "",
+        studentId: "",
+        gender: "",
+        address: "",
+        phoneNumber: "",
+        programId: "",
+        currentLevel: 1,
+        status: "active" as const,
+        enrollmentDate: new Date(),
+      },
   })
 
   useEffect(() => {
-    getPrograms()
+    loadPrograms()
 
     if (studentId) {
       getStudentById(studentId)
@@ -74,7 +75,7 @@ export default function StudentForm({ studentId }: StudentFormProps) {
     return () => {
       resetCurrentStudent()
     }
-  }, [studentId, getStudentById, getPrograms, resetCurrentStudent])
+  }, [studentId, getStudentById, loadPrograms, resetCurrentStudent])
 
   useEffect(() => {
     if (currentStudent && studentId) {
@@ -90,7 +91,7 @@ export default function StudentForm({ studentId }: StudentFormProps) {
         programId: currentStudent.programId || "",
         enrollmentDate: currentStudent.enrollmentDate ? new Date(currentStudent.enrollmentDate) : new Date(),
         currentLevel: currentStudent.currentLevel || 1,
-        status: (currentStudent.status as any) || "active",
+        status: (currentStudent.status as "active" | "inactive" | "graduated" | "suspended") || "active",
       })
     }
   }, [currentStudent, studentId, form])

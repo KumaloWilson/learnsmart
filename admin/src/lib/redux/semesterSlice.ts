@@ -35,24 +35,27 @@ const initialState: SemesterState = {
 export const fetchSemesters = createAsyncThunk("semesters/fetchSemesters", async (_, { rejectWithValue }) => {
   try {
     return await semesterService.getSemesters()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch semesters")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch semesters")
   }
 })
 
 export const fetchSemester = createAsyncThunk("semesters/fetchSemester", async (id: string, { rejectWithValue }) => {
   try {
     return await semesterService.getSemester(id)
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch semester")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch semester")
   }
 })
 
 export const fetchActiveSemester = createAsyncThunk("semesters/fetchActiveSemester", async (_, { rejectWithValue }) => {
   try {
     return await semesterService.getActiveSemester()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch active semester")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch active semester")
   }
 })
 
@@ -61,8 +64,9 @@ export const createSemester = createAsyncThunk(
   async (data: CreateSemesterDto, { rejectWithValue }) => {
     try {
       return await semesterService.createSemester(data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to create semester")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to create semester")
     }
   },
 )
@@ -72,8 +76,9 @@ export const updateSemester = createAsyncThunk(
   async ({ id, data }: { id: string; data: UpdateSemesterDto }, { rejectWithValue }) => {
     try {
       return await semesterService.updateSemester(id, data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update semester")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to update semester")
     }
   },
 )
@@ -82,8 +87,9 @@ export const deleteSemester = createAsyncThunk("semesters/deleteSemester", async
   try {
     await semesterService.deleteSemester(id)
     return id
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to delete semester")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to delete semester")
   }
 })
 

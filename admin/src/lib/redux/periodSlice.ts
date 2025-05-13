@@ -35,16 +35,18 @@ const initialState: PeriodState = {
 export const fetchPeriods = createAsyncThunk("periods/fetchPeriods", async (_, { rejectWithValue }) => {
   try {
     return await periodService.getPeriods()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch periods")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch periods")
   }
 })
 
 export const fetchPeriod = createAsyncThunk("periods/fetchPeriod", async (id: string, { rejectWithValue }) => {
   try {
     return await periodService.getPeriod(id)
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch period")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch period")
   }
 })
 
@@ -53,8 +55,9 @@ export const fetchPeriodsBySemester = createAsyncThunk(
   async (semesterId: string, { rejectWithValue }) => {
     try {
       return await periodService.getPeriodsBySemester(semesterId)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch periods by semester")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch periods by semester")
     }
   },
 )
@@ -64,8 +67,9 @@ export const createPeriod = createAsyncThunk(
   async (data: CreatePeriodDto, { rejectWithValue }) => {
     try {
       return await periodService.createPeriod(data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to create period")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to create period")
     }
   },
 )
@@ -75,8 +79,9 @@ export const updatePeriod = createAsyncThunk(
   async ({ id, data }: { id: string; data: UpdatePeriodDto }, { rejectWithValue }) => {
     try {
       return await periodService.updatePeriod(id, data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update period")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to update period")
     }
   },
 )
@@ -85,8 +90,9 @@ export const deletePeriod = createAsyncThunk("periods/deletePeriod", async (id: 
   try {
     await periodService.deletePeriod(id)
     return id
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to delete period")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to delete period")
   }
 })
 

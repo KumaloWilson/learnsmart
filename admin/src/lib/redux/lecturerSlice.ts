@@ -48,16 +48,18 @@ const initialState: LecturerState = {
 export const fetchLecturers = createAsyncThunk("lecturers/fetchLecturers", async (_, { rejectWithValue }) => {
   try {
     return await lecturerService.getLecturers()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch lecturers")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch lecturers")
   }
 })
 
 export const fetchLecturer = createAsyncThunk("lecturers/fetchLecturer", async (id: string, { rejectWithValue }) => {
   try {
     return await lecturerService.getLecturer(id)
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch lecturer")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch lecturer")
   }
 })
 
@@ -66,8 +68,9 @@ export const fetchLecturerByUserId = createAsyncThunk(
   async (userId: string, { rejectWithValue }) => {
     try {
       return await lecturerService.getLecturerByUserId(userId)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch lecturer by user ID")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch lecturer by user ID")
     }
   },
 )
@@ -77,8 +80,9 @@ export const createLecturer = createAsyncThunk(
   async (data: CreateLecturerDto, { rejectWithValue }) => {
     try {
       return await lecturerService.createLecturer(data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to create lecturer")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to create lecturer")
     }
   },
 )
@@ -88,8 +92,9 @@ export const updateLecturer = createAsyncThunk(
   async ({ id, data }: { id: string; data: UpdateLecturerDto }, { rejectWithValue }) => {
     try {
       return await lecturerService.updateLecturer(id, data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update lecturer")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to update lecturer")
     }
   },
 )
@@ -98,8 +103,9 @@ export const deleteLecturer = createAsyncThunk("lecturers/deleteLecturer", async
   try {
     await lecturerService.deleteLecturer(id)
     return id
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to delete lecturer")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to delete lecturer")
   }
 })
 
@@ -108,8 +114,9 @@ export const fetchLecturerCourseAssignments = createAsyncThunk(
   async (lecturerId: string, { rejectWithValue }) => {
     try {
       return await lecturerService.getLecturerCourseAssignments(lecturerId)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch course assignments")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch course assignments")
     }
   },
 )
@@ -119,8 +126,9 @@ export const createCourseAssignment = createAsyncThunk(
   async (data: CreateCourseAssignmentDto, { rejectWithValue }) => {
     try {
       return await lecturerService.createCourseAssignment(data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to create course assignment")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to create course assignment")
     }
   },
 )
@@ -130,8 +138,9 @@ export const updateCourseAssignment = createAsyncThunk(
   async ({ id, data }: { id: string; data: UpdateCourseAssignmentDto }, { rejectWithValue }) => {
     try {
       return await lecturerService.updateCourseAssignment(id, data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update course assignment")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to update course assignment")
     }
   },
 )
@@ -142,8 +151,9 @@ export const deleteCourseAssignment = createAsyncThunk(
     try {
       await lecturerService.deleteCourseAssignment(id)
       return id
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to delete course assignment")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to delete course assignment")
     }
   },
 )

@@ -20,7 +20,7 @@ import { ArrowLeft } from "lucide-react"
 const formSchema = z.object({
   courseId: z.string().min(1, "Course is required"),
   semesterId: z.string().min(1, "Semester is required"),
-  status: z.enum(["enrolled", "completed", "failed", "withdrawn"]).default("enrolled"),
+  status: z.enum(["enrolled", "completed", "failed", "withdrawn"]),
   grade: z.coerce.number().min(0).max(100).optional(),
 })
 

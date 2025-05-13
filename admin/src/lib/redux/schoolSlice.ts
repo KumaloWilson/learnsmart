@@ -31,16 +31,18 @@ const initialState: SchoolState = {
 export const fetchSchools = createAsyncThunk("schools/fetchSchools", async (_, { rejectWithValue }) => {
   try {
     return await schoolService.getSchools()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch schools")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch schools")
   }
 })
 
 export const fetchSchool = createAsyncThunk("schools/fetchSchool", async (id: string, { rejectWithValue }) => {
   try {
     return await schoolService.getSchool(id)
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch school")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch school")
   }
 })
 
@@ -49,8 +51,9 @@ export const createSchool = createAsyncThunk(
   async (data: CreateSchoolDto, { rejectWithValue }) => {
     try {
       return await schoolService.createSchool(data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to create school")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to create school")
     }
   },
 )
@@ -60,8 +63,9 @@ export const updateSchool = createAsyncThunk(
   async ({ id, data }: { id: string; data: UpdateSchoolDto }, { rejectWithValue }) => {
     try {
       return await schoolService.updateSchool(id, data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update school")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to update school")
     }
   },
 )
@@ -70,8 +74,9 @@ export const deleteSchool = createAsyncThunk("schools/deleteSchool", async (id: 
   try {
     await schoolService.deleteSchool(id)
     return id
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to delete school")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to delete school")
   }
 })
 

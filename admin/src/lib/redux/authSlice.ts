@@ -20,8 +20,9 @@ const initialState: AuthState = {
 export const login = createAsyncThunk("auth/login", async (credentials: LoginCredentials, { rejectWithValue }) => {
   try {
     return await authService.login(credentials)
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Login failed")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Login failed")
   }
 })
 
@@ -30,16 +31,18 @@ export const logout = createAsyncThunk("auth/logout", async (_, { rejectWithValu
     const refreshToken = getSession()?.refreshToken || ""
     await authService.logout(refreshToken)
     clearSession()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Logout failed")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Logout failed")
   }
 })
 
 export const getProfile = createAsyncThunk("auth/getProfile", async (_, { rejectWithValue }) => {
   try {
     return await authService.getProfile()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to get profile")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to get profile")
   }
 })
 
@@ -48,8 +51,9 @@ export const updateProfile = createAsyncThunk(
   async (data: ProfileUpdateRequest, { rejectWithValue }) => {
     try {
       return await authService.updateProfile(data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update profile")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to update profile")
     }
   },
 )

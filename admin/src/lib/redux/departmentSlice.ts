@@ -31,8 +31,9 @@ const initialState: DepartmentState = {
 export const fetchDepartments = createAsyncThunk("departments/fetchDepartments", async (_, { rejectWithValue }) => {
   try {
     return await departmentService.getDepartments()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch departments")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch departments")
   }
 })
 
@@ -41,8 +42,9 @@ export const fetchDepartment = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       return await departmentService.getDepartment(id)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch department")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch department")
     }
   },
 )
@@ -52,8 +54,9 @@ export const createDepartment = createAsyncThunk(
   async (data: CreateDepartmentDto, { rejectWithValue }) => {
     try {
       return await departmentService.createDepartment(data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to create department")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to create department")
     }
   },
 )
@@ -63,8 +66,9 @@ export const updateDepartment = createAsyncThunk(
   async ({ id, data }: { id: string; data: UpdateDepartmentDto }, { rejectWithValue }) => {
     try {
       return await departmentService.updateDepartment(id, data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update department")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to update department")
     }
   },
 )
@@ -75,8 +79,9 @@ export const deleteDepartment = createAsyncThunk(
     try {
       await departmentService.deleteDepartment(id)
       return id
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to delete department")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to delete department")
     }
   },
 )

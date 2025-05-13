@@ -39,16 +39,18 @@ const initialState: CourseState = {
 export const fetchCourses = createAsyncThunk("courses/fetchCourses", async (_, { rejectWithValue }) => {
   try {
     return await courseService.getCourses()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch courses")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch courses")
   }
 })
 
 export const fetchCourse = createAsyncThunk("courses/fetchCourse", async (id: string, { rejectWithValue }) => {
   try {
     return await courseService.getCourse(id)
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch course")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch course")
   }
 })
 
@@ -57,8 +59,9 @@ export const fetchCoursesByProgram = createAsyncThunk(
   async (programId: string, { rejectWithValue }) => {
     try {
       return await courseService.getCoursesByProgram(programId)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch courses by program")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch courses by program")
     }
   },
 )
@@ -68,8 +71,9 @@ export const createCourse = createAsyncThunk(
   async (data: CreateCourseDto, { rejectWithValue }) => {
     try {
       return await courseService.createCourse(data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to create course")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to create course")
     }
   },
 )
@@ -79,8 +83,9 @@ export const updateCourse = createAsyncThunk(
   async ({ id, data }: { id: string; data: UpdateCourseDto }, { rejectWithValue }) => {
     try {
       return await courseService.updateCourse(id, data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update course")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to update course")
     }
   },
 )
@@ -89,8 +94,9 @@ export const deleteCourse = createAsyncThunk("courses/deleteCourse", async (id: 
   try {
     await courseService.deleteCourse(id)
     return id
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to delete course")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to delete course")
   }
 })
 
@@ -100,8 +106,9 @@ export const assignCourseToSemester = createAsyncThunk(
     try {
       await courseService.assignCourseToSemester(courseId, semesterId)
       return { courseId, semesterId }
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to assign course to semester")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to assign course to semester")
     }
   },
 )
@@ -112,8 +119,9 @@ export const removeCourseFromSemester = createAsyncThunk(
     try {
       await courseService.removeCourseFromSemester(courseId, semesterId)
       return { courseId, semesterId }
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to remove course from semester")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to remove course from semester")
     }
   },
 )

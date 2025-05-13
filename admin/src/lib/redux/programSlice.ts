@@ -31,16 +31,18 @@ const initialState: ProgramState = {
 export const fetchPrograms = createAsyncThunk("programs/fetchPrograms", async (_, { rejectWithValue }) => {
   try {
     return await programService.getPrograms()
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch programs")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch programs")
   }
 })
 
 export const fetchProgram = createAsyncThunk("programs/fetchProgram", async (id: string, { rejectWithValue }) => {
   try {
     return await programService.getProgram(id)
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to fetch program")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch program")
   }
 })
 
@@ -49,8 +51,9 @@ export const createProgram = createAsyncThunk(
   async (data: CreateProgramDto, { rejectWithValue }) => {
     try {
       return await programService.createProgram(data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to create program")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to create program")
     }
   },
 )
@@ -60,8 +63,9 @@ export const updateProgram = createAsyncThunk(
   async ({ id, data }: { id: string; data: UpdateProgramDto }, { rejectWithValue }) => {
     try {
       return await programService.updateProgram(id, data)
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update program")
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } }
+      return rejectWithValue(err.response?.data?.message || "Failed to update program")
     }
   },
 )
@@ -70,8 +74,9 @@ export const deleteProgram = createAsyncThunk("programs/deleteProgram", async (i
   try {
     await programService.deleteProgram(id)
     return id
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || "Failed to delete program")
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } }
+    return rejectWithValue(err.response?.data?.message || "Failed to delete program")
   }
 })
 
