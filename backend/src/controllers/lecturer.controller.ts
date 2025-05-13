@@ -2,13 +2,16 @@ import type { Request, Response } from "express"
 import { LecturerService } from "../services/lecturer.service"
 import { StorageService } from "../services/storage.service"
 import { NotificationService } from "../services/notification.service"
+import { AuthService } from "../services/auth.service"
 
 export class LecturerController {
+  private authService: AuthService
   private lecturerService: LecturerService
   private storageService: StorageService
   private notificationService: NotificationService
 
   constructor() {
+    this.authService = new AuthService()
     this.lecturerService = new LecturerService()
     this.storageService = new StorageService()
     this.notificationService = new NotificationService()
@@ -56,13 +59,38 @@ export class LecturerController {
   createLecturer = async (req: Request, res: Response) => {
     try {
       const lecturerData = req.body
-      const lecturer = await this.lecturerService.createLecturer(lecturerData)
+  
+      // 1. Register the user first
+      const authResult = await this.authService.register({
+        firstName: lecturerData.firstName,
+        lastName: lecturerData.lastName,
+        email: lecturerData.email,
+        password: "password123?", // Default password
+        role: "lecturer",
+      })
+  
+      // 3. Auto-generate staffId
+      const staffId = `STAFF-${Math.floor(100000 + Math.random() * 900000)}`
+  
+      // 4. Build complete lecturer profile
+      const completeLecturerData = {
+        ...lecturerData,
+        userId: authResult.user.id,
+        staffId,
+        status: "active",
+        joinDate: new Date(),
+      }
+  
+      // 5. Create lecturer profile
+      const lecturer = await this.lecturerService.createLecturer(completeLecturerData)
+  
       return res.status(201).json(lecturer)
     } catch (error) {
       console.error("Error creating lecturer:", error)
-      return res.status(500).json({ message: "Failed to create lecturer", error: error })
+      return res.status(500).json({ message: "Failed to create lecturer", error })
     }
   }
+  
 
   updateLecturer = async (req: Request, res: Response) => {
     try {

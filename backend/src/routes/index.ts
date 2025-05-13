@@ -8,6 +8,7 @@ import semesterRoutes from "./semester.routes"
 import periodRoutes from "./period.routes"
 import studentRoutes from "./student.routes"
 import lecturerRoutes from "./lecturer.routes"
+import lecturerPortalRoutes from "./lecturer-portal.routes"
 import notificationRoutes from "./notification.routes"
 import dashboardRoutes from "./dashboard.routes"
 import virtualClassRoutes from "./virtual-class.routes"
@@ -29,6 +30,7 @@ router.use("/semesters", semesterRoutes)
 router.use("/periods", periodRoutes)
 router.use("/students", studentRoutes)
 router.use("/lecturers", lecturerRoutes)
+router.use("/lecturer-portal", lecturerPortalRoutes)
 router.use("/notifications", notificationRoutes)
 router.use("/dashboard", dashboardRoutes)
 router.use("/virtual-classes", virtualClassRoutes)
@@ -37,6 +39,7 @@ router.use("/attendance", attendanceRoutes)
 router.use("/student-performance", studentPerformanceRoutes)
 router.use("/lecturer-dashboard", lecturerDashboardRoutes)
 router.use("/student-portal", studentPortalRoutes)
+router.use("/lecturer-portal", lecturerPortalRoutes)
 router.use("/ai-recommendations", aiRecommendationRoutes)
 
 export default router

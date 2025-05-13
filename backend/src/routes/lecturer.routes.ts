@@ -1,128 +1,268 @@
 import express from "express"
-import { LecturerDashboardController } from "../controllers/lecturer-dashboard.controller"
-import { validate, validateParams, validateQuery } from "../middlewares/validation.middleware"
+import { LecturerController } from "../controllers/lecturer.controller"
+import { validate, validateParams } from "../middlewares/validation.middleware"
 import Joi from "joi"
 import { authMiddleware } from "../middlewares/auth.middleware"
+import multer from "multer"
 
 const router = express.Router()
-const lecturerDashboardController = new LecturerDashboardController()
+const lecturerController = new LecturerController()
+
+// Configure multer for file uploads
+const storage = multer.memoryStorage()
+const upload = multer({ storage })
 
 // Validation schemas
-const lecturerIdParam = Joi.object({
-  lecturerProfileId: Joi.string().uuid().required(),
+const idParam = Joi.object({
+  id: Joi.string().uuid().required(),
 })
 
-const courseAndSemesterParams = Joi.object({
+const userIdParam = Joi.object({
+  userId: Joi.string().uuid().required(),
+})
+
+const lecturerIdParam = Joi.object({
+  lecturerId: Joi.string().uuid().required(),
+})
+
+const assessmentIdParam = Joi.object({
+  assessmentId: Joi.string().uuid().required(),
+})
+
+const lecturerProfileSchema = Joi.object({
+  title: Joi.string().required(),
+  firstName: Joi.string().required(),
+  lastName: Joi.string().required(),
+  email: Joi.string().email().required(),
+  phoneNumber: Joi.string().allow("", null),
+  departmentId: Joi.string().uuid().required(),
+  specialization: Joi.string().allow("", null),
+  bio: Joi.string().allow("", null),
+  officeLocation: Joi.string().allow("", null),
+  officeHours: Joi.string().allow("", null),
+})
+
+const courseAssignmentSchema = Joi.object({
   lecturerProfileId: Joi.string().uuid().required(),
   courseId: Joi.string().uuid().required(),
   semesterId: Joi.string().uuid().required(),
+  role: Joi.string().valid("primary", "assistant").required(),
 })
 
-const dashboardQuerySchema = Joi.object({
-  startDate: Joi.date(),
-  endDate: Joi.date(),
-  includeAttendance: Joi.boolean().default(true),
-  includePerformance: Joi.boolean().default(true),
-  includeQuizzes: Joi.boolean().default(true),
-  includeAssessments: Joi.boolean().default(true),
+const assessmentSchema = Joi.object({
+  title: Joi.string().required(),
+  description: Joi.string().required(),
+  type: Joi.string().valid("assignment", "quiz", "exam", "project").required(),
+  dueDate: Joi.date().required(),
+  totalPoints: Joi.number().required(),
+  courseId: Joi.string().uuid().required(),
+  semesterId: Joi.string().uuid().required(),
+  lecturerProfileId: Joi.string().uuid().required(),
+  instructions: Joi.string().required(),
 })
 
-// Routes
+const gradeSubmissionSchema = Joi.object({
+  grade: Joi.number().required(),
+  feedback: Joi.string().allow("", null),
+})
+
+const teachingMaterialSchema = Joi.object({
+  title: Joi.string().required(),
+  description: Joi.string(),
+  type: Joi.string().valid("document", "video", "presentation", "link", "youtube").required(),
+  url: Joi.string().required(),
+  courseId: Joi.string().uuid().required(),
+  semesterId: Joi.string().uuid().required(),
+  lecturerProfileId: Joi.string().uuid().required(),
+})
+
+const youtubeVideoSchema = Joi.object({
+  title: Joi.string().required(),
+  description: Joi.string(),
+  youtubeUrl: Joi.string().required(),
+  courseId: Joi.string().uuid().required(),
+  semesterId: Joi.string().uuid().required(),
+  lecturerProfileId: Joi.string().uuid().required(),
+})
+
+const videoUploadSchema = Joi.object({
+  title: Joi.string().required(),
+  description: Joi.string(),
+  courseId: Joi.string().uuid().required(),
+  semesterId: Joi.string().uuid().required(),
+  lecturerProfileId: Joi.string().uuid().required(),
+})
+
+// Lecturer profile routes
 router.get(
-  "/:lecturerProfileId",
+  "/",
   authMiddleware,
-  validateParams(lecturerIdParam),
-  validateQuery(dashboardQuerySchema),
-  lecturerDashboardController.getDashboardOverview,
+  lecturerController.getAllLecturers
 )
 
 router.get(
-  "/:lecturerProfileId/courses",
+  "/:id",
   authMiddleware,
-  validateParams(lecturerIdParam),
-  lecturerDashboardController.getLecturerCourses,
+  //validateParams(idParam),
+  lecturerController.getLecturerById
 )
 
 router.get(
-  "/:lecturerProfileId/at-risk-students",
+  "/user/:userId",
   authMiddleware,
-  validateParams(lecturerIdParam),
-  lecturerDashboardController.getAtRiskStudents,
+  //validateParams(userIdParam),
+  lecturerController.getLecturerByUserId
 )
 
 router.post(
-  "/:lecturerProfileId/identify-at-risk/:courseId/:semesterId",
+  "/",
   authMiddleware,
-  validateParams(courseAndSemesterParams),
-  validate(
-    Joi.object({
-      attendanceThreshold: Joi.number().min(0).max(100).default(70),
-      performanceThreshold: Joi.number().min(0).max(100).default(60),
-      engagementThreshold: Joi.number().min(0).max(100).default(50),
-    }),
-  ),
-  lecturerDashboardController.identifyAtRiskStudents,
+  validate(lecturerProfileSchema),
+  lecturerController.createLecturer
 )
 
-router.get(
-  "/:lecturerProfileId/course-topic-progress/:courseId/:semesterId",
+router.put(
+  "/:id",
   authMiddleware,
-  validateParams(courseAndSemesterParams),
-  lecturerDashboardController.getCourseTopicProgress,
+  // validateParams(idParam),
+  //validate(lecturerProfileSchema),
+  lecturerController.updateLecturer
 )
 
-router.get(
-  "/:lecturerProfileId/course-mastery-distribution/:courseId/:semesterId",
+router.delete(
+  "/:id",
   authMiddleware,
-  validateParams(courseAndSemesterParams),
-  lecturerDashboardController.getCourseMasteryDistribution,
+  // validateParams(idParam),
+  lecturerController.deleteLecturer
 )
 
+// Course assignment routes
 router.get(
-  "/:lecturerProfileId/attendance-overview/:courseId/:semesterId",
+  "/:lecturerId/course-assignments",
   authMiddleware,
-  validateParams(courseAndSemesterParams),
-  lecturerDashboardController.getAttendanceOverview,
+  //validateParams(lecturerIdParam),
+  lecturerController.getLecturerCourseAssignments
 )
 
-router.get(
-  "/:lecturerProfileId/performance-overview/:courseId/:semesterId",
+router.post(
+  "/course-assignments",
   authMiddleware,
-  validateParams(courseAndSemesterParams),
-  lecturerDashboardController.getPerformanceOverview,
+  validate(courseAssignmentSchema),
+  lecturerController.assignCourseToLecturer
 )
 
-router.get(
-  "/:lecturerProfileId/student-engagement/:courseId/:semesterId",
+router.put(
+  "/course-assignments/:id",
   authMiddleware,
-  validateParams(courseAndSemesterParams),
-  lecturerDashboardController.getStudentEngagement,
+  //validateParams(idParam),
+  validate(courseAssignmentSchema),
+  lecturerController.updateCourseAssignment
 )
 
-router.get(
-  "/:lecturerProfileId/teaching-materials/:courseId/:semesterId",
+router.delete(
+  "/course-assignments/:id",
   authMiddleware,
-  validateParams(courseAndSemesterParams),
-  lecturerDashboardController.getTeachingMaterials,
+  //validateParams(idParam),
+  lecturerController.removeCourseAssignment
 )
 
+// Assessment routes
 router.get(
-  "/:lecturerProfileId/upcoming-classes",
+  "/:lecturerId/assessments",
+  authMiddleware,
+  //validateParams(lecturerIdParam),
+  lecturerController.getLecturerAssessments
+)
+
+router.post(
+  "/assessments",
+  authMiddleware,
+  validate(assessmentSchema),
+  lecturerController.createAssessment
+)
+
+router.put(
+  "/assessments/:id",
+  authMiddleware,
+  //validateParams(idParam),
+  validate(assessmentSchema),
+  lecturerController.updateAssessment
+)
+
+router.delete(
+  "/assessments/:id",
+  authMiddleware,
+  //validateParams(idParam),
+  lecturerController.deleteAssessment
+)
+
+// Assessment submission routes
+router.get(
+  "/assessments/:assessmentId/submissions",
+  authMiddleware,
+  //validateParams(assessmentIdParam),
+  lecturerController.getAssessmentSubmissions
+)
+
+router.put(
+  "/submissions/:id/grade",
+  authMiddleware,
+  //validateParams(idParam),
+  validate(gradeSubmissionSchema),
+  lecturerController.gradeSubmission
+)
+
+// Teaching material routes
+router.get(
+  "/:lecturerId/teaching-materials",
   authMiddleware,
   validateParams(lecturerIdParam),
-  lecturerDashboardController.getUpcomingClasses,
+  lecturerController.getTeachingMaterials
 )
 
 router.get(
-  "/course/:courseId/semester/:semesterId/performance-analytics",
+  "/teaching-materials/:id",
   authMiddleware,
-  validateParams(
-    Joi.object({
-      courseId: Joi.string().uuid().required(),
-      semesterId: Joi.string().uuid().required(),
-    }),
-  ),
-  lecturerDashboardController.getCoursePerformanceAnalytics,
+  validateParams(idParam),
+  lecturerController.getTeachingMaterialById
+)
+
+router.post(
+  "/teaching-materials",
+  authMiddleware,
+  validate(teachingMaterialSchema),
+  lecturerController.createTeachingMaterial
+)
+
+router.put(
+  "/teaching-materials/:id",
+  authMiddleware,
+  validateParams(idParam),
+  validate(teachingMaterialSchema),
+  lecturerController.updateTeachingMaterial
+)
+
+router.delete(
+  "/teaching-materials/:id",
+  authMiddleware,
+  validateParams(idParam),
+  lecturerController.deleteTeachingMaterial
+)
+
+// Video upload routes
+router.post(
+  "/videos/upload",
+  authMiddleware,
+  upload.single("video"),
+  validate(videoUploadSchema),
+  lecturerController.uploadVideo
+)
+
+router.post(
+  "/videos/youtube",
+  authMiddleware,
+  validate(youtubeVideoSchema),
+  lecturerController.addYoutubeVideo
 )
 
 export default router

@@ -1,14 +1,11 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import "./globals.css"
-import { Providers } from "./providers"
-
-const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "LearnSmart Admin Portal",
-  description: "Admin portal for LearnSmart learning management system",
+  title: "SmartLearn Admin Portal",
+  description: "E-learning system administration portal",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -16,11 +13,5 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <Providers>{children}</Providers>
-      </body>
-    </html>
-  )
+  return children
 }

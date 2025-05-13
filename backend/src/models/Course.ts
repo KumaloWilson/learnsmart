@@ -35,11 +35,12 @@ export class Course extends Model {
   code!: string
 
   @Column({
-    type: DataType.INTEGER,
+    type: DataType.FLOAT,
     allowNull: false,
-    defaultValue: 1,
+    defaultValue: 1.0,
   })
   level!: number
+  
 
   @Column({
     type: DataType.INTEGER,
