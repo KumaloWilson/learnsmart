@@ -24,7 +24,7 @@ export default function SchoolManagement() {
         })
         console.error("Failed to load schools:", err)
       })
-  }, []) // Remove loadSchools from dependency array to prevent infinite loop
+  }, [loadSchools, toast])
 
   useEffect(() => {
     if (error) {

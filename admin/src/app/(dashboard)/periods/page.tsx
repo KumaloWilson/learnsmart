@@ -23,7 +23,7 @@ export default function PeriodsManagement() {
         })
         console.error("Failed to load periods:", err)
       })
-  }, []) // Remove loadPeriods from dependencies to prevent infinite loop
+  }, [loadPeriods, toast])
 
   useEffect(() => {
     if (error) {

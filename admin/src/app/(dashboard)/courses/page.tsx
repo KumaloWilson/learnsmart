@@ -24,7 +24,7 @@ export default function CoursesManagement() {
         })
         console.error("Failed to load courses:", err)
       })
-  }, []) // Remove loadCourses from dependency array to prevent infinite loop
+  }, [loadCourses, toast])
 
   useEffect(() => {
     if (error) {
