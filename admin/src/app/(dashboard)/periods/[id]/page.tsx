@@ -1,11 +1,13 @@
+"use client"
 import { PeriodDetail } from "@/components/periods/period-detail"
+import { useParams } from "next/navigation"
 
-interface PeriodPageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function PeriodPage({ params }: PeriodPageProps) {
-  return <PeriodDetail id={params.id} />
+export default function PeriodPage() {
+
+    const params = useParams()
+  
+    const id = params.id as string
+
+  return <PeriodDetail id={id} />
 }

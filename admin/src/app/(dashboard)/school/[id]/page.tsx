@@ -1,11 +1,12 @@
 import { SchoolDetail } from "@/components/schools/school-detail"
+import { useParams } from "next/navigation"
 
-interface SchoolPageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function SchoolPage({ params }: SchoolPageProps) {
-  return <SchoolDetail id={params.id} />
+export default function SchoolPage() {
+
+    const params = useParams()
+  
+    const id = params.id as string
+
+  return <SchoolDetail id={id} />
 }

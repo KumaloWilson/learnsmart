@@ -1,12 +1,14 @@
 import AcademicRecordTable from "@/components/students/academic-record-table"
+import { useParams } from "next/navigation"
 
-interface AcademicRecordsPageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function AcademicRecordsPage({ params }: AcademicRecordsPageProps) {
+export default function AcademicRecordsPage() {
+
+
+    const params = useParams()
+  
+    const id = params.id as string
+
   return (
     <div className="space-y-6">
       <div>
@@ -14,7 +16,7 @@ export default function AcademicRecordsPage({ params }: AcademicRecordsPageProps
         <p className="text-muted-foreground">Manage academic records for this student</p>
       </div>
 
-      <AcademicRecordTable studentId={params.id} />
+      <AcademicRecordTable studentId={id} />
     </div>
   )
 }

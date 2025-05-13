@@ -4,15 +4,12 @@ import { useEffect } from "react"
 import { PeriodForm } from "@/components/periods/period-form"
 import { usePeriods } from "@/hooks/use-periods"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useParams } from "next/navigation"
 
-interface EditPeriodPageProps {
-  params: {
-    id: string
-  }
-}
-
-export default function EditPeriodPage({ params }: EditPeriodPageProps) {
-  const { id } = params
+export default function EditPeriodPage() {
+    const params = useParams()
+  
+    const id = params.id as string
   const { currentPeriod, loadPeriod, isLoading } = usePeriods()
 
   useEffect(() => {

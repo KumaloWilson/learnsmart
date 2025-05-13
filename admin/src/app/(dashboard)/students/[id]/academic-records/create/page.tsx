@@ -1,12 +1,12 @@
 import AcademicRecordForm from "@/components/students/academic-record-form"
+import { useParams } from "next/navigation"
 
-interface CreateAcademicRecordPageProps {
-  params: {
-    id: string
-  }
-}
+export default function CreateAcademicRecordPage() {
 
-export default function CreateAcademicRecordPage({ params }: CreateAcademicRecordPageProps) {
+  const params = useParams()
+  const id = params.id as string
+
+
   return (
     <div className="space-y-6">
       <div>
@@ -14,7 +14,7 @@ export default function CreateAcademicRecordPage({ params }: CreateAcademicRecor
         <p className="text-muted-foreground">Add a new academic record for this student</p>
       </div>
 
-      <AcademicRecordForm studentId={params.id} />
+      <AcademicRecordForm studentId={id} />
     </div>
   )
 }

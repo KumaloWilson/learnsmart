@@ -4,15 +4,14 @@ import { useEffect } from "react"
 import { ProgramForm } from "@/components/programs/program-form"
 import { usePrograms } from "@/hooks/use-programs"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useParams } from "next/navigation"
 
-interface EditProgramPageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function EditProgramPage({ params }: EditProgramPageProps) {
-  const { id } = params
+export default function EditProgramPage() {
+    const params = useParams()
+  
+    const id = params.id as string
+    
   const { currentProgram, loadProgram, isLoading } = usePrograms()
 
   useEffect(() => {
