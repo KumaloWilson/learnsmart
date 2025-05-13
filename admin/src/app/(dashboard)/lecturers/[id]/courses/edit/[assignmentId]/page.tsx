@@ -4,16 +4,17 @@ import { useEffect } from "react"
 import { CourseAssignmentForm } from "@/components/lecturers/course-assignment-form"
 import { useLecturers } from "@/hooks/use-lecturers"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useParams } from "next/navigation"
 
-interface EditCourseAssignmentPageProps {
-  params: {
-    id: string
-    assignmentId: string
-  }
-}
 
-export default function EditCourseAssignmentPage({ params }: EditCourseAssignmentPageProps) {
-  const { id, assignmentId } = params
+export default function EditCourseAssignmentPage() {
+
+    const params = useParams()
+      
+    const id = params.id as string
+    const assignmentId = params.assignmentId as string
+
+
   const { courseAssignments, loadCourseAssignments, isLoading } = useLecturers()
 
   useEffect(() => {

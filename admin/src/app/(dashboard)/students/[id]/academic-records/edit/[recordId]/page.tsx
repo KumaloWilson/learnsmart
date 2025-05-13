@@ -3,16 +3,18 @@
 import { useEffect } from "react"
 import AcademicRecordForm from "@/components/students/academic-record-form"
 import { useStudents } from "@/hooks/use-students"
+import { useParams } from "next/navigation"
 
-interface EditAcademicRecordPageProps {
-  params: {
-    id: string
-    recordId: string
-  }
-}
 
-export default function EditAcademicRecordPage({ params }: EditAcademicRecordPageProps) {
-  const { id, recordId } = params
+export default function EditAcademicRecordPage() {
+
+    const params = useParams()
+  
+    const id = params.id as string
+    const recordId = params.recordId as string
+
+
+
   const { academicRecords, getAcademicRecordById } = useStudents()
 
   useEffect(() => {

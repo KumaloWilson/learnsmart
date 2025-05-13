@@ -1,21 +1,17 @@
 "use client"
 
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { CourseAssignmentTable } from "@/components/lecturers/course-assignment-table"
 import { useLecturers } from "@/hooks/use-lecturers"
 import { Plus, ArrowLeft } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
-interface LecturerCoursesPageProps {
-  params: {
-    id: string
-  }
-}
-
-export default function LecturerCoursesPage({ params }: LecturerCoursesPageProps) {
-  const { id } = params
+export default function LecturerCoursesPage() {
+   const params = useParams()
+ 
+   const id = params.id as string
   const router = useRouter()
   const { currentLecturer, loadLecturer, isLoading } = useLecturers()
 

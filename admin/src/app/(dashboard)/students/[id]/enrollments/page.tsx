@@ -1,12 +1,14 @@
+"use client"
 import EnrollmentTable from "@/components/students/enrollment-table"
+import { useParams } from "next/navigation"
 
-interface EnrollmentsPageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function EnrollmentsPage({ params }: EnrollmentsPageProps) {
+export default function EnrollmentsPage() {
+
+  const params = useParams()
+  const id = params.id as string
+
+
   return (
     <div className="space-y-6">
       <div>
@@ -14,7 +16,7 @@ export default function EnrollmentsPage({ params }: EnrollmentsPageProps) {
         <p className="text-muted-foreground">Manage course enrollments for this student</p>
       </div>
 
-      <EnrollmentTable studentId={params.id} />
+      <EnrollmentTable studentId={id} />
     </div>
   )
 }

@@ -4,15 +4,13 @@ import { useEffect } from "react"
 import { CourseForm } from "@/components/courses/course-form"
 import { useCourses } from "@/hooks/use-courses"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useParams } from "next/navigation"
 
-interface EditCoursePageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function EditCoursePage({ params }: EditCoursePageProps) {
-  const { id } = params
+export default function EditCoursePage() {
+    const params = useParams()
+  
+    const id = params.id as string
   const { currentCourse, loadCourse, isLoading } = useCourses()
 
   useEffect(() => {

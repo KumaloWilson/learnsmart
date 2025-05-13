@@ -4,15 +4,14 @@ import { useEffect } from "react"
 import { SemesterForm } from "@/components/semesters/semester-form"
 import { useSemesters } from "@/hooks/use-semesters"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useParams } from "next/navigation"
 
-interface EditSemesterPageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function EditSemesterPage({ params }: EditSemesterPageProps) {
-  const { id } = params
+
+export default function EditSemesterPage() {
+    const params = useParams()
+  
+    const id = params.id as string
   const { currentSemester, loadSemester, isLoading } = useSemesters()
 
   useEffect(() => {

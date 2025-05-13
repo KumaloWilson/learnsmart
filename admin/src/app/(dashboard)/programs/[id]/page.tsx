@@ -1,11 +1,12 @@
+"use client"
 import { ProgramDetail } from "@/components/programs/program-detail"
+import { useParams } from "next/navigation"
 
-interface ProgramPageProps {
-  params: {
-    id: string
-  }
-}
+export default function ProgramPage() {
 
-export default function ProgramPage({ params }: ProgramPageProps) {
-  return <ProgramDetail id={params.id} />
+    const params = useParams()
+  
+    const id = params.id as string
+
+  return <ProgramDetail id={id} />
 }

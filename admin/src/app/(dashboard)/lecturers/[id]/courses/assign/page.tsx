@@ -1,13 +1,13 @@
+"use client"
+
 import { CourseAssignmentForm } from "@/components/lecturers/course-assignment-form"
+import { useParams } from "next/navigation"
 
-interface AssignCoursePageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function AssignCoursePage({ params }: AssignCoursePageProps) {
-  const { id } = params
+export default function AssignCoursePage() {
+    const params = useParams()
+  
+    const id = params.id as string
 
   return (
     <div className="space-y-6">
