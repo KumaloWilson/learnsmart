@@ -4,15 +4,14 @@ import { useEffect } from "react"
 import { LecturerForm } from "@/components/lecturers/lecturer-form"
 import { useLecturers } from "@/hooks/use-lecturers"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useParams } from "next/navigation"
 
-interface EditLecturerPageProps {
-  params: {
-    id: string
-  }
-}
 
-export default function EditLecturerPage({ params }: EditLecturerPageProps) {
-  const { id } = params
+export default function EditLecturerPage() {
+
+  const params = useParams()
+  const id = params.id as string
+
   const { currentLecturer, loadLecturer, isLoading } = useLecturers()
 
   useEffect(() => {
