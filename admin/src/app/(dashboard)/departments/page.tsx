@@ -24,7 +24,7 @@ export default function DepartmentsManagement() {
         })
         console.error("Failed to load departments:", err)
       })
-  }, []) // Remove loadDepartments from dependency array to prevent infinite loop
+  }, [loadDepartments, toast])
 
   useEffect(() => {
     if (error) {
