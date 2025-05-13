@@ -14,7 +14,7 @@ export default function LecturersManagement() {
   // Remove loadLecturers from the dependency array
   useEffect(() => {
     loadLecturers()
-  }, []) // Empty dependency array
+  }, [loadLecturers]) // Empty dependency array
 
   return (
     <div className="space-y-6">
