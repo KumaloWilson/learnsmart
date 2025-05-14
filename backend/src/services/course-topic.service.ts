@@ -6,24 +6,14 @@ import { TopicProgress } from "../models/TopicProgress"
 import { TeachingMaterial } from "../models/TeachingMaterial"
 import { LearningResource } from "../models/LearningResource"
 import { StudentProfile } from "../models/StudentProfile"
+import { CreateCourseTopicDto } from "../dto/course-topic.dto"
 
 export class CourseTopicService {
   /**
    * Create a new course topic
    */
-  async createCourseTopic(topicData: {
-    title: string
-    description?: string
-    orderIndex: number
-    durationHours: number
-    learningObjectives?: string[]
-    keywords?: string[]
-    difficulty: "beginner" | "intermediate" | "advanced"
-    courseId: string
-    semesterId: string
-    isActive?: boolean
-  }): Promise<CourseTopic> {
-    return CourseTopic.create(topicData)
+  async createCourseTopic(topicData: CreateCourseTopicDto): Promise<CourseTopic> {
+    return CourseTopic.create(topicData as any)
   }
 
   /**

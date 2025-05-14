@@ -41,21 +41,8 @@ export class QuizService {
       if (filters.semesterId) {
         whereClause.semesterId = filters.semesterId
       }
-      if (filters.isActive !== undefined) {
-        whereClause.isActive = filters.isActive
-      }
-      if (filters.startDate && filters.endDate) {
-        whereClause.startDate = {
-          [Op.between]: [filters.startDate, filters.endDate],
-        }
-      } else if (filters.startDate) {
-        whereClause.startDate = {
-          [Op.gte]: filters.startDate,
-        }
-      } else if (filters.endDate) {
-        whereClause.endDate = {
-          [Op.lte]: filters.endDate,
-        }
+      if (filters.isPublished !== undefined) {
+        whereClause.isPublished = filters.isPublished
       }
     }
 
@@ -139,6 +126,8 @@ export class QuizService {
     return { message: "Quiz deactivated successfully" }
   }
 
+
+
   // Quiz attempt methods
   async getQuizAttempts(filters?: QuizAttemptFilterDto) {
     const whereClause: any = {}
@@ -214,6 +203,53 @@ export class QuizService {
           ],
         },
       ],
+    })
+  }
+
+  async getAttemptsByStudent(studentId: string, isProfileId: boolean = true) {
+    let whereClause: any = {}
+    
+    if (isProfileId) {
+      // If the provided ID is a studentProfile ID
+      whereClause.studentProfileId = studentId
+    } else {
+      // If the provided ID is a User ID, we need to find the student profile first
+      const studentProfile = await StudentProfile.findOne({
+        where: { userId: studentId }
+      })
+      
+      if (!studentProfile) {
+        throw new Error("Student profile not found for the given user ID")
+      }
+      
+      whereClause.studentProfileId = studentProfile.id
+    }
+  
+    return QuizAttempt.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: Quiz,
+          include: [
+            {
+              model: Course,
+            },
+            {
+              model: Semester,
+            }
+          ],
+        },
+        {
+          model: StudentProfile,
+          include: [
+            {
+              model: User,
+              attributes: ["firstName", "lastName", "email"],
+            },
+          ],
+        },
+      ],
+      order: [["startTime", "DESC"]],
     })
   }
 

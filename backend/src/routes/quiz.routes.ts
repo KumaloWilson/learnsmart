@@ -2,7 +2,6 @@ import { Router } from "express"
 import { QuizController } from "../controllers/quiz.controller"
 import { authMiddleware } from "../middlewares/auth.middleware"
 //import { validate, validateParams, validateQuery } from "../middlewares/validation.middleware"
-import { quizValidation } from "../middlewares/validation.middleware"
 
 const router = Router()
 const quizController = new QuizController()

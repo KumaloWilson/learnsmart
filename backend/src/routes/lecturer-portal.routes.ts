@@ -1,104 +1,62 @@
-import express from "express"
-import { LecturerDashboardController } from "../controllers/lecturer-dashboard.controller"
-import Joi from "joi"
+import { Router } from "express"
 import { authMiddleware } from "../middlewares/auth.middleware"
-import { validate } from "../middlewares/validation.middleware"
+import { validate, courseTopicValidation } from "../middlewares/validation.middleware"
+import { LecturerPortalController } from "../controllers/lecturer-portal-controller"
 
-const router = express.Router()
-const lecturerDashboardController = new LecturerDashboardController()
+const router = Router()
+const lecturerPortalController = new LecturerPortalController()
 
-// Validation schemas
-const lecturerIdParam = Joi.object({
-  lecturerProfileId: Joi.string().uuid().required(),
-})
-
-const courseAndSemesterParams = Joi.object({
-  lecturerProfileId: Joi.string().uuid().required(),
-  courseId: Joi.string().uuid().required(),
-  semesterId: Joi.string().uuid().required(),
-})
-
-const dashboardQuerySchema = Joi.object({
-  startDate: Joi.date(),
-  endDate: Joi.date(),
-  includeAttendance: Joi.boolean().default(true),
-  includePerformance: Joi.boolean().default(true),
-  includeQuizzes: Joi.boolean().default(true),
-  includeAssessments: Joi.boolean().default(true),
-})
-
-// Routes
-router.get(
-  "/:lecturerProfileId",
-  authMiddleware,
-  lecturerDashboardController.getDashboardOverview,
-)
-
-router.get(
-  "/:lecturerProfileId/courses",
-  authMiddleware,
-  lecturerDashboardController.getLecturerCourses,
-)
-
-router.get(
-  "/:lecturerProfileId/at-risk-students",
-  authMiddleware,
-  lecturerDashboardController.getAtRiskStudents,
-)
-
+// Course Topics Management
+router.get("/course-topics/:courseId/:semesterId", authMiddleware, lecturerPortalController.getCourseTopics)
+router.get("/course-topic/:id", authMiddleware, lecturerPortalController.getCourseTopic)
 router.post(
-  "/:lecturerProfileId/identify-at-risk/:courseId/:semesterId",
-  authMiddleware,
-  lecturerDashboardController.identifyAtRiskStudents,
+  "/course-topic",
+  [authMiddleware, validate(courseTopicValidation.createCourseTopic)],
+  lecturerPortalController.createCourseTopic,
+)
+router.put(
+  "/course-topic/:id",
+  [authMiddleware, validate(courseTopicValidation.updateCourseTopic)],
+  lecturerPortalController.updateCourseTopic,
+)
+router.delete("/course-topic/:id", authMiddleware, lecturerPortalController.deleteCourseTopic)
+router.post(
+  "/reorder-topics/:courseId/:semesterId",
+  [authMiddleware, validate(courseTopicValidation.reorderTopics)],
+  lecturerPortalController.reorderCourseTopics,
 )
 
+// Topic Progress Management
 router.get(
-  "/:lecturerProfileId/course-topic-progress/:courseId/:semesterId",
+  "/topic-progress-statistics/:courseId/:semesterId",
   authMiddleware,
-  lecturerDashboardController.getCourseTopicProgress,
+  lecturerPortalController.getTopicProgressStatistics,
+)
+router.get(
+  "/student-topic-progress/:studentProfileId/:courseId/:semesterId",
+  authMiddleware,
+  lecturerPortalController.getStudentTopicProgress,
 )
 
+// Course Mastery Management
 router.get(
-  "/:lecturerProfileId/course-mastery-distribution/:courseId/:semesterId",
+  "/course-mastery-distribution/:courseId/:semesterId",
   authMiddleware,
-  lecturerDashboardController.getCourseMasteryDistribution,
+  lecturerPortalController.getCourseMasteryDistribution,
+)
+router.get(
+  "/course-student-masteries/:courseId/:semesterId",
+  authMiddleware,
+  lecturerPortalController.getCourseStudentMasteries,
+)
+router.get(
+  "/course-mastery-statistics/:courseId/:semesterId",
+  authMiddleware,
+  lecturerPortalController.getCourseMasteryStatistics,
 )
 
-router.get(
-  "/:lecturerProfileId/attendance-overview/:courseId/:semesterId",
-  authMiddleware,
-  lecturerDashboardController.getAttendanceOverview,
-)
-
-router.get(
-  "/:lecturerProfileId/performance-overview/:courseId/:semesterId",
-  authMiddleware,
-  lecturerDashboardController.getPerformanceOverview,
-)
-
-router.get(
-  "/:lecturerProfileId/student-engagement/:courseId/:semesterId",
-  authMiddleware,
-  lecturerDashboardController.getStudentEngagement,
-)
-
-router.get(
-  "/:lecturerProfileId/teaching-materials/:courseId/:semesterId",
-  authMiddleware,
-  lecturerDashboardController.getTeachingMaterials,
-)
-
-router.get(
-  "/:lecturerProfileId/upcoming-classes",
-  authMiddleware,
-  lecturerDashboardController.getUpcomingClasses,
-)
-
-router.get(
-  "/course/:courseId/semester/:semesterId/performance-analytics",
-  authMiddleware,
-  
-  lecturerDashboardController.getCoursePerformanceAnalytics,
-)
+// Teaching Materials for Topics
+router.get("/topic-teaching-materials/:topicId", authMiddleware, lecturerPortalController.getTopicTeachingMaterials)
+router.get("/topic-learning-resources/:topicId", authMiddleware, lecturerPortalController.getTopicLearningResources)
 
 export default router

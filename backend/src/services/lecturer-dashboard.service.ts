@@ -327,10 +327,10 @@ export class LecturerDashboardService {
         { model: Semester, as: "semester" },
       ],
     })
-
+  
     const courseIds = courseAssignments.map((assignment) => assignment.courseId)
     const semesterIds = courseAssignments.map((assignment) => assignment.semesterId)
-
+  
     // Get student counts for each course
     const enrollmentCounts = await CourseEnrollment.findAll({
       attributes: [
@@ -344,25 +344,67 @@ export class LecturerDashboardService {
       },
       group: ["courseId", "semesterId"],
     })
-
+  
     // Build enrollment map for easy access
     const enrollmentMap: Record<string, number> = {}
     enrollmentCounts.forEach((count: any) => {
       const key = `${count.courseId}-${count.semesterId}`
       enrollmentMap[key] = count.get("studentCount")
     })
-
-    return courseAssignments.map((assignment) => ({
-      id: assignment.id,
-      courseId: assignment.courseId,
-      courseName: assignment.course?.name,
-      courseCode: assignment.course?.code,
-      courseDescription: assignment.course?.description,
-      semesterId: assignment.semesterId,
-      semesterName: assignment.semester?.name,
-      studentCount: enrollmentMap[`${assignment.courseId}-${assignment.semesterId}`] || 0,
-      assignedDate: assignment.createdAt,
-    }))
+  
+    // Get all student enrollments with student profile information
+    const enrollments = await CourseEnrollment.findAll({
+      where: {
+        courseId: { [Op.in]: courseIds },
+        semesterId: { [Op.in]: semesterIds },
+      },
+      include: [
+        { 
+          model: StudentProfile, 
+          as: "studentProfile",
+          include: [{ 
+            model: User, 
+            as: "user",
+            attributes: ['firstName', 'lastName', 'email'] 
+          }]
+        }
+      ],
+    })
+  
+    // Group students by course and semester
+    const studentsByCourse: Record<string, any[]> = {}
+    enrollments.forEach((enrollment: any) => {
+      const key = `${enrollment.courseId}-${enrollment.semesterId}`
+      if (!studentsByCourse[key]) {
+        studentsByCourse[key] = []
+      }
+      
+      const student = enrollment.studentProfile
+      studentsByCourse[key].push({
+        id: student.id,
+        studentId: student.studentId,
+        fullName: `${student.user?.firstName || ''} ${student.user?.lastName || ''}`.trim(),
+        email: student.user?.email,
+        level: student.currentLevel,
+        status: student.status,
+      })
+    })
+  
+    return courseAssignments.map((assignment) => {
+      const key = `${assignment.courseId}-${assignment.semesterId}`
+      return {
+        id: assignment.id,
+        courseId: assignment.courseId,
+        courseName: assignment.course?.name,
+        courseCode: assignment.course?.code,
+        courseDescription: assignment.course?.description,
+        semesterId: assignment.semesterId,
+        semesterName: assignment.semester?.name,
+        studentCount: enrollmentMap[key] || 0,
+        assignedDate: assignment.createdAt,
+        students: studentsByCourse[key] || [],
+      }
+    })
   }
 
   private async getAttendanceOverview(courseIds: string[], semesterIds: string[], dateFilter: any) {
