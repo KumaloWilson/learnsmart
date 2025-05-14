@@ -45,7 +45,12 @@ export const useLogin = () => {
       setLecturerProfile(response.lecturerProfile)
       setTokens(response.accessToken, response.refreshToken)
       setIsAuthenticated(true)
-      router.push("/")
+
+      // Add a small delay before redirecting to ensure state is updated
+      setTimeout(() => {
+        router.push("/")
+      }, 100)
+
       return response
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Login failed. Please try again."

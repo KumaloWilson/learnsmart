@@ -68,6 +68,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [])
 
+  // Add a useEffect to handle token persistence in cookies for middleware
+  useEffect(() => {
+    if (authState.accessToken) {
+      // Set a cookie for the middleware to read
+      document.cookie = `accessToken=${authState.accessToken}; path=/; max-age=86400; SameSite=Strict`
+    } else {
+      // Clear the cookie when logged out
+      document.cookie = "accessToken=; path=/; max-age=0; SameSite=Strict"
+    }
+  }, [authState.accessToken])
+
   const setUser = (user: User | null) => {
     setAuthState((prev) => ({ ...prev, user }))
     if (user) {

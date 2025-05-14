@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   // Define public paths that don't require authentication
   const isPublicPath = path === "/login" || path === "/forgot-password" || path === "/reset-password"
 
-  // Get the token from the cookies
+  // Get the token from the cookies or localStorage (via request headers)
   const token = request.cookies.get("accessToken")?.value || ""
 
   // If the path requires authentication and there's no token, redirect to login
