@@ -1,22 +1,49 @@
 "use client"
-
-import { notFound } from "next/navigation"
 import Link from "next/link"
-import { useCourse } from "@/lib/auth/hooks"
-import PageContainer from "@/components/page-container"
+import { PageContainer } from "@/components/page-container"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Users, Video, FileQuestion, ListChecks } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BookOpen } from "lucide-react"
-import { useRouter } from "next/navigation"
-// Import the CourseTopicsSection component
+import { useRouter, useParams } from "next/navigation"
 import { CourseTopicsSection } from "@/components/course-topics-section"
+import { useAuth } from "@/lib/auth/auth-context"
+import { useCourseDetail } from "@/lib/auth/hooks"
+import { useEffect, useState } from "react"
 
-export default function CoursePage({ params }: { params: { courseId: string } }) {
-  const { course, loading, error } = useCourse(params.courseId)
+export default function CoursePage() {
   const router = useRouter()
-  const courseId = params.courseId
+  const params = useParams()
+  const courseId = params.courseId as string
+  const { lecturerProfile } = useAuth()
+  const lecturerId = lecturerProfile?.id || ""
+
+  // Default semester ID to use until we get the course details
+  const defaultSemesterId = "bbfc180e-11ce-48a5-adb6-95b197339bae"
+  const [semesterId, setSemesterId] = useState(defaultSemesterId)
+
+  // Use the new API endpoint to get detailed course information
+  const { courseDetail, isLoading: loading, error, refetch } = useCourseDetail(lecturerId, courseId, semesterId)
+
+  // Update semesterId if we get it from courseDetail
+  useEffect(() => {
+    if (courseDetail?.semester?.id) {
+      setSemesterId(courseDetail.semester.id)
+    }
+  }, [courseDetail])
+
+  useEffect(() => {
+    if (lecturerId && courseId) {
+      refetch()
+    }
+  }, [lecturerId, courseId, refetch])
+
+  // Add debugging to see what's happening
+  console.log("Course page params:", { courseId, lecturerId, semesterId })
+  console.log("Course detail:", courseDetail)
+  console.log("Loading:", loading)
+  console.log("Error:", error)
 
   if (loading) {
     return (
@@ -34,9 +61,20 @@ export default function CoursePage({ params }: { params: { courseId: string } })
     )
   }
 
-  if (error || !course) {
-    return notFound()
+  if (error || !courseDetail) {
+    return (
+      <PageContainer title="Course Not Found">
+        <div className="py-8 text-center">
+          <h2 className="text-xl font-semibold mb-2">Error loading course details</h2>
+          <p className="text-muted-foreground mb-4">{error || "Course information could not be found"}</p>
+          <Button onClick={() => router.push("/courses")}>Return to Courses</Button>
+        </div>
+      </PageContainer>
+    )
   }
+
+  const course = courseDetail.course
+  const semester = courseDetail.semester
 
   return (
     <PageContainer title={`Course: ${course.name}`}>
@@ -45,6 +83,7 @@ export default function CoursePage({ params }: { params: { courseId: string } })
           <div>
             <h1 className="text-3xl font-bold">{course.name}</h1>
             <p className="text-muted-foreground">Course Code: {course.code}</p>
+            <p className="text-muted-foreground">Semester: {semester.name}</p>
           </div>
           <Button variant="outline" onClick={() => router.push(`/courses/${course.id}/topics`)}>
             <BookOpen className="mr-2 h-4 w-4" />
@@ -61,6 +100,33 @@ export default function CoursePage({ params }: { params: { courseId: string } })
             <div className="mt-4 flex flex-wrap gap-2">
               <div className="bg-muted px-3 py-1 rounded-md text-sm">Level: {course.level}</div>
               <div className="bg-muted px-3 py-1 rounded-md text-sm">Credit Hours: {course.creditHours}</div>
+              <div className="bg-muted px-3 py-1 rounded-md text-sm">Program: {course.program.name}</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Enrollment Statistics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-muted p-3 rounded-md">
+                <p className="text-sm font-medium">Total Students</p>
+                <p className="text-2xl font-bold">{courseDetail.enrollmentStats.total}</p>
+              </div>
+              <div className="bg-muted p-3 rounded-md">
+                <p className="text-sm font-medium">Enrolled</p>
+                <p className="text-2xl font-bold">{courseDetail.enrollmentStats.statusCounts.enrolled}</p>
+              </div>
+              <div className="bg-muted p-3 rounded-md">
+                <p className="text-sm font-medium">Completed</p>
+                <p className="text-2xl font-bold">{courseDetail.enrollmentStats.statusCounts.completed}</p>
+              </div>
+              <div className="bg-muted p-3 rounded-md">
+                <p className="text-sm font-medium">Average Grade</p>
+                <p className="text-2xl font-bold">{courseDetail.enrollmentStats.averageGrade || "N/A"}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -76,6 +142,7 @@ export default function CoursePage({ params }: { params: { courseId: string } })
               </CardHeader>
               <CardContent>
                 <CardDescription>View and manage students enrolled in this course</CardDescription>
+                <p className="mt-2 text-sm font-medium">{courseDetail.enrollmentStats.total} students</p>
               </CardContent>
             </Card>
           </Link>
@@ -122,9 +189,10 @@ export default function CoursePage({ params }: { params: { courseId: string } })
             </Card>
           </Link>
         </div>
-        {course && (
+
+        {courseDetail && (
           <div className="mt-8">
-            <CourseTopicsSection courseId={courseId} semesterId={course.semesterId} />
+            <CourseTopicsSection courseId={courseId} semesterId={semester.id} />
           </div>
         )}
       </div>

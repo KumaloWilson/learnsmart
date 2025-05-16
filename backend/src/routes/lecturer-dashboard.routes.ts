@@ -40,6 +40,12 @@ router.get(
 )
 
 router.get(
+  "/:lecturerProfileId/course/:courseId/semester/:semesterId",
+  authMiddleware,
+  lecturerDashboardController.getLecturerCourseDetails,
+)
+
+router.get(
   "/:lecturerProfileId/at-risk-students",
   authMiddleware,
   lecturerDashboardController.getAtRiskStudents,

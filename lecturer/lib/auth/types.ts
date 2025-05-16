@@ -152,6 +152,65 @@ export interface CourseData {
   }[]
 }
 
+// New detailed course interface
+export interface CourseDetailResponse {
+  success: boolean
+  data: {
+    courseAssignment: {
+      id: string
+      role: string
+      isActive: boolean
+      assignedDate: string
+    }
+    course: {
+      id: string
+      name: string
+      code: string
+      description: string
+      creditHours: number
+      level: number
+      program: {
+        id: string
+        name: string
+      }
+    }
+    semester: {
+      id: string
+      name: string
+      startDate: string
+      endDate: string
+      isActive: boolean
+      academicYear: number
+    }
+    lecturer: {
+      id: string
+      fullName: string
+      email: string
+    }
+    otherLecturers: any[]
+    enrollmentStats: {
+      total: number
+      statusCounts: {
+        enrolled: number
+        completed: number
+        failed: number
+        withdrawn: number
+      }
+      averageGrade: number
+    }
+    students: Array<{
+      id: string
+      studentId: string
+      fullName: string
+      email: string
+      level: number
+      status: string
+      grade: number | null
+      letterGrade: string | null
+    }>
+  }
+}
+
 export interface MasteryDistribution {
   range: string
   count: number

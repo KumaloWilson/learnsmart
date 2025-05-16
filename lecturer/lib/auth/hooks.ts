@@ -11,6 +11,7 @@ import type {
   UpdateProfileRequest,
   DashboardData,
   CourseData,
+  CourseDetailResponse,
   StudentDetail,
   AtRiskStudent,
   CourseMasteryData,
@@ -275,6 +276,43 @@ export const useCourses = () => {
   )
 
   return { getCourses, courses, isLoading, error, isInitialized }
+}
+
+export const useCourseDetail = (lecturerId: string, courseId: string, semesterId: string) => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [courseDetail, setCourseDetail] = useState<CourseDetailResponse["data"] | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  const getCourseDetail = useCallback(async () => {
+    // Skip if already loading or if we've already successfully loaded data
+    if (isLoading || (isInitialized && courseDetail && !error)) return courseDetail
+    if (!lecturerId || !courseId || !semesterId) return null
+
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getLecturerCourseDetail(lecturerId, courseId, semesterId)
+      setCourseDetail(data)
+      setIsInitialized(true)
+      return data
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch course details. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }, [isLoading, isInitialized, courseDetail, error, lecturerId, courseId, semesterId])
+
+  // Fetch course detail on mount or when dependencies change
+  useEffect(() => {
+    if (lecturerId && courseId && semesterId && !isInitialized && !isLoading) {
+      getCourseDetail()
+    }
+  }, [lecturerId, courseId, semesterId, isInitialized, isLoading, getCourseDetail])
+
+  return { courseDetail, isLoading, error, refetch: getCourseDetail }
 }
 
 // Student hooks
@@ -868,6 +906,7 @@ export const useCreateCourseTopic = () => {
   return { createTopic, loading, error }
 }
 
+// Deprecated - use useCourseDetail instead
 export const useCourse = (courseId: string) => {
   const [course, setCourse] = useState<any>(null)
   const [loading, setLoading] = useState(true)

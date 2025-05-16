@@ -1,24 +1,35 @@
 import type { ReactNode } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import type React from "react"
+import { cn } from "@/lib/utils"
 
 interface PageContainerProps {
-  title: string
+  children: React.ReactNode
+  title?: string
   description?: string
-  children: ReactNode
+  className?: string
+  loading?: boolean
   actions?: ReactNode
 }
 
-export function PageContainer({ title, description, children, actions }: PageContainerProps) {
+export function PageContainer({
+  children,
+  title,
+  description,
+  className,
+  loading = false,
+  actions,
+}: PageContainerProps) {
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{title}</h1>
-          {description && <p className="text-muted-foreground mt-2 max-w-2xl">{description}</p>}
+    <div className="container py-6 md:py-8">
+      {title && (
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          {description && <p className="text-muted-foreground mt-1">{description}</p>}
         </div>
-        {actions && <div className="flex-shrink-0">{actions}</div>}
-      </div>
-      <div className="space-y-6">{children}</div>
+      )}
+      {actions && <div className="flex-shrink-0">{actions}</div>}
+      <div className={cn("", className)}>{children}</div>
     </div>
   )
 }

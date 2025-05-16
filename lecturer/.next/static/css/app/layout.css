@@ -971,6 +971,9 @@ video {
 .h-6 {
   height: 1.5rem;
 }
+.h-64 {
+  height: 16rem;
+}
 .h-7 {
   height: 1.75rem;
 }
@@ -979,6 +982,9 @@ video {
 }
 .h-9 {
   height: 2.25rem;
+}
+.h-96 {
+  height: 24rem;
 }
 .h-\[1\.2rem\] {
   height: 1.2rem;
@@ -1320,6 +1326,9 @@ video {
 .grid-cols-1 {
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 .grid-cols-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -1599,6 +1608,10 @@ video {
 .bg-foreground {
   background-color: hsl(var(--foreground));
 }
+.bg-gray-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(243 244 246 / var(--tw-bg-opacity, 1));
+}
 .bg-green-100 {
   --tw-bg-opacity: 1;
   background-color: rgb(220 252 231 / var(--tw-bg-opacity, 1));
@@ -1623,6 +1636,10 @@ video {
 }
 .bg-muted\/50 {
   background-color: hsl(var(--muted) / 0.5);
+}
+.bg-orange-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 237 213 / var(--tw-bg-opacity, 1));
 }
 .bg-orange-500 {
   --tw-bg-opacity: 1;
@@ -1953,6 +1970,10 @@ video {
   --tw-text-opacity: 1;
   color: rgb(107 114 128 / var(--tw-text-opacity, 1));
 }
+.text-gray-800 {
+  --tw-text-opacity: 1;
+  color: rgb(31 41 55 / var(--tw-text-opacity, 1));
+}
 .text-green-500 {
   --tw-text-opacity: 1;
   color: rgb(34 197 94 / var(--tw-text-opacity, 1));
@@ -1981,6 +2002,10 @@ video {
 .text-orange-500 {
   --tw-text-opacity: 1;
   color: rgb(249 115 22 / var(--tw-text-opacity, 1));
+}
+.text-orange-800 {
+  --tw-text-opacity: 1;
+  color: rgb(154 52 18 / var(--tw-text-opacity, 1));
 }
 .text-popover-foreground {
   color: hsl(var(--popover-foreground));
@@ -2431,6 +2456,11 @@ video {
 
 .hover\:text-sidebar-accent-foreground:hover {
   color: hsl(var(--sidebar-accent-foreground));
+}
+
+.hover\:text-red-700:hover {
+  --tw-text-opacity: 1;
+  color: rgb(185 28 28 / var(--tw-text-opacity, 1));
 }
 
 .hover\:underline:hover {
@@ -3494,16 +3524,16 @@ video {
     display: block;
   }
 
-  .md\:inline-block {
-    display: inline-block;
-  }
-
   .md\:flex {
     display: flex;
   }
 
   .md\:table-cell {
     display: table-cell;
+  }
+
+  .md\:w-64 {
+    width: 16rem;
   }
 
   .md\:w-\[200px\] {
@@ -3562,6 +3592,11 @@ video {
     padding: 2rem;
   }
 
+  .md\:py-8 {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
   .md\:text-3xl {
     font-size: 1.875rem;
     line-height: 2.25rem;
@@ -3608,10 +3643,6 @@ video {
 
   .lg\:col-span-2 {
     grid-column: span 2 / span 2;
-  }
-
-  .lg\:table-cell {
-    display: table-cell;
   }
 
   .lg\:w-\[400px\] {

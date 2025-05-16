@@ -1,4 +1,4 @@
-import PageContainer from "@/components/page-container"
+import { PageContainer } from "@/components/page-container"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 
