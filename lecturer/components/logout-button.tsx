@@ -1,50 +1,69 @@
 "use client"
 
 import { useState } from "react"
-import { useLogout } from "@/lib/auth/hooks"
-import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 import { LogOut, Loader2 } from "lucide-react"
+import { useAuth } from "@/lib/auth/auth-context"
+import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
-interface LogoutButtonProps {
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
-  size?: "default" | "sm" | "lg" | "icon"
-  className?: string
-}
-
-export function LogoutButton({ variant = "ghost", size = "sm", className }: LogoutButtonProps) {
-  const { logout, isLoading } = useLogout()
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
+export function LogoutButton() {
+  const { logout } = useAuth()
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const [open, setOpen] = useState(false)
 
   const handleLogout = async () => {
-    setIsLoggingOut(true)
+    setIsLoading(true)
     try {
       await logout()
+      router.push("/login")
     } catch (error) {
       console.error("Logout error:", error)
     } finally {
-      setIsLoggingOut(false)
+      setIsLoading(false)
+      setOpen(false)
     }
   }
 
   return (
-    <Button
-      variant={variant}
-      size={size}
-      className={className}
-      onClick={handleLogout}
-      disabled={isLoading || isLoggingOut}
-    >
-      {isLoading || isLoggingOut ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Logging out...
-        </>
-      ) : (
-        <>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="sm" className="w-full justify-start">
           <LogOut className="mr-2 h-4 w-4" />
-          Logout
-        </>
-      )}
-    </Button>
+          <span>Log out</span>
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+          <AlertDialogDescription>
+            You will be logged out of your account and redirected to the login page.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleLogout} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging out...
+              </>
+            ) : (
+              "Log out"
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

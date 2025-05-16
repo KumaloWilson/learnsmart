@@ -45,14 +45,22 @@ interface CreateQuizDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   lecturerId: string
+  initialCourseId?: string
+  initialSemesterId?: string
 }
 
-export function CreateQuizDialog({ open, onOpenChange, lecturerId }: CreateQuizDialogProps) {
+export function CreateQuizDialog({
+  open,
+  onOpenChange,
+  lecturerId,
+  initialCourseId,
+  initialSemesterId,
+}: CreateQuizDialogProps) {
   const router = useRouter()
   const { toast } = useToast()
   const { createQuiz, isLoading, error, success, setError } = useQuizActions()
   const { getCourses, courses, isLoading: isLoadingCourses } = useCourses()
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null)
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(initialCourseId || null)
   const [activeTab, setActiveTab] = useState("basic")
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -73,8 +81,8 @@ export function CreateQuizDialog({ open, onOpenChange, lecturerId }: CreateQuizD
       focus: "",
       questionType: "multiple_choice",
       instructions: "Answer all questions. No negative marking.",
-      courseId: "",
-      semesterId: "",
+      courseId: initialCourseId || "",
+      semesterId: initialSemesterId || "",
     },
   })
 
@@ -83,6 +91,14 @@ export function CreateQuizDialog({ open, onOpenChange, lecturerId }: CreateQuizD
       getCourses(lecturerId)
     }
   }, [lecturerId, getCourses, open])
+
+  useEffect(() => {
+    if (initialCourseId && initialSemesterId && open) {
+      form.setValue("courseId", initialCourseId)
+      form.setValue("semesterId", initialSemesterId)
+      setSelectedCourse(initialCourseId)
+    }
+  }, [initialCourseId, initialSemesterId, open, form])
 
   useEffect(() => {
     if (error) {
@@ -270,6 +286,7 @@ export function CreateQuizDialog({ open, onOpenChange, lecturerId }: CreateQuizD
                               }
                             }}
                             value={field.value}
+                            disabled={!!initialCourseId}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -302,7 +319,7 @@ export function CreateQuizDialog({ open, onOpenChange, lecturerId }: CreateQuizD
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Semester</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={!!initialSemesterId}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select semester" />

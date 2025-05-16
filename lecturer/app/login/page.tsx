@@ -1,124 +1,145 @@
 "use client"
 
-import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useLogin } from "@/lib/auth/hooks"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { GraduationCap, Mail, Lock, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/auth/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { GraduationCap, Loader2, Mail, Lock } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/components/ui/use-toast"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+
+const loginSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(1, { message: "Password is required" }),
+  rememberMe: z.boolean().default(false),
+})
+
+type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [rememberMe, setRememberMe] = useState(false)
-  const { login, isLoading, error } = useLogin()
-  const { isAuthenticated } = useAuth()
+  const { login, isAuthenticated, error: authError, isLoading: authLoading } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // Check if user is already authenticated and redirect if needed
   useEffect(() => {
     if (isAuthenticated) {
       router.push("/")
     }
   }, [isAuthenticated, router])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  useEffect(() => {
+    if (authError) {
+      setError(authError)
+    }
+  }, [authError])
+
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      rememberMe: false,
+    },
+  })
+
+  async function onSubmit(data: LoginFormValues) {
+    setIsLoading(true)
+    setError(null)
     try {
-      await login({ email, password })
-      // Force navigation after successful login
+      await login(data.email, data.password, data.rememberMe)
       router.push("/")
-    } catch (err) {
-      // Error is handled by the hook
+    } catch (error: any) {
+      console.error("Login error:", error)
+      const errorMessage = error.response?.data?.message || "Invalid email or password. Please try again."
+      setError(errorMessage)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"></div>
+    <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-900 to-slate-800">
+      <div className="flex flex-col items-center justify-center w-full px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md space-y-8 bg-card p-8 rounded-lg shadow-lg">
+          <div className="flex flex-col items-center text-center">
+            <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mb-4">
+              <GraduationCap className="h-8 w-8 text-primary" />
+            </div>
+            <h1 className="text-3xl font-bold">SmartLearn</h1>
+            <p className="mt-2 text-muted-foreground">Welcome back to your Lecturer Portal</p>
+          </div>
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center">
-          <GraduationCap className="h-12 w-12 text-primary" />
-        </div>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-        <Card className="w-full shadow-lg border-t-4 border-t-primary transition-all duration-300 hover:shadow-xl">
-          <CardHeader className="space-y-1 pt-8">
-            <CardTitle className="text-2xl text-center font-bold">SmartLearn</CardTitle>
-            <CardDescription className="text-center">Welcome back to your Lecturer Portal</CardDescription>
-          </CardHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="your.email@learnsmart.com" className="pl-10" {...field} />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <CardContent>
-            {error && (
-              <Alert variant="destructive" className="mb-6 animate-shake">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Password</FormLabel>
+                      <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                        Forgot password?
+                      </Link>
+                    </div>
+                    <FormControl>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input type="password" className="pl-10" {...field} />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">
-                  Email Address
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your.email@learnsmart.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
+              <FormField
+                control={form.control}
+                name="rememberMe"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal">Remember me</FormLabel>
+                  </FormItem>
+                )}
+              />
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-medium">
-                    Password
-                  </Label>
-                  <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                />
-                <label
-                  htmlFor="remember"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Remember me
-                </label>
-              </div>
-
-              <Button type="submit" className="w-full py-6" disabled={isLoading}>
-                {isLoading ? (
+              <Button type="submit" className="w-full" disabled={isLoading || authLoading}>
+                {isLoading || authLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in...
                   </>
@@ -127,17 +148,15 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
-          </CardContent>
+          </Form>
 
-          <CardFooter className="flex justify-center border-t pt-6">
-            <p className="text-sm text-muted-foreground">
-              Need help? Contact{" "}
-              <a href="mailto:support@learnsmart.com" className="text-primary hover:underline">
-                support@learnsmart.com
-              </a>
-            </p>
-          </CardFooter>
-        </Card>
+          <div className="text-center text-sm text-muted-foreground">
+            Need help? Contact{" "}
+            <a href="mailto:support@learnsmart.com" className="text-primary hover:underline">
+              support@learnsmart.com
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   )

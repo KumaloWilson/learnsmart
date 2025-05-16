@@ -1,20 +1,20 @@
 import type { Request, Response } from "express"
-import { CourseTopicService } from "../services/course-topic.service"
 import { TopicProgressService } from "../services/topic-progress.service"
 import { CourseMasteryService } from "../services/course-mastery.service"
 import type { CreateCourseTopicDto, UpdateCourseTopicDto } from "../dto/course-topic.dto"
 import { LecturerPortalService } from "../services/lecturer-portal.service"
+import { CourseTopicService } from "../services/course-topic.service"
 
 export class LecturerPortalController {
-  private lecturerPortalService: LecturerPortalService
+  //private lecturerPortalService: LecturerPortalService
   private courseTopicService: CourseTopicService
-  private topicProgressService: TopicProgressService
+  //private topicProgressService: TopicProgressService
   private courseMasteryService: CourseMasteryService
 
   constructor() {
-    this.lecturerPortalService = new LecturerPortalService()
+    //this.lecturerPortalService = new LecturerPortalService()
     this.courseTopicService = new CourseTopicService()
-    this.topicProgressService = new TopicProgressService()
+    //this.topicProgressService = new TopicProgressService()
     this.courseMasteryService = new CourseMasteryService()
   }
 

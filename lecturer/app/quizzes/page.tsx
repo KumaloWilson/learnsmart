@@ -35,13 +35,17 @@ export default function QuizzesPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (lecturerProfile?.id) {
+      if (lecturerProfile?.id && !isInitialLoading) {
         try {
           // Fetch courses for the filter dropdown
-          await getCourses(lecturerProfile.id)
+          if (courses.length === 0) {
+            await getCourses(lecturerProfile.id)
+          }
 
-          // Fetch quizzes
-          await getQuizzesByFilters({ lecturerProfileId: lecturerProfile.id })
+          // Fetch quizzes only if not already loaded
+          if (quizzes.length === 0) {
+            await getQuizzesByFilters({ lecturerProfileId: lecturerProfile.id })
+          }
         } catch (err) {
           console.error("Error fetching data:", err)
         } finally {
@@ -53,7 +57,7 @@ export default function QuizzesPage() {
     }
 
     fetchData()
-  }, [lecturerProfile, getQuizzesByFilters, getCourses])
+  }, [lecturerProfile, getQuizzesByFilters, getCourses, courses.length, quizzes.length, isInitialLoading])
 
   const handleCourseChange = async (courseId: string) => {
     setSelectedCourse(courseId)

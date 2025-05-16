@@ -1,8 +1,9 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/login/page": "app/login/page.js",
-  "/courses/page": "app/courses/page.js",
   "/page": "app/page.js",
-  "/students/page": "app/students/page.js",
-  "/profile/page": "app/profile/page.js"
+  "/courses/[courseId]/topics/page": "app/courses/[courseId]/topics/page.js",
+  "/assessments/page": "app/assessments/page.js",
+  "/progress/page": "app/progress/page.js",
+  "/courses/page": "app/courses/page.js",
+  "/courses/[courseId]/page": "app/courses/[courseId]/page.js",
+  "/performance-analytics/page": "app/performance-analytics/page.js"
 }

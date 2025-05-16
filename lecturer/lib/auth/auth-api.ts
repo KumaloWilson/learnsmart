@@ -29,6 +29,20 @@ import type {
   UpdateVirtualClassRequest,
   VirtualClassAttendance,
   VirtualClassAttendanceStatistics,
+  CourseTopic,
+  CreateTopicPayload,
+  UpdateTopicPayload,
+  TopicProgressStatistics,
+  StudentTopicProgress,
+  CourseMasteryStatistics,
+  StudentMastery,
+  AttendanceRecord,
+  AttendanceFilters,
+  CreateAttendanceRequest,
+  BulkCreateAttendanceRequest,
+  UpdateAttendanceRequest,
+  AttendanceStatistics,
+  CourseAttendanceSummary,
 } from "./types"
 
 // Authentication API functions
@@ -208,5 +222,135 @@ export const getQuizStatistics = async (quizId: string): Promise<QuizStatistics>
 
 export const getQuizAttempts = async (quizId: string): Promise<QuizAttempt[]> => {
   const response = await axiosInstance.get<QuizAttempt[]>(`/quizzes/${quizId}/attempts`)
+  return response.data
+}
+
+// Course Topics API
+export const getCourseTopics = async (courseId: string, semesterId: string): Promise<CourseTopic[]> => {
+  const response = await axiosInstance.get<CourseTopic[]>(
+    `/lecturer-portal/course-topics/course/${courseId}/semester/${semesterId}`,
+  )
+  return response.data
+}
+
+export const getCourseTopic = async (topicId: string): Promise<CourseTopic> => {
+  const response = await axiosInstance.get<CourseTopic>(`/lecturer-portal/course-topic/${topicId}`)
+  return response.data
+}
+
+export const createCourseTopic = async (data: CreateTopicPayload): Promise<CourseTopic> => {
+  const response = await axiosInstance.post<CourseTopic>("/lecturer-portal/course-topic/", data)
+  return response.data
+}
+
+export const updateCourseTopic = async (topicId: string, data: UpdateTopicPayload): Promise<CourseTopic> => {
+  const response = await axiosInstance.patch<CourseTopic>(`/lecturer-portal/course-topic/${topicId}`, data)
+  return response.data
+}
+
+export const deleteCourseTopic = async (topicId: string): Promise<void> => {
+  await axiosInstance.delete(`/lecturer-portal/course-topic/${topicId}`)
+}
+
+// Course Progress APIs
+export const getTopicProgressStatistics = async (
+  courseId: string,
+  semesterId: string,
+): Promise<TopicProgressStatistics[]> => {
+  const response = await axiosInstance.get<TopicProgressStatistics[]>(
+    `/lecturer-portal/topic-progress-statistics/course/${courseId}/semester/${semesterId}`,
+  )
+  return response.data
+}
+
+export const getStudentTopicProgress = async (
+  studentProfileId: string,
+  courseId: string,
+  semesterId: string,
+): Promise<StudentTopicProgress> => {
+  const response = await axiosInstance.get<StudentTopicProgress>(
+    `/lecturer-portal/student-topic-progress/studentProfile/${studentProfileId}/course/${courseId}/semester/${semesterId}`,
+  )
+  return response.data
+}
+
+export const getCourseMasteryStatistics = async (
+  courseId: string,
+  semesterId: string,
+): Promise<CourseMasteryStatistics> => {
+  const response = await axiosInstance.get<CourseMasteryStatistics>(
+    `/lecturer-portal/course-mastery-statistics/course/${courseId}/semester/${semesterId}`,
+  )
+  return response.data
+}
+
+export const getCourseStudentMasteries = async (courseId: string, semesterId: string): Promise<StudentMastery[]> => {
+  const response = await axiosInstance.get<StudentMastery[]>(
+    `/lecturer-portal/course-student-masteries/course/${courseId}/semester/${semesterId}`,
+  )
+  return response.data
+}
+
+// Attendance APIs
+export const getAttendanceRecords = async (filters?: AttendanceFilters): Promise<AttendanceRecord[]> => {
+  const queryParams = new URLSearchParams()
+
+  if (filters) {
+    if (filters.courseId) queryParams.append("courseId", filters.courseId)
+    if (filters.semesterId) queryParams.append("semesterId", filters.semesterId)
+    if (filters.studentProfileId) queryParams.append("studentProfileId", filters.studentProfileId)
+    if (filters.isPresent !== undefined) queryParams.append("isPresent", filters.isPresent.toString())
+    if (filters.lecturerProfileId) queryParams.append("lecturerProfileId", filters.lecturerProfileId)
+    if (filters.startDate) queryParams.append("startDate", filters.startDate)
+    if (filters.endDate) queryParams.append("endDate", filters.endDate)
+  }
+
+  const url = `/attendance${queryParams.toString() ? `?${queryParams.toString()}` : ""}`
+  const response = await axiosInstance.get<AttendanceRecord[]>(url)
+  return response.data
+}
+
+export const getAttendanceById = async (id: string): Promise<AttendanceRecord> => {
+  const response = await axiosInstance.get<AttendanceRecord>(`/attendance/${id}`)
+  return response.data
+}
+
+export const createAttendance = async (data: CreateAttendanceRequest): Promise<AttendanceRecord[]> => {
+  const response = await axiosInstance.post<AttendanceRecord[]>("/attendance", data)
+  return response.data
+}
+
+export const createBulkAttendance = async (data: BulkCreateAttendanceRequest): Promise<AttendanceRecord[]> => {
+  const response = await axiosInstance.post<AttendanceRecord[]>("/attendance/bulk", data)
+  return response.data
+}
+
+export const updateAttendance = async (id: string, data: UpdateAttendanceRequest): Promise<AttendanceRecord> => {
+  const response = await axiosInstance.patch<AttendanceRecord>(`/attendance/${id}`, data)
+  return response.data
+}
+
+export const deleteAttendance = async (id: string): Promise<void> => {
+  await axiosInstance.delete(`/attendance/${id}`)
+}
+
+export const getStudentAttendanceStatistics = async (
+  studentProfileId: string,
+  courseId: string,
+  semesterId: string,
+): Promise<AttendanceStatistics> => {
+  const response = await axiosInstance.get<AttendanceStatistics>(
+    `/attendance/statistics/student/${studentProfileId}/course/${courseId}/semester/${semesterId}`,
+  )
+  return response.data
+}
+
+export const getCourseAttendanceSummary = async (
+  courseId: string,
+  semesterId: string,
+): Promise<CourseAttendanceSummary> => {
+  const response = await axiosInstance.get<CourseAttendanceSummary>(
+    `/attendance/summary/course/${courseId}/semester/${semesterId}`,
+  )
   return response.data
 }

@@ -1,7 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "./auth-context"
 import * as authApi from "./auth-api"
 import type {
@@ -27,6 +26,20 @@ import type {
   UpdateQuizRequest,
   QuizStatistics,
   QuizAttempt,
+  CourseTopic,
+  CreateTopicPayload,
+  UpdateTopicPayload,
+  TopicProgressStatistics,
+  StudentTopicProgress,
+  CourseMasteryStatistics,
+  StudentMastery,
+  AttendanceRecord,
+  AttendanceFilters,
+  CreateAttendanceRequest,
+  BulkCreateAttendanceRequest,
+  UpdateAttendanceRequest,
+  AttendanceStatistics,
+  CourseAttendanceSummary,
 } from "./types"
 
 // Authentication hooks
@@ -34,7 +47,6 @@ export const useLogin = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { setUser, setLecturerProfile, setTokens, setIsAuthenticated } = useAuth()
-  const router = useRouter()
 
   const login = async (credentials: LoginCredentials) => {
     setIsLoading(true)
@@ -45,11 +57,6 @@ export const useLogin = () => {
       setLecturerProfile(response.lecturerProfile)
       setTokens(response.accessToken, response.refreshToken)
       setIsAuthenticated(true)
-
-      // Add a small delay before redirecting to ensure state is updated
-      setTimeout(() => {
-        router.push("/")
-      }, 100)
 
       return response
     } catch (err: any) {
@@ -68,7 +75,6 @@ export const useLogout = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { clearAuth, refreshToken } = useAuth()
-  const router = useRouter()
 
   const logout = async () => {
     setIsLoading(true)
@@ -78,13 +84,10 @@ export const useLogout = () => {
         await authApi.logout(refreshToken)
       }
       clearAuth()
-      router.push("/login")
     } catch (err: any) {
-      // Even if the API call fails, we still want to clear the local auth state
       const errorMessage = err.response?.data?.message || "Logout failed. Local state has been cleared."
       setError(errorMessage)
       clearAuth()
-      router.push("/login")
     } finally {
       setIsLoading(false)
     }
@@ -122,7 +125,6 @@ export const useResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const router = useRouter()
 
   const resetPassword = async (data: ResetPasswordRequest) => {
     setIsLoading(true)
@@ -131,9 +133,6 @@ export const useResetPassword = () => {
     try {
       const response = await authApi.resetPassword(data)
       setSuccess(response.message)
-      setTimeout(() => {
-        router.push("/login")
-      }, 3000)
       return response
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Failed to reset password. Please try again."
@@ -217,24 +216,32 @@ export const useDashboard = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  const getDashboard = async (lecturerId: string) => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const data = await authApi.getLecturerDashboard(lecturerId)
-      setDashboardData(data)
-      return data
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Failed to fetch dashboard data. Please try again."
-      setError(errorMessage)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const getDashboard = useCallback(
+    async (lecturerId: string) => {
+      // Skip if already loading or if we've already successfully loaded data
+      if (isLoading || (isInitialized && dashboardData && !error)) return dashboardData
 
-  return { getDashboard, dashboardData, isLoading, error }
+      setIsLoading(true)
+      setError(null)
+      try {
+        const data = await authApi.getLecturerDashboard(lecturerId)
+        setDashboardData(data)
+        setIsInitialized(true)
+        return data
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || "Failed to fetch dashboard data. Please try again."
+        setError(errorMessage)
+        throw err
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [isLoading, isInitialized, dashboardData, error],
+  )
+
+  return { getDashboard, dashboardData, isLoading, error, isInitialized }
 }
 
 // Course hooks
@@ -242,24 +249,32 @@ export const useCourses = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [courses, setCourses] = useState<CourseData[]>([])
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  const getCourses = async (lecturerId: string) => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const data = await authApi.getLecturerCourses(lecturerId)
-      setCourses(data)
-      return data
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Failed to fetch courses. Please try again."
-      setError(errorMessage)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const getCourses = useCallback(
+    async (lecturerId: string) => {
+      // Skip if already loading or if we've already successfully loaded data
+      if (isLoading || (isInitialized && courses.length > 0 && !error)) return courses
 
-  return { getCourses, courses, isLoading, error }
+      setIsLoading(true)
+      setError(null)
+      try {
+        const data = await authApi.getLecturerCourses(lecturerId)
+        setCourses(data)
+        setIsInitialized(true)
+        return data
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || "Failed to fetch courses. Please try again."
+        setError(errorMessage)
+        throw err
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [isLoading, isInitialized, courses, error],
+  )
+
+  return { getCourses, courses, isLoading, error, isInitialized }
 }
 
 // Student hooks
@@ -291,24 +306,32 @@ export const useAtRiskStudents = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [atRiskStudents, setAtRiskStudents] = useState<AtRiskStudent[]>([])
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  const getAtRiskStudents = async (lecturerId: string) => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const data = await authApi.getAtRiskStudents(lecturerId)
-      setAtRiskStudents(data)
-      return data
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Failed to fetch at-risk students. Please try again."
-      setError(errorMessage)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const getAtRiskStudents = useCallback(
+    async (lecturerId: string) => {
+      // Skip if already loading or if we've already successfully loaded data
+      if (isLoading || (isInitialized && atRiskStudents.length > 0 && !error)) return atRiskStudents
 
-  return { getAtRiskStudents, atRiskStudents, isLoading, error }
+      setIsLoading(true)
+      setError(null)
+      try {
+        const data = await authApi.getAtRiskStudents(lecturerId)
+        setAtRiskStudents(data)
+        setIsInitialized(true)
+        return data
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || "Failed to fetch at-risk students. Please try again."
+        setError(errorMessage)
+        throw err
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [isLoading, isInitialized, atRiskStudents, error],
+  )
+
+  return { getAtRiskStudents, atRiskStudents, isLoading, error, isInitialized }
 }
 
 // Course analytics hooks
@@ -528,24 +551,35 @@ export const useQuizzes = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
+  const [isInitialized, setIsInitialized] = useState(false)
+  const [lastFilters, setLastFilters] = useState<QuizFilterDto | undefined>(undefined)
 
-  const getQuizzesByFilters = async (filters?: QuizFilterDto) => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const data = await authApi.getQuizzes(filters)
-      setQuizzes(data)
-      return data
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Failed to fetch quizzes. Please try again."
-      setError(errorMessage)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const getQuizzesByFilters = useCallback(
+    async (filters?: QuizFilterDto) => {
+      // Skip if already loading or if we've already loaded with the same filters
+      const filtersMatch = JSON.stringify(filters) === JSON.stringify(lastFilters)
+      if (isLoading || (isInitialized && filtersMatch && !error)) return quizzes
 
-  return { getQuizzesByFilters, quizzes, isLoading, error }
+      setIsLoading(true)
+      setError(null)
+      try {
+        const data = await authApi.getQuizzes(filters)
+        setQuizzes(data)
+        setLastFilters(filters)
+        setIsInitialized(true)
+        return data
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || "Failed to fetch quizzes. Please try again."
+        setError(errorMessage)
+        throw err
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [isLoading, isInitialized, quizzes, lastFilters, error],
+  )
+
+  return { getQuizzesByFilters, quizzes, isLoading, error, isInitialized }
 }
 
 export const useQuiz = () => {
@@ -682,6 +716,472 @@ export const useQuizStatistics = () => {
     getQuizAttempts,
     statistics,
     attempts,
+    isLoading,
+    error,
+  }
+}
+
+// Course Topics hooks
+export const useCourseTopics = (courseId: string, semesterId: string) => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [topics, setTopics] = useState<CourseTopic[]>([])
+
+  const fetchTopics = async () => {
+    if (!courseId || !semesterId) return
+
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getCourseTopics(courseId, semesterId)
+      setTopics(data)
+      return data
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch course topics. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { topics, loading: isLoading, error, refetch: fetchTopics }
+}
+
+export const useCourseTopic = (topicId: string) => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [topic, setTopic] = useState<CourseTopic | null>(null)
+
+  const fetchTopic = async () => {
+    if (!topicId) return
+
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getCourseTopic(topicId)
+      setTopic(data)
+      return data
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch course topic. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { topic, loading: isLoading, error, refetch: fetchTopic }
+}
+
+export const useCourseTopicActions = () => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  const createCourseTopic = async (data: CreateTopicPayload) => {
+    setIsLoading(true)
+    setError(null)
+    setSuccess(false)
+    try {
+      const response = await authApi.createCourseTopic(data)
+      setSuccess(true)
+      return response
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to create course topic. Please try again."
+      setError(errorMessage)
+      return null
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { createCourseTopic, isLoading, error, success }
+}
+
+export const useUpdateCourseTopic = (topicId: string) => {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  const updateTopic = async (data: UpdateTopicPayload) => {
+    setLoading(true)
+    setError(null)
+    setSuccess(false)
+    try {
+      await authApi.updateCourseTopic(topicId, data)
+      setSuccess(true)
+      return true
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to update course topic. Please try again."
+      setError(errorMessage)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return { updateTopic, loading, error, success }
+}
+
+export const useDeleteCourseTopic = () => {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const deleteTopic = async (topicId: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      await authApi.deleteCourseTopic(topicId)
+      return true
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to delete course topic. Please try again."
+      setError(errorMessage)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return { deleteTopic, loading, error }
+}
+
+export const useCreateCourseTopic = () => {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const createTopic = async (data: CreateTopicPayload) => {
+    setLoading(true)
+    setError(null)
+    try {
+      await authApi.createCourseTopic(data)
+      return true
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to create course topic. Please try again."
+      setError(errorMessage)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return { createTopic, loading, error }
+}
+
+export const useCourse = (courseId: string) => {
+  const [course, setCourse] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { courses } = useCourses()
+
+  useEffect(() => {
+    const fetchCourse = async () => {
+      if (!courseId) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        // First check if we already have the course in our courses state
+        if (courses && courses.length > 0) {
+          const foundCourse = courses.find((c) => c.courseId === courseId)
+          if (foundCourse) {
+            setCourse(foundCourse)
+            setLoading(false)
+            return
+          }
+        }
+
+        // If not found in state, we would fetch it from API
+        // For now, we'll just set loading to false and error to indicate course not found
+        setError("Course not found")
+      } catch (err) {
+        setError("Failed to fetch course details")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCourse()
+  }, [courseId, courses])
+
+  return { course, loading, error }
+}
+
+// Course Progress hooks
+export const useTopicProgressStatistics = (courseId: string, semesterId: string) => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [progressStats, setProgressStats] = useState<TopicProgressStatistics[]>([])
+
+  const fetchTopicProgressStatistics = async () => {
+    if (!courseId || !semesterId) return
+
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getTopicProgressStatistics(courseId, semesterId)
+      setProgressStats(data)
+      return data
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch topic progress statistics. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { progressStats, loading: isLoading, error, refetch: fetchTopicProgressStatistics }
+}
+
+export const useStudentTopicProgress = (studentProfileId: string, courseId: string, semesterId: string) => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [studentProgress, setStudentProgress] = useState<StudentTopicProgress | null>(null)
+
+  const fetchStudentTopicProgress = async () => {
+    if (!studentProfileId || !courseId || !semesterId) return
+
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getStudentTopicProgress(studentProfileId, courseId, semesterId)
+      setStudentProgress(data)
+      return data
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch student topic progress. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { studentProgress, loading: isLoading, error, refetch: fetchStudentTopicProgress }
+}
+
+export const useCourseMasteryStatistics = (courseId: string, semesterId: string) => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [masteryStats, setMasteryStats] = useState<CourseMasteryStatistics | null>(null)
+
+  const fetchCourseMasteryStatistics = async () => {
+    if (!courseId || !semesterId) return
+
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getCourseMasteryStatistics(courseId, semesterId)
+      setMasteryStats(data)
+      return data
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch course mastery statistics. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { masteryStats, loading: isLoading, error, refetch: fetchCourseMasteryStatistics }
+}
+
+export const useCourseStudentMasteries = (courseId: string, semesterId: string) => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [studentMasteries, setStudentMasteries] = useState<StudentMastery[]>([])
+
+  const fetchCourseStudentMasteries = async () => {
+    if (!courseId || !semesterId) return
+
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getCourseStudentMasteries(courseId, semesterId)
+      setStudentMasteries(data)
+      return data
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch student masteries. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { studentMasteries, loading: isLoading, error, refetch: fetchCourseStudentMasteries }
+}
+
+// Attendance hooks
+export const useAttendance = () => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
+
+  const getAttendanceRecords = async (filters?: AttendanceFilters) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getAttendanceRecords(filters)
+      setAttendanceRecords(data)
+      return data
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch attendance records. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getAttendanceById = async (id: string) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getAttendanceById(id)
+      return data
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch attendance record. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { getAttendanceRecords, getAttendanceById, attendanceRecords, isLoading, error }
+}
+
+export const useAttendanceActions = () => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
+  const createAttendance = async (data: CreateAttendanceRequest) => {
+    setIsLoading(true)
+    setError(null)
+    setSuccess(null)
+    try {
+      const response = await authApi.createAttendance(data)
+      setSuccess("Attendance recorded successfully")
+      return response
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to record attendance. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const createBulkAttendance = async (data: BulkCreateAttendanceRequest) => {
+    setIsLoading(true)
+    setError(null)
+    setSuccess(null)
+    try {
+      const response = await authApi.createBulkAttendance(data)
+      setSuccess("Bulk attendance recorded successfully")
+      return response
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to record bulk attendance. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const updateAttendance = async (id: string, data: UpdateAttendanceRequest) => {
+    setIsLoading(true)
+    setError(null)
+    setSuccess(null)
+    try {
+      const response = await authApi.updateAttendance(id, data)
+      setSuccess("Attendance updated successfully")
+      return response
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to update attendance. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const deleteAttendance = async (id: string) => {
+    setIsLoading(true)
+    setError(null)
+    setSuccess(null)
+    try {
+      await authApi.deleteAttendance(id)
+      setSuccess("Attendance deleted successfully")
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to delete attendance. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return {
+    createAttendance,
+    createBulkAttendance,
+    updateAttendance,
+    deleteAttendance,
+    isLoading,
+    error,
+    success,
+    setError,
+    setSuccess,
+  }
+}
+
+export const useAttendanceStatistics = () => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [studentStats, setStudentStats] = useState<AttendanceStatistics | null>(null)
+  const [courseSummary, setCourseSummary] = useState<CourseAttendanceSummary | null>(null)
+
+  const getStudentAttendanceStatistics = async (studentProfileId: string, courseId: string, semesterId: string) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getStudentAttendanceStatistics(studentProfileId, courseId, semesterId)
+      setStudentStats(data)
+      return data
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || "Failed to fetch student attendance statistics. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getCourseAttendanceSummary = async (courseId: string, semesterId: string) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getCourseAttendanceSummary(courseId, semesterId)
+      setCourseSummary(data)
+      return data
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch course attendance summary. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return {
+    getStudentAttendanceStatistics,
+    getCourseAttendanceSummary,
+    studentStats,
+    courseSummary,
     isLoading,
     error,
   }

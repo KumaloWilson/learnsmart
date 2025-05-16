@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter } from "next/navigation"
-import { useVirtualClassActions, useCourses } from "@/lib/auth/hooks"
+import { useVirtualClassActions, useCourses, useAuth } from "@/lib/auth/hooks"
 import { useToast } from "@/components/ui/use-toast"
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2 } from "lucide-react"
+import type { CreateVirtualClassRequest } from "@/lib/auth/types"
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -32,23 +33,43 @@ const formSchema = z.object({
 interface CreateVirtualClassDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  lecturerId: string
+  defaultCourseId?: string
+  defaultSemesterId?: string
 }
 
-export function CreateVirtualClassDialog({ open, onOpenChange, lecturerId }: CreateVirtualClassDialogProps) {
+export function CreateVirtualClassDialog({
+  open,
+  onOpenChange,
+  defaultCourseId,
+  defaultSemesterId,
+}: CreateVirtualClassDialogProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const { createVirtualClass, isLoading, error, success, setError } = useVirtualClassActions()
-  const { getCourses, courses, isLoading: isLoadingCourses } = useCourses()
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null)
+  const { lecturerProfile } = useAuth()
+  const { courses, getCourses, isLoading: isLoadingCourses } = useCourses()
+  const { createVirtualClass, isLoading, error, success, setSuccess } = useVirtualClassActions()
+  const [formData, setFormData] = useState<CreateVirtualClassRequest>({
+    title: "",
+    description: "",
+    scheduledStartTime: "",
+    scheduledEndTime: "",
+    isRecorded: true,
+    lecturerProfileId: "",
+    courseId: defaultCourseId || "",
+    semesterId: defaultSemesterId || "",
+    meetingConfig: {
+      platform: "Jitsi",
+      passcode: "",
+    },
+  })
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
-      courseId: "",
-      semesterId: "",
+      courseId: defaultCourseId || "",
+      semesterId: defaultSemesterId || "",
       scheduledStartTime: "",
       scheduledEndTime: "",
       isRecorded: true,
@@ -58,10 +79,10 @@ export function CreateVirtualClassDialog({ open, onOpenChange, lecturerId }: Cre
   })
 
   useEffect(() => {
-    if (lecturerId && open) {
-      getCourses(lecturerId)
+    if (lecturerProfile?.id && open) {
+      getCourses(lecturerProfile?.id)
     }
-  }, [lecturerId, getCourses, open])
+  }, [lecturerProfile?.id, getCourses, open])
 
   useEffect(() => {
     if (error) {
@@ -78,10 +99,19 @@ export function CreateVirtualClassDialog({ open, onOpenChange, lecturerId }: Cre
       })
       onOpenChange(false)
       router.refresh()
+      setSuccess(null)
     }
-  }, [error, success, toast, onOpenChange, router])
+  }, [error, success, toast, onOpenChange, router, setSuccess])
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const setError = (message: string) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      })
+    }
+
     if (new Date(values.scheduledEndTime) <= new Date(values.scheduledStartTime)) {
       setError("End time must be after start time")
       return
@@ -94,7 +124,7 @@ export function CreateVirtualClassDialog({ open, onOpenChange, lecturerId }: Cre
         scheduledStartTime: values.scheduledStartTime,
         scheduledEndTime: values.scheduledEndTime,
         isRecorded: values.isRecorded,
-        lecturerProfileId: lecturerId,
+        lecturerProfileId: lecturerProfile?.id || "",
         courseId: values.courseId,
         semesterId: values.semesterId,
         meetingConfig: {
@@ -109,9 +139,9 @@ export function CreateVirtualClassDialog({ open, onOpenChange, lecturerId }: Cre
 
   // Get available semesters for the selected course
   const getAvailableSemesters = () => {
-    if (!selectedCourse) return []
+    if (!form.watch("courseId")) return []
 
-    const course = courses.find((c) => c.courseId === selectedCourse)
+    const course = courses.find((c) => c.courseId === form.watch("courseId"))
     if (!course) return []
 
     return [
@@ -198,7 +228,7 @@ export function CreateVirtualClassDialog({ open, onOpenChange, lecturerId }: Cre
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value)
-                        setSelectedCourse(value)
+                        // setSelectedCourse(value)
 
                         // Auto-select semester if there's only one
                         const course = courses.find((c) => c.courseId === value)
@@ -246,7 +276,7 @@ export function CreateVirtualClassDialog({ open, onOpenChange, lecturerId }: Cre
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {selectedCourse ? (
+                        {form.watch("courseId") ? (
                           getAvailableSemesters().map((semester) => (
                             <SelectItem key={semester.id} value={semester.id}>
                               {semester.name}

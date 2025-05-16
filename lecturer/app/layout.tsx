@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { ReduxProvider } from "@/lib/redux/provider"
 import { AuthProvider } from "@/lib/auth/auth-context"
 import { Toaster } from "@/components/ui/toaster"
+import { AppHeader } from "@/components/app-header"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -23,15 +24,18 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning className="h-full">
+      <body className={`${inter.className} antialiased h-full`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <ReduxProvider>
             <AuthProvider>
               <SidebarProvider>
-                <div className="flex h-screen">
+                <div className="flex h-screen w-full overflow-hidden">
                   <AppSidebar />
-                  <main className="flex-1 overflow-auto">{children}</main>
+                  <div className="flex flex-col flex-1 w-full min-h-screen overflow-hidden">
+                    <AppHeader />
+                    <main className="flex-1 overflow-auto w-full">{children}</main>
+                  </div>
                 </div>
                 <Toaster />
               </SidebarProvider>

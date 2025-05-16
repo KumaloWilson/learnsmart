@@ -1,61 +1,145 @@
 "use client"
 
-import { useTheme } from "next-themes"
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
-import type { EngagementDistribution } from "@/lib/auth/types"
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useStudentEngagement } from "@/lib/auth/hooks"
+import { useAuth } from "@/lib/auth/auth-context"
+import { Loader2 } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
 
 interface EngagementDistributionChartProps {
-  distribution: EngagementDistribution
+  courseId: string
+  semesterId: string
 }
 
-export function EngagementDistributionChart({ distribution }: EngagementDistributionChartProps) {
-  const { theme } = useTheme()
-  const isDark = theme === "dark"
+export function EngagementDistributionChart({ courseId, semesterId }: EngagementDistributionChartProps) {
+  const { lecturerProfile } = useAuth()
+  const { getStudentEngagement, engagementData, isLoading, error } = useStudentEngagement()
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
 
-  // Format data for the chart
-  const data = [
-    { name: "Very High", value: distribution.veryHigh, color: "#10b981" },
-    { name: "High", value: distribution.high, color: "#3b82f6" },
-    { name: "Moderate", value: distribution.moderate, color: "#6366f1" },
-    { name: "Low", value: distribution.low, color: "#f59e0b" },
-    { name: "Very Low", value: distribution.veryLow, color: "#ef4444" },
-  ].filter((item) => item.value > 0) // Only include non-zero values
+  useEffect(() => {
+    const fetchData = async () => {
+      if (lecturerProfile?.id && courseId && semesterId && !isInitialLoading && !engagementData) {
+        try {
+          await getStudentEngagement(lecturerProfile.id, courseId, semesterId)
+        } catch (err) {
+          console.error("Error fetching student engagement data:", err)
+        } finally {
+          setIsInitialLoading(false)
+        }
+      } else {
+        setIsInitialLoading(false)
+      }
+    }
 
-  // If no data, show a message
-  if (data.length === 0) {
+    fetchData()
+  }, [lecturerProfile, courseId, semesterId, getStudentEngagement, engagementData, isInitialLoading])
+
+  if (isInitialLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">No engagement data available</p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Engagement Distribution</CardTitle>
+          <CardDescription>Student engagement levels</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[300px]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Loading engagement data...</p>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Engagement Distribution</CardTitle>
+          <CardDescription>Student engagement levels</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!engagementData || !engagementData.engagementDistribution) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Engagement Distribution</CardTitle>
+          <CardDescription>Student engagement levels</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[300px]">
+          <p className="text-muted-foreground">No engagement data available for this course</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const { engagementDistribution } = engagementData
+
+  const chartData = [
+    { name: "Very High", value: engagementDistribution.veryHigh, color: "#10b981" },
+    { name: "High", value: engagementDistribution.high, color: "#22c55e" },
+    { name: "Moderate", value: engagementDistribution.moderate, color: "#eab308" },
+    { name: "Low", value: engagementDistribution.low, color: "#f97316" },
+    { name: "Very Low", value: engagementDistribution.veryLow, color: "#ef4444" },
+  ]
+
+  const COLORS = ["#10b981", "#22c55e", "#eab308", "#f97316", "#ef4444"]
+
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          labelLine={true}
-          outerRadius={80}
-          fill="#8884d8"
-          dataKey="value"
-          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip
-          contentStyle={{
-            backgroundColor: isDark ? "#333" : "#fff",
-            borderColor: isDark ? "#444" : "#ddd",
-            color: isDark ? "#fff" : "#333",
-          }}
-        />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
+    <Card>
+      <CardHeader>
+        <CardTitle>Engagement Distribution</CardTitle>
+        <CardDescription>Student engagement levels</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-muted/30 p-3 rounded-lg">
+            <p className="text-sm text-muted-foreground">Attendance Rate</p>
+            <p className="text-2xl font-bold">{engagementData.classAverages.overallAttendanceRate.toFixed(1)}%</p>
+          </div>
+          <div className="bg-muted/30 p-3 rounded-lg">
+            <p className="text-sm text-muted-foreground">Quiz Completion</p>
+            <p className="text-2xl font-bold">{engagementData.classAverages.quizCompletionRate.toFixed(1)}%</p>
+          </div>
+          <div className="bg-muted/30 p-3 rounded-lg">
+            <p className="text-sm text-muted-foreground">Assignment Submission</p>
+            <p className="text-2xl font-bold">{engagementData.classAverages.assessmentSubmissionRate.toFixed(1)}%</p>
+          </div>
+        </div>
+
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

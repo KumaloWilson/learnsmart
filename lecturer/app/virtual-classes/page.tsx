@@ -31,7 +31,7 @@ export default function VirtualClassesPage() {
 
   useEffect(() => {
     const fetchVirtualClasses = async () => {
-      if (lecturerProfile?.id) {
+      if (lecturerProfile?.id && !isInitialLoading && virtualClasses.length === 0) {
         try {
           await getUpcomingVirtualClasses(lecturerProfile.id)
         } catch (err) {
@@ -45,7 +45,7 @@ export default function VirtualClassesPage() {
     }
 
     fetchVirtualClasses()
-  }, [lecturerProfile, getUpcomingVirtualClasses])
+  }, [lecturerProfile, getUpcomingVirtualClasses, virtualClasses.length, isInitialLoading])
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -80,12 +80,25 @@ export default function VirtualClassesPage() {
     return now >= joinTime && now <= classEndTime
   }
 
+  const actions = (
+    <div className="flex gap-2">
+      <Button variant="outline" asChild>
+        <Link href="/virtual-classes/calendar">
+          <Calendar className="mr-2 h-4 w-4" /> Calendar View
+        </Link>
+      </Button>
+      <Button onClick={() => setIsCreateDialogOpen(true)}>
+        <Plus className="mr-2 h-4 w-4" /> Create Virtual Class
+      </Button>
+    </div>
+  )
+
   if (isInitialLoading) {
     return (
-      <div className="container py-6 flex items-center justify-center h-screen">
+      <div className="container py-8 flex items-center justify-center min-h-[80vh]">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Loading virtual classes...</p>
+          <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-lg">Loading virtual classes...</p>
         </div>
       </div>
     )
@@ -102,32 +115,27 @@ export default function VirtualClassesPage() {
   }
 
   return (
-    <PageContainer title="Virtual Classes" description="Manage your online classes and lectures">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Calendar className="h-4 w-4" /> Schedule
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <MonitorPlay className="h-4 w-4" /> Recordings
-          </Button>
-        </div>
-        <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4" /> Create Class
+    <PageContainer title="Virtual Classes" description="Manage your online classes and lectures" actions={actions}>
+      <div className="flex flex-wrap gap-4 mb-6">
+        <Button variant="outline" className="gap-2">
+          <Calendar className="h-4 w-4" /> Schedule
+        </Button>
+        <Button variant="outline" className="gap-2">
+          <MonitorPlay className="h-4 w-4" /> Recordings
         </Button>
       </div>
 
       <Tabs defaultValue="upcoming" className="w-full">
-        <TabsList className="mb-4">
+        <TabsList className="mb-6">
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
           <TabsTrigger value="active">Active</TabsTrigger>
           <TabsTrigger value="past">Past</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="upcoming">
+        <TabsContent value="upcoming" className="animate-fade-in">
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -136,25 +144,25 @@ export default function VirtualClassesPage() {
                 .map((virtualClass) => (
                   <Card
                     key={virtualClass.id}
-                    className={
+                    className={`overflow-hidden card-hover ${
                       canJoin(virtualClass.scheduledStartTime, virtualClass.scheduledEndTime)
-                        ? "border-blue-200 dark:border-blue-800"
+                        ? "border-primary/30 dark:border-primary/50"
                         : ""
-                    }
+                    }`}
                   >
-                    <CardHeader className="pb-2">
+                    <CardHeader className="pb-2 bg-muted/30">
                       <div className="flex justify-between">
-                        <Badge variant={getStatusBadgeVariant(virtualClass.status)}>
-                          {virtualClass.status.charAt(0).toUpperCase() + virtualClass.status.slice(1)}
+                        <Badge variant={getStatusBadgeVariant(virtualClass.status)} className="capitalize">
+                          {virtualClass.status.replace("_", " ")}
                         </Badge>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">Open menu</span>
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="w-[180px]">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
@@ -175,8 +183,8 @@ export default function VirtualClassesPage() {
                         {virtualClass.course?.name || "No course name"}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="pb-2">
-                      <div className="flex flex-col space-y-1.5">
+                    <CardContent className="pt-4">
+                      <div className="flex flex-col space-y-2">
                         <div className="flex items-center text-sm">
                           <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
                           <span>{formatDate(virtualClass.scheduledStartTime)}</span>
@@ -212,10 +220,10 @@ export default function VirtualClassesPage() {
                 ))}
 
               {virtualClasses.filter((virtualClass) => isUpcoming(virtualClass.scheduledStartTime)).length === 0 && (
-                <div className="col-span-full text-center py-8 text-muted-foreground">
-                  <Video className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                  <p>No upcoming virtual classes scheduled</p>
-                  <Button variant="outline" className="mt-4" onClick={() => setIsCreateDialogOpen(true)}>
+                <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                  <Video className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                  <p className="text-muted-foreground mb-4">No upcoming virtual classes scheduled</p>
+                  <Button onClick={() => setIsCreateDialogOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" /> Create a Virtual Class
                   </Button>
                 </div>
@@ -224,28 +232,33 @@ export default function VirtualClassesPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="active">
+        <TabsContent value="active" className="animate-fade-in">
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {virtualClasses
                 .filter((virtualClass) => virtualClass.status === "in_progress")
                 .map((virtualClass) => (
-                  <Card key={virtualClass.id} className="border-green-200 dark:border-green-800">
-                    <CardHeader className="pb-2">
+                  <Card
+                    key={virtualClass.id}
+                    className="overflow-hidden card-hover border-green-200 dark:border-green-800"
+                  >
+                    <CardHeader className="pb-2 bg-green-50 dark:bg-green-900/20">
                       <div className="flex justify-between">
-                        <Badge variant="default">In Progress</Badge>
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800">
+                          In Progress
+                        </Badge>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">Open menu</span>
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="w-[180px]">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
@@ -262,8 +275,8 @@ export default function VirtualClassesPage() {
                         {virtualClass.course?.name || "No course name"}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="pb-2">
-                      <div className="flex flex-col space-y-1.5">
+                    <CardContent className="pt-4">
+                      <div className="flex flex-col space-y-2">
                         <div className="flex items-center text-sm">
                           <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
                           <span>{formatDate(virtualClass.scheduledStartTime)}</span>
@@ -291,37 +304,37 @@ export default function VirtualClassesPage() {
                 ))}
 
               {virtualClasses.filter((virtualClass) => virtualClass.status === "in_progress").length === 0 && (
-                <div className="col-span-full text-center py-8 text-muted-foreground">
-                  <Video className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                  <p>No active virtual classes at the moment</p>
+                <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                  <Video className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                  <p className="text-muted-foreground">No active virtual classes at the moment</p>
                 </div>
               )}
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="past">
+        <TabsContent value="past" className="animate-fade-in">
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {virtualClasses
                 .filter((virtualClass) => virtualClass.status === "completed")
                 .map((virtualClass) => (
-                  <Card key={virtualClass.id}>
+                  <Card key={virtualClass.id} className="overflow-hidden card-hover bg-muted/30">
                     <CardHeader className="pb-2">
                       <div className="flex justify-between">
                         <Badge variant="secondary">Completed</Badge>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">Open menu</span>
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="w-[180px]">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
@@ -346,8 +359,8 @@ export default function VirtualClassesPage() {
                         {virtualClass.course?.name || "No course name"}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="pb-2">
-                      <div className="flex flex-col space-y-1.5">
+                    <CardContent className="pt-4">
+                      <div className="flex flex-col space-y-2">
                         <div className="flex items-center text-sm">
                           <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
                           <span>{formatDate(virtualClass.scheduledStartTime)}</span>
@@ -383,9 +396,9 @@ export default function VirtualClassesPage() {
                 ))}
 
               {virtualClasses.filter((virtualClass) => virtualClass.status === "completed").length === 0 && (
-                <div className="col-span-full text-center py-8 text-muted-foreground">
-                  <MonitorPlay className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                  <p>No past virtual classes found</p>
+                <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                  <MonitorPlay className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                  <p className="text-muted-foreground">No past virtual classes found</p>
                 </div>
               )}
             </div>

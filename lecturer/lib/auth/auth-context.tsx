@@ -4,8 +4,11 @@ import type React from "react"
 
 import { createContext, useContext, useEffect, useState } from "react"
 import type { AuthState, User, LecturerProfile } from "./types"
+import * as authApi from "./auth-api"
 
 interface AuthContextType extends AuthState {
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>
+  logout: () => Promise<void>
   setUser: (user: User | null) => void
   setLecturerProfile: (profile: LecturerProfile | null) => void
   setTokens: (accessToken: string | null, refreshToken: string | null) => void
@@ -79,6 +82,50 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [authState.accessToken])
 
+  const login = async (email: string, password: string, rememberMe = false) => {
+    setAuthState((prev) => ({ ...prev, isLoading: true, error: null }))
+    try {
+      const response = await authApi.login({ email, password })
+
+      // Store auth data
+      const { user, lecturerProfile, accessToken, refreshToken } = response
+
+      localStorage.setItem("accessToken", accessToken)
+      localStorage.setItem("refreshToken", refreshToken)
+      localStorage.setItem("user", JSON.stringify(user))
+      localStorage.setItem("lecturerProfile", JSON.stringify(lecturerProfile))
+
+      setAuthState({
+        user,
+        lecturerProfile,
+        accessToken,
+        refreshToken,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+      })
+    } catch (error: any) {
+      console.error("Login error:", error)
+      const errorMessage = error.response?.data?.message || "Login failed. Please try again."
+      setAuthState((prev) => ({ ...prev, isLoading: false, error: errorMessage }))
+      throw error
+    }
+  }
+
+  const logout = async () => {
+    setAuthState((prev) => ({ ...prev, isLoading: true, error: null }))
+    try {
+      if (authState.refreshToken) {
+        await authApi.logout(authState.refreshToken)
+      }
+      clearAuth()
+    } catch (error: any) {
+      console.error("Logout error:", error)
+      // Even if the API call fails, we still want to clear the local auth state
+      clearAuth()
+    }
+  }
+
   const setUser = (user: User | null) => {
     setAuthState((prev) => ({ ...prev, user }))
     if (user) {
@@ -132,10 +179,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem("refreshToken")
     localStorage.removeItem("user")
     localStorage.removeItem("lecturerProfile")
+    document.cookie = "accessToken=; path=/; max-age=0; SameSite=Strict"
   }
 
   const value = {
     ...authState,
+    login,
+    logout,
     setUser,
     setLecturerProfile,
     setTokens,

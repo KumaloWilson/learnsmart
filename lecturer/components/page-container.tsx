@@ -5,22 +5,42 @@ interface PageContainerProps {
   title: string
   description?: string
   children: ReactNode
+  actions?: ReactNode
 }
 
-export function PageContainer({ title, description, children }: PageContainerProps) {
+export function PageContainer({ title, description, children, actions }: PageContainerProps) {
   return (
-    <div className="container py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        {description && <p className="text-muted-foreground mt-2">{description}</p>}
+    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{title}</h1>
+          {description && <p className="text-muted-foreground mt-2 max-w-2xl">{description}</p>}
+        </div>
+        {actions && <div className="flex-shrink-0">{actions}</div>}
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>{title} Overview</CardTitle>
-          <CardDescription>Manage your {title.toLowerCase()} information</CardDescription>
-        </CardHeader>
-        <CardContent>{children}</CardContent>
-      </Card>
+      <div className="space-y-6">{children}</div>
     </div>
+  )
+}
+
+export function PageSection({
+  title,
+  description,
+  children,
+  className = "",
+}: {
+  title: string
+  description?: string
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <Card className={`overflow-hidden shadow-sm ${className}`}>
+      <CardHeader className="bg-muted/30 dark:bg-muted/10 px-6">
+        <CardTitle>{title}</CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
+      </CardHeader>
+      <CardContent className="p-6">{children}</CardContent>
+    </Card>
   )
 }

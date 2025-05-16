@@ -30,7 +30,7 @@ export default function AtRiskStudentsPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (lecturerProfile?.id) {
+      if (lecturerProfile?.id && !isInitialLoading && atRiskStudents.length === 0) {
         try {
           await getAtRiskStudents(lecturerProfile.id)
         } catch (err) {
@@ -44,7 +44,7 @@ export default function AtRiskStudentsPage() {
     }
 
     fetchData()
-  }, [lecturerProfile, getAtRiskStudents])
+  }, [lecturerProfile, getAtRiskStudents, atRiskStudents.length, isInitialLoading])
 
   const filteredStudents = atRiskStudents.filter(
     (student) =>
@@ -117,7 +117,7 @@ export default function AtRiskStudentsPage() {
                     <div className="flex items-center gap-2">
                       <Avatar className="h-8 w-8">
                         <AvatarImage
-                          src={`/placeholder.svg?height=32&width=32`}
+                          src={`/placeholder-32px.png?height=32&width=32`}
                           alt={`${student.studentProfile.user.firstName} ${student.studentProfile.user.lastName}`}
                         />
                         <AvatarFallback>
