@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ChevronLeft, UserPlus } from "lucide-react"
+import { ChevronLeft, UserPlus, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
 
 export default function CourseStudentsPage() {
   const params = useParams()
@@ -17,6 +18,7 @@ export default function CourseStudentsPage() {
   const courseId = params.courseId as string
   const { lecturerProfile } = useAuth()
   const lecturerId = lecturerProfile?.id || ""
+  const [searchTerm, setSearchTerm] = useState("")
 
   // Default semester ID to use until we get the course details
   const defaultSemesterId = "bbfc180e-11ce-48a5-adb6-95b197339bae"
@@ -37,6 +39,16 @@ export default function CourseStudentsPage() {
       refetch()
     }
   }, [lecturerId, courseId, refetch])
+
+  // Filter students based on search term
+  const filteredStudents = courseDetail?.students
+    ? courseDetail.students.filter(
+        (student) =>
+          student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          student.email.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    : []
 
   if (isLoading) {
     return (
@@ -66,15 +78,28 @@ export default function CourseStudentsPage() {
   return (
     <PageContainer title={`Students - ${course.name}`} description={`Course Code: ${course.code}`}>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <Button variant="outline" onClick={() => router.push(`/courses/${courseId}`)}>
             <ChevronLeft className="mr-2 h-4 w-4" />
             Back to Course
           </Button>
-          <Button>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add Student
-          </Button>
+
+          <div className="flex gap-2 w-full md:w-auto">
+            <div className="relative w-full md:w-[300px]">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search students..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add Student
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -85,6 +110,10 @@ export default function CourseStudentsPage() {
             {students.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">No students enrolled in this course yet.</p>
+              </div>
+            ) : filteredStudents.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No students match your search criteria.</p>
               </div>
             ) : (
               <Table>
@@ -100,7 +129,7 @@ export default function CourseStudentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {students.map((student) => (
+                  {filteredStudents.map((student) => (
                     <TableRow key={student.id}>
                       <TableCell>{student.studentId}</TableCell>
                       <TableCell className="font-medium">{student.fullName}</TableCell>

@@ -1,8 +1,10 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
   "/courses/page": "app/courses/page.js",
   "/page": "app/page.js",
-  "/students/page": "app/students/page.js",
   "/courses/[courseId]/page": "app/courses/[courseId]/page.js",
+  "/courses/[courseId]/students/page": "app/courses/[courseId]/students/page.js",
   "/attendance/page": "app/attendance/page.js",
-  "/courses/[courseId]/students/page": "app/courses/[courseId]/students/page.js"
+  "/students/page": "app/students/page.js",
+  "/virtual-classes/page": "app/virtual-classes/page.js"
 }
