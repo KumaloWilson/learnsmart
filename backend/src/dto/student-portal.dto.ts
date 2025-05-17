@@ -1,156 +1,188 @@
-import { IsArray, IsDate, IsOptional, IsString, IsUUID, IsNumber } from "class-validator"
-import { Expose, Type } from "class-transformer"
+import { IsString, IsUUID, IsOptional, IsDate, IsNumber, IsBoolean, IsArray, ValidateNested } from "class-validator"
+import { Type } from "class-transformer"
 
-export class StudentCourseDto {
-  @IsUUID(4)
-  @Expose()
-  courseId: string
+// Dashboard filter DTO
+export class StudentDashboardFilterDto {
+  @IsOptional()
+  @IsUUID()
+  courseId?: string
 
-  @IsUUID(4)
-  @Expose()
-  semesterId: string
+  @IsOptional()
+  @IsUUID()
+  semesterId?: string
 }
 
+// Assessment submission DTO
 export class StudentAssessmentSubmissionDto {
-  @IsUUID(4)
-  @Expose()
-  assessmentId: string
+  @IsUUID()
+  assessmentId!: string
 
-  @IsUUID(4)
-  @Expose()
-  studentProfileId: string
+  @IsUUID()
+  studentProfileId!: string
 
-  @IsString()
   @IsOptional()
-  @Expose()
+  @IsString()
   submissionText?: string
 
-  @IsString()
   @IsOptional()
-  @Expose()
+  @IsString()
   fileUrl?: string
 
-  @IsString()
   @IsOptional()
-  @Expose()
+  @IsString()
   fileName?: string
 
-  @IsString()
   @IsOptional()
-  @Expose()
+  @IsString()
   fileType?: string
 
-  @IsNumber()
   @IsOptional()
-  @Expose()
+  @IsNumber()
   fileSize?: number
 }
 
-export class StudentQuizAttemptDto {
-  @IsUUID(4)
-  @Expose()
-  quizId: string
-
-  @IsUUID(4)
-  @Expose()
-  studentProfileId: string
-
-  @IsArray()
-  @Expose()
-  answers: {
-    questionId: string
-    selectedOptionId: string
-  }[]
-}
-
+// Virtual class join DTO
 export class JoinVirtualClassDto {
-  @IsUUID(4)
-  @Expose()
-  virtualClassId: string
+  @IsUUID()
+  virtualClassId!: string
 
-  @IsUUID(4)
-  @Expose()
-  studentProfileId: string
+  @IsUUID()
+  studentProfileId!: string
 }
 
-export class StudentDashboardFilterDto {
-  @IsUUID(4)
+// Materials filter DTO
+export class StudentMaterialsFilterDto {
   @IsOptional()
-  @Expose()
-  semesterId?: string
-
-  @IsUUID(4)
-  @IsOptional()
-  @Expose()
+  @IsUUID()
   courseId?: string
 
-  @IsDate()
-  @Type(() => Date)
   @IsOptional()
-  @Expose()
-  startDate?: Date
-
-  @IsDate()
-  @Type(() => Date)
-  @IsOptional()
-  @Expose()
-  endDate?: Date
-}
-
-export class StudentPerformanceFilterDto {
-  @IsUUID(4)
-  @IsOptional()
-  @Expose()
-  courseId?: string
-
-  @IsUUID(4)
-  @IsOptional()
-  @Expose()
+  @IsUUID()
   semesterId?: string
 
+  @IsOptional()
   @IsString()
+  type?: string
+}
+
+// Performance filter DTO
+export class StudentPerformanceFilterDto {
   @IsOptional()
-  @Expose()
+  @IsUUID()
+  courseId?: string
+
+  @IsOptional()
+  @IsUUID()
+  semesterId?: string
+
+  @IsOptional()
+  @IsString()
   assessmentType?: string
 }
 
+// Attendance filter DTO
 export class StudentAttendanceFilterDto {
-  @IsUUID(4)
   @IsOptional()
-  @Expose()
+  @IsUUID()
   courseId?: string
 
-  @IsUUID(4)
   @IsOptional()
-  @Expose()
+  @IsUUID()
   semesterId?: string
 
-  @IsDate()
-  @Type(() => Date)
   @IsOptional()
-  @Expose()
+  @IsDate()
   startDate?: Date
 
-  @IsDate()
-  @Type(() => Date)
   @IsOptional()
-  @Expose()
+  @IsDate()
   endDate?: Date
 }
 
-export class StudentMaterialsFilterDto {
-  @IsUUID(4)
-  @IsOptional()
-  @Expose()
-  courseId?: string
+// Quiz response DTO
+export class QuizResponseDto {
+  @IsUUID()
+  questionId!: string
 
-  @IsUUID(4)
   @IsOptional()
-  @Expose()
-  semesterId?: string
+  @IsUUID()
+  optionId?: string
+
+  @IsOptional()
+  @IsString()
+  textResponse?: string
+
+  @IsOptional()
+  @IsBoolean()
+  booleanResponse?: boolean
+}
+
+// Quiz attempt DTO
+export class StudentQuizAttemptDto {
+  @IsUUID()
+  quizId!: string
+
+  @IsUUID()
+  studentProfileId!: string
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QuizResponseDto)
+  responses!: QuizResponseDto[]
+
+  @IsOptional()
+  @IsDate()
+  startTime?: Date
+}
+
+// Topic progress DTO
+export class TopicProgressDto {
+  @IsUUID()
+  courseTopicId!: string
+
+  @IsUUID()
+  studentProfileId!: string
+
+  @IsNumber()
+  timeSpentMinutes!: number
+}
+
+// Recommendation feedback DTO
+export class RecommendationFeedbackDto {
+  @IsUUID()
+  recommendationId!: string
+
+  @IsBoolean()
+  isHelpful!: boolean
+
+  @IsOptional()
+  @IsString()
+  feedback?: string
+}
+
+// Resource interaction DTO
+export class StudentResourceInteractionDto {
+  @IsUUID()
+  studentProfileId!: string
+
+  @IsUUID()
+  learningResourceId!: string
 
   @IsString()
+  interactionType!: string
+
   @IsOptional()
-  @Expose()
-  type?: string
+  @IsNumber()
+  durationSeconds?: number
+
+  @IsOptional()
+  @IsNumber()
+  rating?: number
+
+  @IsOptional()
+  @IsString()
+  feedback?: string
+
+  @IsOptional()
+  metadata?: any
 }

@@ -1,6 +1,19 @@
-import { IsArray, IsBoolean, IsDate, IsEnum, IsInt, IsObject, IsOptional, IsString, IsUUID, Min } from "class-validator"
+import {
+  IsArray,
+  IsBoolean,
+  IsDate,
+  IsEnum,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+  IsNumber,
+} from "class-validator"
 import { Expose, Type } from "class-transformer"
 
+// Quiz DTOs
 export class CreateQuizDto {
   @IsString()
   @Expose()
@@ -11,155 +24,260 @@ export class CreateQuizDto {
   @Expose()
   description?: string
 
-  @IsString()
+  @IsUUID()
   @Expose()
-  topic: string
+  courseId!: string
 
-  @IsInt()
-  @Min(1)
+  @IsUUID()
   @Expose()
-  numberOfQuestions: number
+  semesterId!: string
 
-  @IsInt()
-  @Min(1)
+  @IsUUID()
   @Expose()
-  timeLimit: number
+  lecturerProfileId!: string
 
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
   @Expose()
-  startDate: Date
+  dueDate?: Date
 
-  @IsDate()
-  @Type(() => Date)
-  @Expose()
-  endDate: Date
-
-  @IsInt()
   @IsOptional()
-  @Expose()
-  totalMarks?: number
-
-  @IsInt()
-  @IsOptional()
-  @Expose()
-  passingMarks?: number
-
-  @IsBoolean()
-  @IsOptional()
-  @Expose()
-  isActive?: boolean
-
-  @IsBoolean()
-  @IsOptional()
-  @Expose()
-  isRandomized?: boolean
-
-  @IsObject()
-  @IsOptional()
-  @Expose()
-  aiPrompt?: object
-
-  @IsEnum(["multiple_choice", "true_false", "short_answer", "mixed"], {
-    message: "Question type must be one of: multiple_choice, true_false, short_answer, mixed",
-  })
-  @Expose()
-  questionType: "multiple_choice" | "true_false" | "short_answer" | "mixed"
-
-  @IsString()
-  @IsOptional()
-  @Expose()
-  instructions?: string
-
-  @IsUUID(4)
-  @Expose()
-  lecturerProfileId: string
-
-  @IsUUID(4)
-  @Expose()
-  courseId: string
-
-  @IsUUID(4)
-  @Expose()
-  semesterId: string
-}
-
-export class UpdateQuizDto {
-  @IsString()
-  @IsOptional()
-  @Expose()
-  title?: string
-
-  @IsString()
-  @IsOptional()
-  @Expose()
-  description?: string
-
-  @IsString()
-  @IsOptional()
-  @Expose()
-  topic?: string
-
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  @Expose()
-  numberOfQuestions?: number
-
-  @IsInt()
-  @Min(1)
-  @IsOptional()
+  @IsNumber()
   @Expose()
   timeLimit?: number
 
-  @IsDate()
-  @Type(() => Date)
   @IsOptional()
-  @Expose()
-  startDate?: Date
-
-  @IsDate()
-  @Type(() => Date)
-  @IsOptional()
-  @Expose()
-  endDate?: Date
-
-  @IsInt()
-  @IsOptional()
+  @IsNumber()
   @Expose()
   totalMarks?: number
 
-  @IsInt()
   @IsOptional()
+  @IsNumber()
   @Expose()
-  passingMarks?: number
+  passingScore?: number
 
+  @IsOptional()
   @IsBoolean()
-  @IsOptional()
   @Expose()
-  isActive?: boolean
+  allowMultipleAttempts?: boolean
 
+  @IsOptional()
   @IsBoolean()
-  @IsOptional()
   @Expose()
-  isRandomized?: boolean
+  randomizeQuestions?: boolean
 
-  @IsObject()
   @IsOptional()
+  @IsBoolean()
   @Expose()
-  aiPrompt?: object
+  showAnswers?: boolean
 
-  @IsEnum(["multiple_choice", "true_false", "short_answer", "mixed"], {
-    message: "Question type must be one of: multiple_choice, true_false, short_answer, mixed",
-  })
   @IsOptional()
+  @IsUUID()
   @Expose()
-  questionType?: "multiple_choice" | "true_false" | "short_answer" | "mixed"
+  courseTopicId?: string
+}
+
+export class UpdateQuizDto {
+  @IsOptional()
+  @IsString()
+  @Expose()
+  title?: string
+
+  @IsOptional()
+  @IsString()
+  @Expose()
+  description?: string
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  @Expose()
+  dueDate?: Date
+
+  @IsOptional()
+  @IsNumber()
+  @Expose()
+  timeLimit?: number
+
+  @IsOptional()
+  @IsNumber()
+  @Expose()
+  totalMarks?: number
+
+  @IsOptional()
+  @IsNumber()
+  @Expose()
+  passingScore?: number
+
+  @IsOptional()
+  @IsBoolean()
+  @Expose()
+  allowMultipleAttempts?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  @Expose()
+  randomizeQuestions?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  @Expose()
+  showAnswers?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  @Expose()
+  isPublished?: boolean
+
+  @IsOptional()
+  @IsUUID()
+  @Expose()
+  courseTopicId?: string
+}
+
+export class QuizFilterDto {
+  @IsOptional()
+  @IsUUID()
+  @Expose()
+  courseId?: string
+
+  @IsOptional()
+  @IsUUID()
+  @Expose()
+  semesterId?: string
+
+  @IsOptional()
+  @IsUUID()
+  @Expose()
+  lecturerProfileId?: string
+
+  @IsOptional()
+  @IsBoolean()
+  @Expose()
+  isPublished?: boolean
+
+  @IsOptional()
+  @IsString()
+  @Expose()
+  search?: string
+}
+
+// Quiz Question DTOs
+export class CreateQuizQuestionDto {
+  @IsUUID()
+  @Expose()
+  quizId!: string
 
   @IsString()
-  @IsOptional()
   @Expose()
-  instructions?: string
+  questionText!: string
+
+  @IsEnum(["multiple_choice", "true_false", "short_answer"])
+  @Expose()
+  questionType!: string
+
+  @IsOptional()
+  @IsNumber()
+  @Expose()
+  points?: number
+
+  @IsOptional()
+  @IsString()
+  @Expose()
+  explanation?: string
+
+  @IsOptional()
+  @IsBoolean()
+  @Expose()
+  isRequired?: boolean
+}
+
+export class UpdateQuizQuestionDto {
+  @IsOptional()
+  @IsString()
+  @Expose()
+  questionText?: string
+
+  @IsOptional()
+  @IsEnum(["multiple_choice", "true_false", "short_answer"])
+  @Expose()
+  questionType?: string
+
+  @IsOptional()
+  @IsNumber()
+  @Expose()
+  points?: number
+
+  @IsOptional()
+  @IsString()
+  @Expose()
+  explanation?: string
+
+  @IsOptional()
+  @IsBoolean()
+  @Expose()
+  isRequired?: boolean
+}
+
+// Quiz Option DTOs
+export class CreateQuizOptionDto {
+  @IsUUID()
+  @Expose()
+  questionId!: string
+
+  @IsString()
+  @Expose()
+  optionText!: string
+
+  @IsBoolean()
+  @Expose()
+  isCorrect!: boolean
+
+  @IsOptional()
+  @IsString()
+  @Expose()
+  explanation?: string
+}
+
+export class UpdateQuizOptionDto {
+  @IsOptional()
+  @IsString()
+  @Expose()
+  optionText?: string
+
+  @IsOptional()
+  @IsBoolean()
+  @Expose()
+  isCorrect?: boolean
+
+  @IsOptional()
+  @IsString()
+  @Expose()
+  explanation?: string
+}
+
+// Quiz Reordering DTOs
+export class ReorderQuizQuestionsDto {
+  @IsUUID()
+  @Expose()
+  quizId!: string
+
+  @IsArray()
+  @IsUUID(4, { each: true })
+  @Expose()
+  questionIds!: string[]
+}
+
+export class ReorderQuizOptionsDto {
+  @IsUUID()
+  @Expose()
+  questionId!: string
+
+  @IsArray()
+  @IsUUID(4, { each: true })
+  @Expose()
+  optionIds!: string[]
 }
 
 export class StartQuizAttemptDto {
@@ -197,40 +315,6 @@ export class GradeQuizAttemptDto {
   @IsOptional()
   @Expose()
   aiAnalysis?: object
-}
-
-export class QuizFilterDto {
-  @IsUUID(4)
-  @IsOptional()
-  @Expose()
-  lecturerProfileId?: string
-
-  @IsUUID(4)
-  @IsOptional()
-  @Expose()
-  courseId?: string
-
-  @IsUUID(4)
-  @IsOptional()
-  @Expose()
-  semesterId?: string
-
-  @IsBoolean()
-  @IsOptional()
-  @Expose()
-  isActive?: boolean
-
-  @IsDate()
-  @Type(() => Date)
-  @IsOptional()
-  @Expose()
-  startDate?: Date
-
-  @IsDate()
-  @Type(() => Date)
-  @IsOptional()
-  @Expose()
-  endDate?: Date
 }
 
 export class QuizAttemptFilterDto {

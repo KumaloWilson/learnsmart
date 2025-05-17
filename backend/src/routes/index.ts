@@ -21,25 +21,29 @@ import aiRecommendationRoutes from "./ai-recommendation.routes"
 
 const router = Router()
 
-router.use("/auth", authRoutes)
-router.use("/schools", schoolRoutes)
-router.use("/departments", departmentRoutes)
-router.use("/programs", programRoutes)
-router.use("/courses", courseRoutes)
-router.use("/semesters", semesterRoutes)
-router.use("/periods", periodRoutes)
-router.use("/students", studentRoutes)
-router.use("/lecturers", lecturerRoutes)
+router.use("/auth", authRoutes) //done
+router.use("/dashboard", dashboardRoutes) //done
+router.use("/schools", schoolRoutes) //done
+router.use("/departments", departmentRoutes) //done
+router.use("/programs", programRoutes) //done
+router.use("/courses", courseRoutes) //done
+router.use("/semesters", semesterRoutes) //done
+router.use("/periods", periodRoutes) //done
+router.use("/students", studentRoutes) //done
+router.use("/lecturers", lecturerRoutes) //done
+
+
+
+router.use("/lecturer-dashboard", lecturerDashboardRoutes) 
 router.use("/lecturer-portal", lecturerPortalRoutes)
 router.use("/notifications", notificationRoutes)
-router.use("/dashboard", dashboardRoutes)
 router.use("/virtual-classes", virtualClassRoutes)
 router.use("/quizzes", quizRoutes)
 router.use("/attendance", attendanceRoutes)
 router.use("/student-performance", studentPerformanceRoutes)
-router.use("/lecturer-dashboard", lecturerDashboardRoutes)
-router.use("/student-portal", studentPortalRoutes)
-router.use("/lecturer-portal", lecturerPortalRoutes)
 router.use("/ai-recommendations", aiRecommendationRoutes)
+
+
+router.use("/student-portal", studentPortalRoutes)
 
 export default router

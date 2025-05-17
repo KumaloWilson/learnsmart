@@ -1,5 +1,6 @@
 import { Op } from "sequelize"
 import OpenAI from "openai"
+
 import type {
   CreateLearningResourceDto,
   UpdateLearningResourceDto,
@@ -10,7 +11,6 @@ import type {
   UpdateLearningRecommendationDto,
   ResourceInteractionDto,
   GenerateRecommendationsDto,
-  RecommendationFeedbackDto,
 } from "../dto/learning-recommendation.dto"
 import { Assessment } from "../models/Assessment"
 import { AssessmentSubmission } from "../models/AssessmentSubmission"
@@ -171,11 +171,21 @@ export class AIRecommendationService {
     })
   }
 
-  async getStudentRecommendations(studentProfileId: string, courseId?: string) {
+  // Get recommendations for a student
+  async getRecommendationsForStudent(
+    studentProfileId: string,
+    courseId?: string,
+    limit = 10,
+    includeCompleted = false,
+  ) {
     const whereClause: any = { studentProfileId }
 
     if (courseId) {
       whereClause.courseId = courseId
+    }
+
+    if (!includeCompleted) {
+      whereClause.isCompleted = false
     }
 
     return LearningRecommendation.findAll({
@@ -187,13 +197,35 @@ export class AIRecommendationService {
         },
         "course",
       ],
-      order: [["createdAt", "DESC"]],
+      order: [["relevanceScore", "DESC"]],
+      limit,
     })
   }
 
   // Resource Interaction methods
   async recordInteraction(data: ResourceInteractionDto) {
     return ResourceInteraction.create(data as any)
+  }
+
+  // Record resource interaction with more parameters
+  async recordResourceInteraction(
+    studentProfileId: string,
+    learningResourceId: string,
+    interactionType: string,
+    durationSeconds?: number,
+    rating?: number,
+    feedback?: string,
+    metadata?: any,
+  ) {
+    return ResourceInteraction.create({
+      studentProfileId,
+      learningResourceId,
+      interactionType,
+      durationSeconds,
+      rating,
+      feedback,
+      metadata,
+    })
   }
 
   async getResourceInteractions(learningResourceId: string) {
@@ -493,9 +525,7 @@ Return your recommendations in the following JSON format:
   }
 
   // Recommendation Feedback
-  async provideFeedback(data: RecommendationFeedbackDto) {
-    const { recommendationId, isHelpful, feedback } = data
-
+  async provideFeedback(recommendationId: string, isHelpful: boolean, feedback?: string) {
     const recommendation = await LearningRecommendation.findByPk(recommendationId)
     if (!recommendation) {
       throw new Error("Recommendation not found")
@@ -516,6 +546,21 @@ Return your recommendations in the following JSON format:
     })
 
     return { message: "Feedback recorded successfully" }
+  }
+
+  // Mark recommendation as viewed
+  async markRecommendationAsViewed(id: string) {
+    return this.markRecommendation(id, "view")
+  }
+
+  // Mark recommendation as saved
+  async markRecommendationAsSaved(id: string) {
+    return this.markRecommendation(id, "save")
+  }
+
+  // Mark recommendation as completed
+  async markRecommendationAsCompleted(id: string) {
+    return this.markRecommendation(id, "complete")
   }
 
   // Mark recommendation as viewed, saved, or completed
