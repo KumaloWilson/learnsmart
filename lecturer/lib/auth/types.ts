@@ -804,3 +804,130 @@ export interface CourseAttendanceSummary {
   averageAttendanceRate: number
   studentSummaries: StudentAttendanceSummary[]
 }
+
+// Performance Analytics interfaces
+export interface PerformanceFilterDto {
+  studentProfileId?: string
+  courseId?: string
+  semesterId?: string
+  performanceCategory?: string
+  minOverallPerformance?: number
+  maxOverallPerformance?: number
+}
+
+export interface StudentPerformance {
+  id: string
+  studentProfileId: string
+  courseId: string
+  semesterId: string
+  attendancePercentage: number
+  assignmentAverage: number
+  quizAverage: number
+  overallPerformance: number
+  performanceCategory: string
+  strengths: string
+  weaknesses: string
+  recommendations: string
+  aiAnalysis: {
+    studentName: string
+    courseName: string
+    attendancePercentage: number
+    assignmentAverage: number
+    quizAverage: number
+    overallPerformance: number
+    performanceCategory: string
+    assignmentDetails: any[]
+    quizDetails: any[]
+  }
+  lastUpdated: string
+  assessmentId: string | null
+  quizId: string | null
+  createdAt: string
+  updatedAt: string
+  studentProfile: {
+    id: string
+    studentId: string
+    dateOfBirth: string
+    gender: string
+    address: string
+    phoneNumber: string
+    status: string
+    currentLevel: number
+    enrollmentDate: string
+    graduationDate: string | null
+    userId: string
+    programId: string
+    createdAt: string
+    updatedAt: string
+    user: {
+      firstName: string
+      lastName: string
+      email: string
+    }
+  }
+  course: {
+    id: string
+    name: string
+    description: string
+    code: string
+    level: number
+    creditHours: number
+    programId: string
+    createdAt: string
+    updatedAt: string
+  }
+  semester: {
+    id: string
+    name: string
+    startDate: string
+    endDate: string
+    isActive: boolean
+    academicYear: number
+    createdAt: string
+    updatedAt: string
+  }
+}
+
+export interface GenerateAnalysisRequest {
+  courseId: string
+  semesterId: string
+  studentProfileId: string
+}
+
+export interface GenerateClassAnalysisRequest {
+  courseId: string
+  semesterId: string
+}
+
+export interface ClassPerformanceAnalysis {
+  courseId: string
+  semesterId: string
+  courseName: string
+  semesterName: string
+  totalStudents: number
+  averageAttendance: number
+  averageAssignmentScore: number
+  averageQuizScore: number
+  averageOverallPerformance: number
+  performanceDistribution: {
+    excellent: number
+    good: number
+    average: number
+    poor: number
+    failing: number
+  }
+  topPerformers: {
+    studentId: string
+    studentName: string
+    overallPerformance: number
+    performanceCategory: string
+  }[]
+  strugglingStudents: {
+    studentId: string
+    studentName: string
+    overallPerformance: number
+    performanceCategory: string
+    weaknesses: string
+  }[]
+  recommendations: string[]
+}

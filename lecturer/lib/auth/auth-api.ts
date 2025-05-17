@@ -44,6 +44,11 @@ import type {
   AttendanceStatistics,
   CourseAttendanceSummary,
   CourseDetailResponse,
+  ClassPerformanceAnalysis,
+  GenerateAnalysisRequest,
+  GenerateClassAnalysisRequest,
+  PerformanceFilterDto,
+  StudentPerformance,
 } from "./types"
 
 // Authentication API functions
@@ -367,4 +372,56 @@ export const getCourseAttendanceSummary = async (
     `/attendance/summary/course/${courseId}/semester/${semesterId}`,
   )
   return response.data
+}
+
+// Performance Analytics APIs
+export const getStudentPerformances = async (filters?: PerformanceFilterDto): Promise<StudentPerformance[]> => {
+  const queryParams = new URLSearchParams()
+
+  if (filters) {
+    if (filters.studentProfileId) queryParams.append("studentProfileId", filters.studentProfileId)
+    if (filters.courseId) queryParams.append("courseId", filters.courseId)
+    if (filters.semesterId) queryParams.append("semesterId", filters.semesterId)
+    if (filters.performanceCategory) queryParams.append("performanceCategory", filters.performanceCategory)
+    if (filters.minOverallPerformance !== undefined)
+      queryParams.append("minOverallPerformance", filters.minOverallPerformance.toString())
+    if (filters.maxOverallPerformance !== undefined)
+      queryParams.append("maxOverallPerformance", filters.maxOverallPerformance.toString())
+  }
+
+  const url = `/student-performance${queryParams.toString() ? `?${queryParams.toString()}` : ""}`
+  const response = await axiosInstance.get<{ success: boolean; data: StudentPerformance[] }>(url)
+  return response.data.data
+}
+
+export const getStudentPerformanceById = async (id: string): Promise<StudentPerformance> => {
+  const response = await axiosInstance.get<{ success: boolean; data: StudentPerformance }>(`/student-performance/${id}`)
+  return response.data.data
+}
+
+export const getStudentCoursePerformance = async (
+  studentProfileId: string,
+  courseId: string,
+  semesterId: string,
+): Promise<StudentPerformance> => {
+  const response = await axiosInstance.get<{ success: boolean; data: StudentPerformance }>(
+    `/student-performance/student/${studentProfileId}/course/${courseId}/semester/${semesterId}`,
+  )
+  return response.data.data
+}
+
+export const generateStudentAnalysis = async (data: GenerateAnalysisRequest): Promise<StudentPerformance> => {
+  const response = await axiosInstance.post<{ success: boolean; data: StudentPerformance }>(
+    "/student-performance/analysis",
+    data,
+  )
+  return response.data.data
+}
+
+export const generateClassAnalysis = async (data: GenerateClassAnalysisRequest): Promise<ClassPerformanceAnalysis> => {
+  const response = await axiosInstance.post<{ success: boolean; data: ClassPerformanceAnalysis }>(
+    "/student-performance/class-analysis",
+    data,
+  )
+  return response.data.data
 }

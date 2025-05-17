@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowLeft, Mail, Phone, User, Calendar, School, MapPin } from "lucide-react"
+import { ArrowLeft, Mail, Phone, User, Calendar, School, MapPin, AlertCircle } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import axiosInstance from "@/lib/axios"
 import { useAuth } from "@/lib/auth/auth-context"
 import { useCourses } from "@/lib/auth/hooks"
+import { useStudentPerformance, usePerformanceAnalysis } from "@/lib/auth/hooks"
 
 export default function StudentProfilePage() {
   const params = useParams()
@@ -27,8 +30,23 @@ export default function StudentProfilePage() {
   const [attendanceStats, setAttendanceStats] = useState<any>(null)
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([])
   const [isAttendanceLoading, setIsAttendanceLoading] = useState(false)
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null)
+  const [selectedSemester, setSelectedSemester] = useState<string | null>(null)
 
   const { getCourses, courses } = useCourses()
+  const {
+    getStudentCoursePerformance,
+    performance,
+    isLoading: isPerformanceLoading,
+    error: performanceError,
+  } = useStudentPerformance()
+
+  const {
+    generateStudentAnalysis,
+    studentAnalysis,
+    isLoading: isAnalysisLoading,
+    error: analysisError,
+  } = usePerformanceAnalysis()
 
   useEffect(() => {
     if (lecturerProfile?.id) {
@@ -95,6 +113,55 @@ export default function StudentProfilePage() {
       fetchAttendance()
     }
   }, [student, courses, activeTab])
+
+  useEffect(() => {
+    // Set initial course and semester when courses are loaded
+    if (courses && courses.length > 0 && student) {
+      // Find courses this student is enrolled in
+      const studentCourses = courses.filter(
+        (course) => course.students && course.students.some((s) => s.id === student.id),
+      )
+
+      if (studentCourses.length > 0) {
+        setSelectedCourse(studentCourses[0].courseId)
+        setSelectedSemester(studentCourses[0].semesterId)
+      }
+    }
+  }, [courses, student])
+
+  useEffect(() => {
+    // Fetch performance data when course and semester are selected
+    if (student && selectedCourse && selectedSemester && activeTab === "performance") {
+      getStudentCoursePerformance(student.id, selectedCourse, selectedSemester)
+    }
+  }, [student, selectedCourse, selectedSemester, activeTab, getStudentCoursePerformance])
+
+  const handleGenerateAnalysis = async () => {
+    if (!student || !selectedCourse || !selectedSemester) return
+
+    await generateStudentAnalysis({
+      studentProfileId: student.id,
+      courseId: selectedCourse,
+      semesterId: selectedSemester,
+    })
+  }
+
+  const getPerformanceBadgeColor = (category: string) => {
+    switch (category.toLowerCase()) {
+      case "excellent":
+        return "bg-green-100 text-green-800"
+      case "good":
+        return "bg-blue-100 text-blue-800"
+      case "average":
+        return "bg-yellow-100 text-yellow-800"
+      case "poor":
+        return "bg-orange-100 text-orange-800"
+      case "failing":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
 
   if (isLoading) {
     return (
@@ -316,7 +383,7 @@ export default function StudentProfilePage() {
                       </div>
                       <div className="bg-muted/30 p-3 rounded-lg">
                         <p className="text-sm text-muted-foreground">Attendance Rate</p>
-                        <p className="text-2xl font-bold">{attendanceStats.attendancePercentage}%</p>
+                        <p className="text-2xl font-bold">{attendanceStats.attendanceRate}%</p>
                       </div>
                     </div>
 
@@ -378,12 +445,258 @@ export default function StudentProfilePage() {
                 <CardDescription>View this student's academic performance</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-6">
-                  <p className="text-muted-foreground">Performance data will be implemented in a future update.</p>
-                  <Button variant="outline" className="mt-4">
-                    Request Performance Report
-                  </Button>
-                </div>
+                {!courses || courses.length === 0 ? (
+                  <div className="text-center py-6">
+                    <p className="text-muted-foreground">No courses available for this student.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Course</label>
+                        <select
+                          className="w-full px-3 py-2 border rounded-md"
+                          value={selectedCourse || ""}
+                          onChange={(e) => setSelectedCourse(e.target.value)}
+                        >
+                          <option value="" disabled>
+                            Select course
+                          </option>
+                          {courses
+                            .filter((course) => course.students && course.students.some((s) => s.id === student.id))
+                            .map((course) => (
+                              <option key={course.courseId} value={course.courseId}>
+                                {course.courseCode}: {course.courseName}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Semester</label>
+                        <select
+                          className="w-full px-3 py-2 border rounded-md"
+                          value={selectedSemester || ""}
+                          onChange={(e) => setSelectedSemester(e.target.value)}
+                        >
+                          <option value="" disabled>
+                            Select semester
+                          </option>
+                          {courses
+                            .filter((course) => course.students && course.students.some((s) => s.id === student.id))
+                            .map((course) => (
+                              <option key={course.semesterId} value={course.semesterId}>
+                                {course.semesterName}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={handleGenerateAnalysis}
+                        disabled={!selectedCourse || !selectedSemester || isAnalysisLoading}
+                        className="gap-2"
+                      >
+                        Generate Performance Analysis
+                      </Button>
+                    </div>
+
+                    {isPerformanceLoading || isAnalysisLoading ? (
+                      <div className="space-y-4">
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-[300px] w-full" />
+                      </div>
+                    ) : performanceError || analysisError ? (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{performanceError || analysisError}</AlertDescription>
+                      </Alert>
+                    ) : performance ? (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <div className="bg-muted/30 p-3 rounded-lg">
+                            <p className="text-sm text-muted-foreground">Attendance</p>
+                            <p className="text-2xl font-bold">{performance.attendancePercentage}%</p>
+                          </div>
+                          <div className="bg-muted/30 p-3 rounded-lg">
+                            <p className="text-sm text-muted-foreground">Assignment Avg</p>
+                            <p className="text-2xl font-bold">{performance.assignmentAverage}%</p>
+                          </div>
+                          <div className="bg-muted/30 p-3 rounded-lg">
+                            <p className="text-sm text-muted-foreground">Quiz Avg</p>
+                            <p className="text-2xl font-bold">{performance.quizAverage}%</p>
+                          </div>
+                          <div className="bg-muted/30 p-3 rounded-lg">
+                            <p className="text-sm text-muted-foreground">Overall Performance</p>
+                            <p className="text-2xl font-bold">{performance.overallPerformance}%</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <Card>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-sm font-medium">Performance Category</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="flex items-center justify-center py-4">
+                                <Badge
+                                  className={`text-lg px-4 py-2 ${getPerformanceBadgeColor(performance.performanceCategory)}`}
+                                >
+                                  {performance.performanceCategory.toUpperCase()}
+                                </Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <Card>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-sm font-medium">Last Updated</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="flex items-center justify-center py-4">
+                                <p className="text-lg">{format(new Date(performance.lastUpdated), "PPP")}</p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <Card>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-sm font-medium">Strengths</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <p>{performance.strengths || "No strengths identified."}</p>
+                            </CardContent>
+                          </Card>
+
+                          <Card>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-sm font-medium">Weaknesses</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <p>{performance.weaknesses || "No weaknesses identified."}</p>
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium">Recommendations</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p>{performance.recommendations || "No recommendations available."}</p>
+                          </CardContent>
+                        </Card>
+
+                        {studentAnalysis && studentAnalysis.aiAnalysis && (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle>AI Analysis</CardTitle>
+                              <CardDescription>Generated performance analysis</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-4">
+                                <div>
+                                  <h3 className="text-sm font-medium mb-2">Overview</h3>
+                                  <p>
+                                    {studentAnalysis.aiAnalysis.studentName} is currently showing{" "}
+                                    {studentAnalysis.aiAnalysis.performanceCategory} performance in{" "}
+                                    {studentAnalysis.aiAnalysis.courseName} with an overall score of{" "}
+                                    {studentAnalysis.aiAnalysis.overallPerformance}%.
+                                  </p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <div className="bg-muted/30 p-3 rounded-lg">
+                                    <p className="text-sm text-muted-foreground">Attendance</p>
+                                    <p className="text-xl font-bold">
+                                      {studentAnalysis.aiAnalysis.attendancePercentage}%
+                                    </p>
+                                  </div>
+                                  <div className="bg-muted/30 p-3 rounded-lg">
+                                    <p className="text-sm text-muted-foreground">Assignment</p>
+                                    <p className="text-xl font-bold">{studentAnalysis.aiAnalysis.assignmentAverage}%</p>
+                                  </div>
+                                  <div className="bg-muted/30 p-3 rounded-lg">
+                                    <p className="text-sm text-muted-foreground">Quiz</p>
+                                    <p className="text-xl font-bold">{studentAnalysis.aiAnalysis.quizAverage}%</p>
+                                  </div>
+                                </div>
+
+                                {studentAnalysis.aiAnalysis.assignmentDetails &&
+                                  studentAnalysis.aiAnalysis.assignmentDetails.length > 0 && (
+                                    <div>
+                                      <h3 className="text-sm font-medium mb-2">Assignment Details</h3>
+                                      <div className="rounded-md border overflow-hidden">
+                                        <table className="w-full">
+                                          <thead>
+                                            <tr className="bg-muted/50">
+                                              <th className="px-4 py-2 text-left text-sm font-medium">Title</th>
+                                              <th className="px-4 py-2 text-left text-sm font-medium">Score</th>
+                                              <th className="px-4 py-2 text-left text-sm font-medium">Date</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {studentAnalysis.aiAnalysis.assignmentDetails.map((assignment, index) => (
+                                              <tr key={index} className="border-t">
+                                                <td className="px-4 py-2 text-sm">{assignment.title}</td>
+                                                <td className="px-4 py-2 text-sm">{assignment.score}%</td>
+                                                <td className="px-4 py-2 text-sm">
+                                                  {format(new Date(assignment.date), "PPP")}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                {studentAnalysis.aiAnalysis.quizDetails &&
+                                  studentAnalysis.aiAnalysis.quizDetails.length > 0 && (
+                                    <div>
+                                      <h3 className="text-sm font-medium mb-2">Quiz Details</h3>
+                                      <div className="rounded-md border overflow-hidden">
+                                        <table className="w-full">
+                                          <thead>
+                                            <tr className="bg-muted/50">
+                                              <th className="px-4 py-2 text-left text-sm font-medium">Title</th>
+                                              <th className="px-4 py-2 text-left text-sm font-medium">Score</th>
+                                              <th className="px-4 py-2 text-left text-sm font-medium">Date</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {studentAnalysis.aiAnalysis.quizDetails.map((quiz, index) => (
+                                              <tr key={index} className="border-t">
+                                                <td className="px-4 py-2 text-sm">{quiz.title}</td>
+                                                <td className="px-4 py-2 text-sm">{quiz.score}%</td>
+                                                <td className="px-4 py-2 text-sm">
+                                                  {format(new Date(quiz.date), "PPP")}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6">
+                        <p className="text-muted-foreground">
+                          Select a course and semester to view performance data, or generate a new analysis.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

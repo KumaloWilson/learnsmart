@@ -41,6 +41,11 @@ import type {
   UpdateAttendanceRequest,
   AttendanceStatistics,
   CourseAttendanceSummary,
+  PerformanceFilterDto,
+  StudentPerformance,
+  GenerateAnalysisRequest,
+  GenerateClassAnalysisRequest,
+  ClassPerformanceAnalysis,
 } from "./types"
 
 // Authentication hooks
@@ -1230,6 +1235,120 @@ export const useAttendanceStatistics = () => {
     getCourseAttendanceSummary,
     studentStats,
     courseSummary,
+    isLoading,
+    error,
+  }
+}
+
+// Performance Analytics hooks
+export const useStudentPerformances = () => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [performances, setPerformances] = useState<StudentPerformance[]>([])
+
+  const getStudentPerformances = async (filters?: PerformanceFilterDto) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getStudentPerformances(filters)
+      setPerformances(data)
+      return data
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch student performances. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { getStudentPerformances, performances, isLoading, error }
+}
+
+export const useStudentPerformance = () => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [performance, setPerformance] = useState<StudentPerformance | null>(null)
+
+  const getStudentPerformanceById = async (id: string) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getStudentPerformanceById(id)
+      setPerformance(data)
+      return data
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to fetch student performance. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getStudentCoursePerformance = async (studentProfileId: string, courseId: string, semesterId: string) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.getStudentCoursePerformance(studentProfileId, courseId, semesterId)
+      setPerformance(data)
+      return data
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || "Failed to fetch student course performance. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return { getStudentPerformanceById, getStudentCoursePerformance, performance, isLoading, error }
+}
+
+export const usePerformanceAnalysis = () => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [studentAnalysis, setStudentAnalysis] = useState<StudentPerformance | null>(null)
+  const [classAnalysis, setClassAnalysis] = useState<ClassPerformanceAnalysis | null>(null)
+
+  const generateStudentAnalysis = async (data: GenerateAnalysisRequest) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await authApi.generateStudentAnalysis(data)
+      setStudentAnalysis(response)
+      return response
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to generate student analysis. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const generateClassAnalysis = async (data: GenerateClassAnalysisRequest) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await authApi.generateClassAnalysis(data)
+      setClassAnalysis(response)
+      return response
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Failed to generate class analysis. Please try again."
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return {
+    generateStudentAnalysis,
+    generateClassAnalysis,
+    studentAnalysis,
+    classAnalysis,
     isLoading,
     error,
   }

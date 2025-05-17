@@ -1,9 +1,8 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
   "/virtual-classes/page": "app/virtual-classes/page.js",
-  "/performance-analytics/page": "app/performance-analytics/page.js",
   "/progress/page": "app/progress/page.js",
   "/assessments/page": "app/assessments/page.js",
   "/courses/[courseId]/topics/page": "app/courses/[courseId]/topics/page.js",
-  "/attendance/page": "app/attendance/page.js"
+  "/attendance/page": "app/attendance/page.js",
+  "/page": "app/page.js"
 }
