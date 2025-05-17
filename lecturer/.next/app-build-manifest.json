@@ -106,6 +106,16 @@
       "static/chunks/main-app.js",
       "static/chunks/app/progress/page.js"
     ],
+    "/assessments/loading": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/assessments/loading.js"
+    ],
+    "/assessments/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/assessments/page.js"
+    ],
     "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",

@@ -173,21 +173,6 @@ export class StudentPerformanceController {
       }
 
 
-      // Send notification to student
-      await this.notificationService.createNotification({
-        userId: analysisData.studentProfileId,
-        title: "Performance Analysis Available",
-        message: `A new performance analysis for your course is now available.`,
-        type: "PERFORMANCE",
-        isRead: false,
-        metadata: {
-          performanceId: analysis.id,
-          courseId: analysisData.courseId,
-          overallPerformance: analysis.overallPerformance,
-          performanceCategory: analysis.performanceCategory,
-        },
-      })
-
       return res.status(200).json({
         success: true,
         data: analysis,
