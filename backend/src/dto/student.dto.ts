@@ -10,8 +10,10 @@ import {
   IsEmail,
   MinLength,
   IsPhoneNumber,
+  IsNumber,
 } from "class-validator"
 import { Expose, Type } from "class-transformer"
+import { IsFloat } from "sequelize-typescript"
 
 export class CreateStudentProfileDto {
   @IsString()
@@ -67,12 +69,12 @@ export class CreateStudentProfileDto {
   @Expose()
   enrollmentDate: Date
 
-  @IsInt()
-  @Min(1)
-  @Max(10)
+  @IsNumber({ allowInfinity: false, allowNaN: false }, { message: 'currentLevel must be a valid number' })
+  @Min(1.1, { message: 'currentLevel must be greater than or equal to 1.1' })
+  @Max(5.2, { message: 'currentLevel must be less than or equal to 5.2' })
   @IsOptional()
   @Expose()
-  currentLevel?: number
+  currentLevel?: number;
 }
 
 export class UpdateStudentProfileDto {
