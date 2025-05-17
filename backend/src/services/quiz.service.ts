@@ -182,6 +182,36 @@ export class QuizService {
     })
   }
 
+  async getQuizAttemptsByQuizId(quizId: string) {
+  const whereClause: any = {
+    quizId: quizId // Filter by the quizId parameter
+  }
+
+  return QuizAttempt.findAll({
+    where: whereClause,
+    include: [
+      {
+        model: Quiz,
+        include: [
+          {
+            model: Course,
+          },
+        ],
+      },
+      {
+        model: StudentProfile,
+        include: [
+          {
+            model: User,
+            attributes: ["firstName", "lastName", "email"],
+          },
+        ],
+      },
+    ],
+    order: [["startTime", "DESC"]],
+  });
+}
+  
   async getQuizAttemptById(id: string) {
     return QuizAttempt.findByPk(id, {
       include: [

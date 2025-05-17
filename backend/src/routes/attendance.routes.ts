@@ -36,7 +36,7 @@ router.post("/bulk", authMiddleware, (req, res) =>
 
 // Statistics and reports
 router.get(
-  "/statistics/:courseId/:semesterId",
+  "/statistics/course/:courseId/semester/:semesterId",
   authMiddleware,
   (req, res) => attendanceController.getAttendanceStatistics(req, res),
 )
@@ -48,7 +48,7 @@ router.get(
 )
 
 router.get(
-  "/report/class/:courseId/:semesterId",
+  "/report/class/:courseId/semester/:semesterId",
   authMiddleware,
   (req, res) => attendanceController.getClassAttendanceReport(req, res),
 )

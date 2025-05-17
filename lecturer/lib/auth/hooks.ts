@@ -741,9 +741,12 @@ export const useQuizStatistics = () => {
       setAttempts(data)
       return data
     } catch (err: any) {
+      console.error("Error fetching quiz attempts:", err)
       const errorMessage = err.response?.data?.message || "Failed to fetch quiz attempts. Please try again."
       setError(errorMessage)
-      throw err
+      // Return empty array instead of throwing
+      setAttempts([])
+      return []
     } finally {
       setIsLoading(false)
     }
@@ -775,9 +778,12 @@ export const useCourseTopics = (courseId: string, semesterId: string) => {
       setTopics(data)
       return data
     } catch (err: any) {
+      console.error("Error fetching course topics:", err)
       const errorMessage = err.response?.data?.message || "Failed to fetch course topics. Please try again."
       setError(errorMessage)
-      throw err
+      // Return empty array instead of throwing to prevent cascading errors
+      setTopics([])
+      return []
     } finally {
       setIsLoading(false)
     }
@@ -963,9 +969,12 @@ export const useTopicProgressStatistics = (courseId: string, semesterId: string)
       setProgressStats(data)
       return data
     } catch (err: any) {
+      console.error("Error fetching topic progress statistics:", err)
       const errorMessage = err.response?.data?.message || "Failed to fetch topic progress statistics. Please try again."
       setError(errorMessage)
-      throw err
+      // Return empty array instead of throwing
+      setProgressStats([])
+      return []
     } finally {
       setIsLoading(false)
     }

@@ -48,6 +48,7 @@ router.delete(
   quizController.delete(req, res),
 )
 
+
 // Get quiz attempts with optional filters
 router.get(
   "/attempts",
@@ -56,6 +57,18 @@ router.get(
      (req, res) =>
   quizController.getQuizAttempts(req, res),
 )
+
+
+// Get quiz attempts with optional filters
+router.get(
+  "/:quizId/attempts",
+   authMiddleware,
+    //validateQuery(quizValidation.getQuizAttemptsQuery),
+     (req, res) =>
+  quizController.getQuizAttempts(req, res),
+)
+
+
 
 // Get a quiz attempt by ID
 router.get(

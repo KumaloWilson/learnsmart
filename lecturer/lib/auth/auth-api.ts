@@ -20,7 +20,6 @@ import type {
   QuizAttempt,
   DashboardData,
   CourseData,
-  CourseDetailResponse,
   StudentDetail,
   AtRiskStudent,
   CourseMasteryData,
@@ -44,6 +43,7 @@ import type {
   UpdateAttendanceRequest,
   AttendanceStatistics,
   CourseAttendanceSummary,
+  CourseDetailResponse,
 } from "./types"
 
 // Authentication API functions
@@ -98,18 +98,6 @@ export const getLecturerDashboard = async (lecturerId: string): Promise<Dashboar
 export const getLecturerCourses = async (lecturerId: string): Promise<CourseData[]> => {
   const response = await axiosInstance.get<{ success: boolean; data: CourseData[] }>(
     `/lecturer-dashboard/${lecturerId}/courses`,
-  )
-  return response.data.data
-}
-
-// New API endpoint for getting detailed course information
-export const getLecturerCourseDetail = async (
-  lecturerId: string,
-  courseId: string,
-  semesterId: string,
-): Promise<CourseDetailResponse["data"]> => {
-  const response = await axiosInstance.get<CourseDetailResponse>(
-    `/lecturer-dashboard/${lecturerId}/course/${courseId}/semester/${semesterId}`,
   )
   return response.data.data
 }
@@ -244,6 +232,19 @@ export const getCourseTopics = async (courseId: string, semesterId: string): Pro
     `/lecturer-portal/course-topics/course/${courseId}/semester/${semesterId}`,
   )
   return response.data
+}
+
+
+// New API endpoint for getting detailed course information
+export const getLecturerCourseDetail = async (
+  lecturerId: string,
+  courseId: string,
+  semesterId: string,
+): Promise<CourseDetailResponse["data"]> => {
+  const response = await axiosInstance.get<CourseDetailResponse>(
+    `/lecturer-dashboard/${lecturerId}/course/${courseId}/semester/${semesterId}`,
+  )
+  return response.data.data
 }
 
 export const getCourseTopic = async (topicId: string): Promise<CourseTopic> => {

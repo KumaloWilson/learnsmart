@@ -45,19 +45,23 @@ export default function QuizDetailsPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
+    let isMounted = true
+
     const fetchData = async () => {
-      if (id) {
+      if (id && isMounted) {
         try {
           // Fetch quiz details
           await getQuizById(id as string)
 
-          // Fetch statistics and attempts
-          try {
-            await getQuizStatistics(id as string)
-            await getQuizAttempts(id as string)
-          } catch (err) {
-            console.error("Error fetching quiz statistics:", err)
-            // Don't throw here, we still want to show the quiz details
+          // Only fetch statistics and attempts if quiz is loaded successfully
+          if (quiz && isMounted) {
+            try {
+              await getQuizStatistics(id as string)
+              await getQuizAttempts(id as string)
+            } catch (err) {
+              console.error("Error fetching quiz statistics or attempts:", err)
+              // Continue showing the quiz details even if statistics fail
+            }
           }
         } catch (err) {
           console.error("Error fetching quiz data:", err)
@@ -66,7 +70,11 @@ export default function QuizDetailsPage() {
     }
 
     fetchData()
-  }, [id, getQuizById, getQuizStatistics, getQuizAttempts])
+
+    return () => {
+      isMounted = false
+    }
+  }, [id, getQuizById])
 
   useEffect(() => {
     if (error) {
@@ -158,7 +166,7 @@ export default function QuizDetailsPage() {
     return (
       <PageContainer title="Quiz Details" description="View and manage quiz">
         <Alert variant="destructive">
-          <AlertDescription>Quiz not found</AlertDescription>
+          <AlertDescription>Quiz not found or could not be loaded</AlertDescription>
         </Alert>
         <div className="mt-4">
           <Button variant="outline" asChild>
@@ -210,7 +218,7 @@ export default function QuizDetailsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-medium">
-              {quiz.course?.code || "No course code"} - {quiz.course?.name || "No course name"}
+              {quiz.course?.code || "No course code"}
             </div>
             <p className="text-sm text-muted-foreground">{quiz.semester?.name || "No semester"}</p>
           </CardContent>

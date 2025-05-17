@@ -30,11 +30,44 @@ export function CourseTopicsSection({ courseId, semesterId }: CourseTopicsSectio
   } = useTopicProgressStatistics(courseId, semesterId)
 
   useEffect(() => {
-    if (courseId && semesterId) {
-      refetchTopics()
-      refetchProgress()
+    let isMounted = true
+
+    const fetchData = async () => {
+      if (courseId && semesterId) {
+        try {
+          await refetchTopics()
+        } catch (err) {
+          console.error("Error fetching topics:", err)
+        }
+      }
     }
-  }, [courseId, semesterId, refetchTopics, refetchProgress])
+
+    fetchData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [courseId, semesterId, refetchTopics])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchProgressData = async () => {
+      if (courseId && semesterId) {
+        try {
+          await refetchProgress()
+        } catch (err) {
+          console.error("Error fetching progress:", err)
+        }
+      }
+    }
+
+    fetchProgressData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [courseId, semesterId, refetchProgress])
 
   const loading = topicsLoading || progressLoading
 

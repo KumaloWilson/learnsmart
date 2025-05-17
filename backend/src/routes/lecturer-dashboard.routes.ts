@@ -6,25 +6,6 @@ import { authMiddleware } from "../middlewares/auth.middleware"
 const router = express.Router()
 const lecturerDashboardController = new LecturerDashboardController()
 
-// Validation schemas
-const lecturerIdParam = Joi.object({
-  lecturerProfileId: Joi.string().uuid().required(),
-})
-
-const courseAndSemesterParams = Joi.object({
-  lecturerProfileId: Joi.string().uuid().required(),
-  courseId: Joi.string().uuid().required(),
-  semesterId: Joi.string().uuid().required(),
-})
-
-const dashboardQuerySchema = Joi.object({
-  startDate: Joi.date(),
-  endDate: Joi.date(),
-  includeAttendance: Joi.boolean().default(true),
-  includePerformance: Joi.boolean().default(true),
-  includeQuizzes: Joi.boolean().default(true),
-  includeAssessments: Joi.boolean().default(true),
-})
 
 // Routes
 router.get(

@@ -16,6 +16,7 @@ import { StudentProfile } from "../models/StudentProfile"
 import { User } from "../models/User"
 import { VirtualClass } from "../models/VirtualClass"
 import { VirtualClassAttendance } from "../models/VirtualClassAttendance"
+import { CourseEnrollment } from "../models/CourseEnrollment"
 
 export class AttendanceService {
   // Physical attendance methods
@@ -360,7 +361,6 @@ export class AttendanceService {
 
   async getClassAttendanceReport(courseId: string, semesterId: string) {
     // Get all students enrolled in the course
-    const { CourseEnrollment, StudentProfile } = require("../models")
     const enrollments = await CourseEnrollment.findAll({
       where: {
         courseId,
@@ -430,7 +430,6 @@ export class AttendanceService {
   }
 
   private async getUniqueStudentsInCourse(courseId: string, semesterId: string): Promise<string[]> {
-    const { CourseEnrollment } = require("../models")
     const enrollments = await CourseEnrollment.findAll({
       where: {
         courseId,
