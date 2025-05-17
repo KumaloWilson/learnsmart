@@ -53,9 +53,9 @@ export class StudentProfile extends Model {
   status!: "active" | "suspended" | "graduated" | "withdrawn"
 
   @Column({
-    type: DataType.INTEGER,
+    type: DataType.FLOAT,
     allowNull: false,
-    defaultValue: 1,
+    defaultValue: 1.1,
   })
   currentLevel!: number
 

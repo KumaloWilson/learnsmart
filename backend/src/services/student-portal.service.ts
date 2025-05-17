@@ -118,7 +118,7 @@ export class StudentPortalService {
           ],
         },
       ],
-      order: [["startTime", "ASC"]],
+      order: [["scheduledStartTime", "ASC"]],
       limit: 5,
     })
 
