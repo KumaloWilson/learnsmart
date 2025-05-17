@@ -1,5 +1,7 @@
 import { IsEmail, IsString, IsEnum, MinLength, Matches } from "class-validator"
 import { Expose } from "class-transformer"
+import { Department } from "../models/Department"
+import { Program } from "../models/Program"
 
 export class RegisterUserDto {
   @IsString()
@@ -86,4 +88,36 @@ export class AuthResponseDto {
 
   @Expose()
   refreshToken: string
+
+  @Expose()
+  studentProfile?: {
+    id: string
+    studentId: string
+    status: "active" | "suspended" | "graduated" | "withdrawn"
+    currentLevel: number
+    enrollmentDate: Date
+    graduationDate?: Date
+    programId: string
+    program?: Program,
+    dateOfBirth?: Date
+    gender?: string
+    address?: string
+    phoneNumber?: string
+  }
+
+  @Expose()
+  lecturerProfile?: {
+    id: string
+    staffId: string
+    title?: string
+    specialization?: string
+    status: "active" | "on_leave" | "retired" | "terminated"
+    joinDate: Date
+    departmentId: string
+    department?: Department
+    bio?: string
+    officeLocation?: string
+    officeHours?: string
+    phoneNumber?: string
+  }
 }

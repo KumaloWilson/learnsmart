@@ -1,8 +1,8 @@
-// File: /home/watkay/ReactProjects/learn-smart/lecturer/src/app/courses/page.tsx
-import * as entry from '../../../../src/app/courses/page.js'
+// File: /home/watkay/ReactProjects/learn-smart/lecturer/app/courses/page.tsx
+import * as entry from '../../../../app/courses/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../../src/app/courses/page.js')
+type TEntry = typeof import('../../../../app/courses/page.js')
 
 type SegmentParams<T extends Object = any> = T extends Record<string, any>
   ? { [K in keyof T]: T[K] extends string ? string | string[] | undefined : never }

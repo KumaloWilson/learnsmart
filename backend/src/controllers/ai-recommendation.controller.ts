@@ -128,11 +128,18 @@ export class AIRecommendationController {
       return res.status(500).json({ message: "Failed to get learning recommendation", error: error })
     }
   }
-
   getStudentRecommendations = async (req: Request, res: Response) => {
     try {
-      const { studentId } = req.params
-      const recommendations = await this.aiRecommendationService.getStudentRecommendations(studentId)
+      const { studentId: studentProfileId } = req.params
+      const { courseId, count, includeCompleted } = req.query
+
+      const recommendations = await this.aiRecommendationService.generateRecommendations({
+        studentProfileId,
+        courseId: courseId as string,
+        count: count ? parseInt(count as string) : undefined,
+        includeCompleted: includeCompleted === 'true',
+      })
+
       return res.status(200).json(recommendations)
     } catch (error) {
       console.error("Error getting student recommendations:", error)
@@ -194,11 +201,11 @@ export class AIRecommendationController {
   provideFeedback = async (req: Request, res: Response) => {
     try {
       const { recommendationId, isHelpful, feedback } = req.body
-      const recommendation = await this.aiRecommendationService.provideFeedback({
+      const recommendation = await this.aiRecommendationService.provideFeedback(
         recommendationId,
         isHelpful,
-        feedback,
-      })
+        feedback
+      )
       if (!recommendation) {
         return res.status(404).json({ message: "Learning recommendation not found" })
       }

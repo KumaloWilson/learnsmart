@@ -1,156 +1,118 @@
-import {
-  IsBoolean,
-  IsDate,
-  IsEnum,
-  IsInt,
-  IsNumber,
-  IsObject,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Max,
-  Min,
-} from "class-validator"
-import { Expose, Type } from "class-transformer"
+import { IsString, IsUUID, IsOptional, IsNumber, IsBoolean, IsObject } from "class-validator"
 
+// Create learning recommendation DTO
 export class CreateLearningRecommendationDto {
-  @IsUUID(4)
-  @Expose()
-  studentProfileId: string
+  @IsUUID()
+  studentProfileId!: string
 
-  @IsUUID(4)
-  @Expose()
-  learningResourceId: string
+  @IsUUID()
+  learningResourceId!: string
 
-  @IsUUID(4)
-  @Expose()
-  courseId: string
+  @IsUUID()
+  courseId!: string
 
-  @IsString()
   @IsOptional()
-  @Expose()
+  @IsString()
   reason?: string
 
-  @IsNumber()
-  @Min(0)
-  @Max(1)
-  @Expose()
-  relevanceScore: number
-}
-
-export class UpdateLearningRecommendationDto {
-  @IsBoolean()
   @IsOptional()
-  @Expose()
+  @IsNumber()
+  relevanceScore?: number
+
+  @IsOptional()
+  @IsBoolean()
   isViewed?: boolean
 
-  @IsDate()
-  @Type(() => Date)
   @IsOptional()
-  @Expose()
-  viewedAt?: Date
-
   @IsBoolean()
-  @IsOptional()
-  @Expose()
   isSaved?: boolean
 
-  @IsBoolean()
   @IsOptional()
-  @Expose()
+  @IsBoolean()
+  isCompleted?: boolean
+}
+
+// Update learning recommendation DTO
+export class UpdateLearningRecommendationDto {
+  @IsOptional()
+  @IsString()
+  reason?: string
+
+  @IsOptional()
+  @IsNumber()
+  relevanceScore?: number
+
+  @IsOptional()
+  @IsBoolean()
+  isViewed?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  isSaved?: boolean
+
+  @IsOptional()
+  @IsBoolean()
   isCompleted?: boolean
 
-  @IsDate()
-  @Type(() => Date)
   @IsOptional()
-  @Expose()
-  completedAt?: Date
-
-  @IsInt()
-  @Min(1)
-  @Max(5)
-  @IsOptional()
-  @Expose()
-  rating?: number
-
   @IsString()
-  @IsOptional()
-  @Expose()
   feedback?: string
 }
 
+// Resource interaction DTO
 export class ResourceInteractionDto {
-  @IsUUID(4)
-  @Expose()
-  studentProfileId: string
+  @IsUUID()
+  studentProfileId!: string
 
-  @IsUUID(4)
-  @Expose()
-  learningResourceId: string
+  @IsUUID()
+  learningResourceId!: string
 
-  @IsEnum(["view", "save", "complete", "rate", "share"], {
-    message: "Interaction type must be one of: view, save, complete, rate, share",
-  })
-  @Expose()
-  interactionType: "view" | "save" | "complete" | "rate" | "share"
+  @IsString()
+  interactionType!: string
 
-  @IsInt()
-  @Min(0)
   @IsOptional()
-  @Expose()
+  @IsNumber()
   durationSeconds?: number
 
-  @IsInt()
-  @Min(1)
-  @Max(5)
   @IsOptional()
-  @Expose()
+  @IsNumber()
   rating?: number
 
-  @IsString()
   @IsOptional()
-  @Expose()
+  @IsString()
   feedback?: string
 
-  @IsObject()
   @IsOptional()
-  @Expose()
-  metadata?: any
+  @IsObject()
+  metadata?: object
 }
 
+// Generate recommendations DTO
 export class GenerateRecommendationsDto {
-  @IsUUID(4)
-  @Expose()
-  studentProfileId: string
+  @IsUUID()
+  studentProfileId!: string
 
-  @IsUUID(4)
-  @Expose()
-  courseId: string
+  @IsUUID()
+  courseId!: string
 
-  @IsInt()
-  @Min(1)
-  @Max(20)
   @IsOptional()
-  @Expose()
+  @IsNumber()
   count?: number
 
-  @IsBoolean()
   @IsOptional()
-  @Expose()
+  @IsBoolean()
   includeCompleted?: boolean
 }
 
+// Recommendation feedback DTO
 export class RecommendationFeedbackDto {
-  @IsUUID(4)
-  @Expose()
-  recommendationId: string
+  @IsUUID()
+  recommendationId!: string
 
   @IsBoolean()
-  @Expose()
-  isHelpful: boolean
+  isHelpful!: boolean
 
-  @IsString()
   @IsOptional()
-  @Expose()
+  @IsString()
   feedback?: string
 }

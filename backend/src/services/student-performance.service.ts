@@ -10,11 +10,14 @@ import type {
 } from "../dto/student-performance.dto"
 import { AssessmentSubmission } from "../models/AssessmentSubmission"
 import { Course } from "../models/Course"
+import { CourseEnrollment } from "../models/CourseEnrollment" // Added import
 import { QuizAttempt } from "../models/QuizAttempt"
 import { Semester } from "../models/Semester"
 import { StudentPerformance } from "../models/StudentPerformance"
 import { StudentProfile } from "../models/StudentProfile"
 import { User } from "../models/User"
+import { Quiz } from "../models/Quiz" // Added import
+import { Assessment } from "../models/Assessment" // Added import
 
 export class StudentPerformanceService {
   private attendanceService: AttendanceService
@@ -319,8 +322,7 @@ export class StudentPerformanceService {
   async generateClassPerformanceAnalysis(data: ClassPerformanceAnalysisDto) {
     const { courseId, semesterId } = data
 
-    // Get all students enrolled in the course
-    const { CourseEnrollment, StudentProfile } = require("../models")
+    // Get all students enrolled in the course - FIXED: using imports instead of require
     const enrollments = await CourseEnrollment.findAll({
       where: {
         courseId,
@@ -442,7 +444,7 @@ export class StudentPerformanceService {
 
   // Helper methods
   private async getAssignmentPerformance(studentProfileId: string, courseId: string, semesterId: string) {
-    const { Assessment } = require("../models")
+    // FIXED: using imports instead of require
     const submissions = await AssessmentSubmission.findAll({
       include: [
         {
@@ -485,7 +487,7 @@ export class StudentPerformanceService {
   }
 
   private async getQuizPerformance(studentProfileId: string, courseId: string, semesterId: string) {
-    const { Quiz } = require("../models")
+    // FIXED: using imports instead of require
     const attempts = await QuizAttempt.findAll({
       include: [
         {
@@ -584,9 +586,9 @@ export class StudentPerformanceService {
 
       // Call OpenAI API
       const response = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
+        "https://api.deepinfra.com/v1/openai/chat/completions",
         {
-          model: "gpt-4o",
+          model: "Qwen/Qwen3-30B-A3B",
           messages: [
             {
               role: "system",

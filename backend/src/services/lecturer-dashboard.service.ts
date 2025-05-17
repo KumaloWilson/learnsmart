@@ -22,6 +22,7 @@ import { TeachingMaterial } from "../models/TeachingMaterial"
 import { User } from "../models/User"
 import { VirtualClass } from "../models/VirtualClass"
 import { VirtualClassAttendance } from "../models/VirtualClassAttendance"
+import { Program } from "../models/Program"
 
 export class LecturerDashboardService {
   private attendanceService: AttendanceService
@@ -319,6 +320,149 @@ export class LecturerDashboardService {
     return result
   }
 
+  async getLecturerCourseDetails(lecturerProfileId: string, courseId: string, semesterId: string) {
+  // Verify that the lecturer is assigned to this course in this semester
+  const courseAssignment = await CourseAssignment.findOne({
+    where: { 
+      lecturerProfileId,
+      courseId,
+      semesterId
+    },
+    include: [
+      { 
+        model: Course, 
+        as: "course",
+        include: [{ model: Program, as: "program" }]
+      },
+      { model: Semester, as: "semester" },
+      { 
+        model: LecturerProfile, 
+        as: "lecturerProfile",
+        include: [{ 
+          model: User, 
+          as: "user",
+          attributes: ['firstName', 'lastName', 'email'] 
+        }]
+      }
+    ],
+  });
+
+  if (!courseAssignment) {
+    throw new Error("Course assignment not found or you don't have access to this course");
+  }
+
+  // Get all student enrollments for this course in this semester
+  const enrollments = await CourseEnrollment.findAll({
+    where: {
+      courseId,
+      semesterId
+    },
+    include: [
+      { 
+        model: StudentProfile, 
+        as: "studentProfile",
+        include: [{ 
+          model: User, 
+          as: "user",
+          attributes: ['firstName', 'lastName', 'email'] 
+        }]
+      }
+    ],
+  });
+
+  // Get statistics about course enrollment
+  const enrollmentStats = {
+    total: enrollments.length,
+    statusCounts: {
+      enrolled: enrollments.filter(e => e.status === "enrolled").length,
+      completed: enrollments.filter(e => e.status === "completed").length,
+      failed: enrollments.filter(e => e.status === "failed").length,
+      withdrawn: enrollments.filter(e => e.status === "withdrawn").length,
+    },
+    averageGrade: enrollments
+      .filter(e => e.grade !== null && e.grade !== undefined)
+      .reduce((sum, e) => sum + (e.grade || 0), 0) / 
+      (enrollments.filter(e => e.grade !== null && e.grade !== undefined).length || 1),
+  };
+
+  // Get other lecturers assigned to this course
+  const otherLecturers = await CourseAssignment.findAll({
+    where: { 
+      courseId,
+      semesterId,
+      lecturerProfileId: { [Op.ne]: lecturerProfileId }
+    },
+    include: [
+      { 
+        model: LecturerProfile, 
+        as: "lecturerProfile",
+        include: [{ 
+          model: User, 
+          as: "user",
+          attributes: ['firstName', 'lastName', 'email'] 
+        }]
+      }
+    ],
+  });
+
+  // Format the student data
+  const students = enrollments.map(enrollment => {
+    const student = enrollment.studentProfile;
+    return {
+      id: student?.id,
+      studentId: student?.studentId,
+      fullName: `${student?.user?.firstName || ''} ${student?.user?.lastName || ''}`.trim(),
+      email: student?.user?.email,
+      level: student?.currentLevel,
+      status: enrollment.status,
+      grade: enrollment.grade,
+      letterGrade: enrollment.letterGrade
+    };
+  });
+
+  return {
+    courseAssignment: {
+      id: courseAssignment.id,
+      role: courseAssignment.role,
+      isActive: courseAssignment.isActive,
+      assignedDate: courseAssignment.createdAt
+    },
+    course: {
+      id: courseAssignment.course?.id,
+      name: courseAssignment.course?.name,
+      code: courseAssignment.course?.code,
+      description: courseAssignment.course?.description,
+      creditHours: courseAssignment.course?.creditHours,
+      level: courseAssignment.course?.level,
+      program: {
+        id: courseAssignment.course?.program?.id,
+        name: courseAssignment.course?.program?.name
+      }
+    },
+    semester: {
+      id: courseAssignment.semester?.id,
+      name: courseAssignment.semester?.name,
+      startDate: courseAssignment.semester?.startDate,
+      endDate: courseAssignment.semester?.endDate,
+      isActive: courseAssignment.semester?.isActive,
+      academicYear: courseAssignment.semester?.academicYear
+    },
+    lecturer: {
+      id: courseAssignment.lecturerProfile?.id,
+      fullName: `${courseAssignment.lecturerProfile?.user?.firstName || ''} ${courseAssignment.lecturerProfile?.user?.lastName || ''}`.trim(),
+      email: courseAssignment.lecturerProfile?.user?.email
+    },
+    otherLecturers: otherLecturers.map(assignment => ({
+      id: assignment.lecturerProfile?.id,
+      fullName: `${assignment.lecturerProfile?.user?.firstName || ''} ${assignment.lecturerProfile?.user?.lastName || ''}`.trim(),
+      email: assignment.lecturerProfile?.user?.email,
+      role: assignment.role
+    })),
+    enrollmentStats,
+    students
+  };
+}
+
   async getLecturerCourses(lecturerProfileId: string) {
     const courseAssignments = await CourseAssignment.findAll({
       where: { lecturerProfileId },
@@ -327,10 +471,10 @@ export class LecturerDashboardService {
         { model: Semester, as: "semester" },
       ],
     })
-
+  
     const courseIds = courseAssignments.map((assignment) => assignment.courseId)
     const semesterIds = courseAssignments.map((assignment) => assignment.semesterId)
-
+  
     // Get student counts for each course
     const enrollmentCounts = await CourseEnrollment.findAll({
       attributes: [
@@ -344,25 +488,67 @@ export class LecturerDashboardService {
       },
       group: ["courseId", "semesterId"],
     })
-
+  
     // Build enrollment map for easy access
     const enrollmentMap: Record<string, number> = {}
     enrollmentCounts.forEach((count: any) => {
       const key = `${count.courseId}-${count.semesterId}`
       enrollmentMap[key] = count.get("studentCount")
     })
-
-    return courseAssignments.map((assignment) => ({
-      id: assignment.id,
-      courseId: assignment.courseId,
-      courseName: assignment.course?.name,
-      courseCode: assignment.course?.code,
-      courseDescription: assignment.course?.description,
-      semesterId: assignment.semesterId,
-      semesterName: assignment.semester?.name,
-      studentCount: enrollmentMap[`${assignment.courseId}-${assignment.semesterId}`] || 0,
-      assignedDate: assignment.createdAt,
-    }))
+  
+    // Get all student enrollments with student profile information
+    const enrollments = await CourseEnrollment.findAll({
+      where: {
+        courseId: { [Op.in]: courseIds },
+        semesterId: { [Op.in]: semesterIds },
+      },
+      include: [
+        { 
+          model: StudentProfile, 
+          as: "studentProfile",
+          include: [{ 
+            model: User, 
+            as: "user",
+            attributes: ['firstName', 'lastName', 'email'] 
+          }]
+        }
+      ],
+    })
+  
+    // Group students by course and semester
+    const studentsByCourse: Record<string, any[]> = {}
+    enrollments.forEach((enrollment: any) => {
+      const key = `${enrollment.courseId}-${enrollment.semesterId}`
+      if (!studentsByCourse[key]) {
+        studentsByCourse[key] = []
+      }
+      
+      const student = enrollment.studentProfile
+      studentsByCourse[key].push({
+        id: student.id,
+        studentId: student.studentId,
+        fullName: `${student.user?.firstName || ''} ${student.user?.lastName || ''}`.trim(),
+        email: student.user?.email,
+        level: student.currentLevel,
+        status: student.status,
+      })
+    })
+  
+    return courseAssignments.map((assignment) => {
+      const key = `${assignment.courseId}-${assignment.semesterId}`
+      return {
+        id: assignment.id,
+        courseId: assignment.courseId,
+        courseName: assignment.course?.name,
+        courseCode: assignment.course?.code,
+        courseDescription: assignment.course?.description,
+        semesterId: assignment.semesterId,
+        semesterName: assignment.semester?.name,
+        studentCount: enrollmentMap[key] || 0,
+        assignedDate: assignment.createdAt,
+        students: studentsByCourse[key] || [],
+      }
+    })
   }
 
   private async getAttendanceOverview(courseIds: string[], semesterIds: string[], dateFilter: any) {

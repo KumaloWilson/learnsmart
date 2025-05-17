@@ -74,6 +74,25 @@ export class LecturerDashboardController {
     }
   }
 
+  getLecturerCourseDetails = async (req: Request, res: Response) => {
+    try {
+      const { lecturerProfileId, courseId, semesterId } = req.params
+      const course = await this.lecturerDashboardService.getLecturerCourseDetails(lecturerProfileId, courseId, semesterId )
+
+      return res.status(200).json({
+        success: true,
+        data: course,
+      })
+    } catch (error) {
+      console.error("Error getting lecturer course:", error)
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve lecturer course details",
+        error: error,
+      })
+    }
+  }
+
   getAtRiskStudents = async (req: Request, res: Response) => {
     try {
       const { lecturerProfileId } = req.params

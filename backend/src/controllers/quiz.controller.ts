@@ -73,6 +73,16 @@ export class QuizController {
   }
 
   // Quiz attempt methods
+  async getQuizAttemptsByQuizID(req: Request, res: Response) {
+    try {
+      const { quizId } = req.params
+      const attempts = await this.quizService.getQuizAttemptsByQuizId(quizId)
+      return res.status(200).json(attempts)
+    } catch (error: any) {
+      return res.status(500).json({ message: error.message })
+    }
+  }
+
   async getQuizAttempts(req: Request, res: Response) {
     try {
       const filters: QuizAttemptFilterDto = req.query as any

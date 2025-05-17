@@ -567,6 +567,7 @@ export class StudentPortalService {
     })
   }
 
+
   // Virtual class methods
   async getVirtualClasses(studentProfileId: string, courseId?: string, semesterId?: string) {
     // First, get the student's enrollments

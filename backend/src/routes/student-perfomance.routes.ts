@@ -1,96 +1,69 @@
-import express from "express"
+import express, { Request, Response, NextFunction } from "express"
 import { StudentPerformanceController } from "../controllers/student-performance.controller"
-import { validateDto, validateParams, validateQuery } from "../middlewares/validation.middleware"
-import Joi from "joi"
 import { authMiddleware } from "../middlewares/auth.middleware"
-import {
-  CreateStudentPerformanceDto,
-  UpdateStudentPerformanceDto,
-  GeneratePerformanceAnalysisDto,
-  ClassPerformanceAnalysisDto,
-} from "../dto/student-performance.dto"
 
 const router = express.Router()
 const studentPerformanceController = new StudentPerformanceController()
 
 // Routes
-router.get(
-  "/",
-  authMiddleware,
-  validateQuery(
-    Joi.object({
-      studentProfileId: Joi.string().uuid(),
-      courseId: Joi.string().uuid(),
-      semesterId: Joi.string().uuid(),
-      performanceCategory: Joi.string(),
-      minOverallPerformance: Joi.number().min(0).max(100),
-      maxOverallPerformance: Joi.number().min(0).max(100),
-    }),
-  ),
-  studentPerformanceController.findAll,
-)
+router.get("/", authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await studentPerformanceController.findAll(req, res)
+  } catch (err) {
+    next(err)
+  }
+})
 
-router.get(
-  "/:id",
-  authMiddleware,
-  validateParams(
-    Joi.object({
-      id: Joi.string().uuid().required(),
-    }),
-  ),
-  studentPerformanceController.findById,
-)
+router.get("/:id", authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await studentPerformanceController.findById(req, res)
+  } catch (err) {
+    next(err)
+  }
+})
 
 router.get(
   "/student/:studentProfileId/course/:courseId/semester/:semesterId",
   authMiddleware,
-  validateParams(
-    Joi.object({
-      studentProfileId: Joi.string().uuid().required(),
-      courseId: Joi.string().uuid().required(),
-      semesterId: Joi.string().uuid().required(),
-    }),
-  ),
-  studentPerformanceController.findByStudent,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await studentPerformanceController.findByStudent(req, res)
+    } catch (err) {
+      next(err)
+    }
+  },
 )
 
-router.post("/", authMiddleware, validateDto(CreateStudentPerformanceDto), studentPerformanceController.create)
+router.put("/:id", authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await studentPerformanceController.update(req, res)
+  } catch (err) {
+    next(err)
+  }
+})
 
-router.put(
-  "/:id",
-  authMiddleware,
-  validateParams(
-    Joi.object({
-      id: Joi.string().uuid().required(),
-    }),
-  ),
-  validateDto(UpdateStudentPerformanceDto),
-  studentPerformanceController.update,
-)
+router.delete("/:id", authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await studentPerformanceController.delete(req, res)
+  } catch (err) {
+    next(err)
+  }
+})
 
-router.delete(
-  "/:id",
-  authMiddleware,
-  validateParams(
-    Joi.object({
-      id: Joi.string().uuid().required(),
-    }),
-  ),
-  studentPerformanceController.delete,
-)
+router.post("/analysis", authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await studentPerformanceController.generatePerformanceAnalysis(req, res)
+  } catch (err) {
+    next(err)
+  }
+})
 
-router.post(
-  "/analysis",
-  authMiddleware,
-  validateDto(GeneratePerformanceAnalysisDto),
-  studentPerformanceController.generatePerformanceAnalysis,
-)
-
-router.post(
-  "/class-analysis",
-  authMiddleware,
-  validateDto(ClassPerformanceAnalysisDto),
-  studentPerformanceController.generateClassPerformanceAnalysis,
-)
+router.post("/class-analysis", authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await studentPerformanceController.generateClassPerformanceAnalysis(req, res)
+  } catch (err) {
+    next(err)
+  }
+})
 
 export default router
