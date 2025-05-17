@@ -2,6 +2,7 @@ import { IsEmail, IsString, IsEnum, MinLength, Matches } from "class-validator"
 import { Expose } from "class-transformer"
 import { Department } from "../models/Department"
 import { Program } from "../models/Program"
+import { Course } from "../models/Course"
 
 export class RegisterUserDto {
   @IsString()
@@ -97,12 +98,99 @@ export class AuthResponseDto {
     currentLevel: number
     enrollmentDate: Date
     graduationDate?: Date
-    programId: string
-    program?: Program,
     dateOfBirth?: Date
     gender?: string
     address?: string
     phoneNumber?: string
+    
+    // Program details
+    programId: string
+    program?: {
+      id: string
+      name: string
+      code?: string
+      description?: string
+      durationYears: number
+      level: "undergraduate" | "postgraduate" | "doctorate"
+      department?: Department
+      courses?: Course[]
+    }
+
+    // Active semester information
+    activeSemester?: {
+      id: string
+      name: string
+      startDate: Date
+      endDate: Date
+      academicYear: number
+    }
+
+    // Current semester academic performance
+    currentSemesterPerformance?: {
+      id: string
+      gpa: number
+      cgpa: number
+      totalCredits: number
+      earnedCredits: number
+      remarks?: string
+    }
+
+    // Academic records history
+    academicRecords?: Array<{
+      id: string
+      semesterId: string
+      semesterName?: string
+      academicYear?: number
+      gpa: number
+      cgpa: number
+      totalCredits: number
+      earnedCredits: number
+      remarks?: string
+    }>
+
+    // Current semester course enrollments
+    currentEnrollments?: Array<{
+      id: string
+      courseId: string
+      courseName?: string
+      courseCode?: string
+      status: "enrolled" | "completed" | "failed" | "withdrawn"
+      grade?: number
+      letterGrade?: string
+      creditHours?: number
+    }>
+
+    // Learning recommendations
+    learningRecommendations?: Array<{
+      id: string
+      resourceId: string
+      resourceTitle?: string
+      resourceType?: "video" | "article" | "book" | "exercise" | "quiz" | "other"
+      resourceUrl?: string
+      courseId: string
+      courseName?: string
+      courseCode?: string
+      relevanceScore: number
+      isViewed: boolean
+      isSaved: boolean
+      isCompleted: boolean
+      completedAt?: Date
+      rating?: number
+      feedback?: string
+    }>
+
+    // Notifications
+    notifications?: Array<{
+      id: string
+      title: string
+      message: string
+      type: "info" | "success" | "warning" | "error" | "assignment" | "grade" | "announcement" | "enrollment" | "system"
+      isRead: boolean
+      readAt?: Date
+      link?: string
+      metadata?: object
+      createdAt: Date
+    }>
   }
 
   @Expose()
