@@ -1,104 +1,140 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
+import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
+import { authService } from "@/lib/services/auth.service"
+import type { AuthState, LoginCredentials, AuthResponse } from "@/lib/types/auth.types"
 
-export interface User {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-  role: string
-}
-
-export interface AuthState {
-  user: User | null
-  accessToken: string | null
-  refreshToken: string | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  error: string | null
-}
-
+// Initial state
 const initialState: AuthState = {
   user: null,
+  studentProfile: null,
   accessToken: null,
   refreshToken: null,
   isAuthenticated: false,
-  isLoading: true, // Start with loading true to prevent flash of unauthenticated content
+  isLoading: false,
   error: null,
 }
 
-// Load auth state from localStorage if available
-if (typeof window !== "undefined") {
+// Async thunks
+export const loginUser = createAsyncThunk("auth/login", async (credentials: LoginCredentials, { rejectWithValue }) => {
   try {
-    const storedAuth = localStorage.getItem("auth")
-    if (storedAuth) {
-      const parsedAuth = JSON.parse(storedAuth)
-      initialState.user = parsedAuth.user
-      initialState.accessToken = parsedAuth.accessToken
-      initialState.refreshToken = parsedAuth.refreshToken
-      initialState.isAuthenticated = !!parsedAuth.accessToken
+    const response = await authService.login(credentials)
+    return response
+  } catch (error) {
+    if (error instanceof Error) {
+      return rejectWithValue(error.message)
     }
-  } catch (e) {
-    console.error("Failed to parse stored auth data", e)
-  } finally {
-    initialState.isLoading = false
+    return rejectWithValue("Login failed")
   }
-}
+})
 
+export const logoutUser = createAsyncThunk("auth/logout", async () => {
+  authService.logout()
+  return null
+})
+
+export const restoreAuthState = createAsyncThunk("auth/restore", async () => {
+  const authData = authService.getStoredAuthData()
+  return authData
+})
+
+export const forgotPassword = createAsyncThunk("auth/forgotPassword", async (email: string, { rejectWithValue }) => {
+  try {
+    const response = await authService.forgotPassword(email)
+    return response
+  } catch (error) {
+    if (error instanceof Error) {
+      return rejectWithValue(error.message)
+    }
+    return rejectWithValue("Password reset request failed")
+  }
+})
+
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async ({ token, password }: { token: string; password: string }, { rejectWithValue }) => {
+    try {
+      const response = await authService.resetPassword(token, password)
+      return response
+    } catch (error) {
+      if (error instanceof Error) {
+        return rejectWithValue(error.message)
+      }
+      return rejectWithValue("Password reset failed")
+    }
+  },
+)
+
+// Auth slice
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setCredentials: (
-      state,
-      action: PayloadAction<{
-        user: User
-        accessToken: string
-        refreshToken: string
-      }>,
-    ) => {
-      const { user, accessToken, refreshToken } = action.payload
-      state.user = user
-      state.accessToken = accessToken
-      state.refreshToken = refreshToken
-      state.isAuthenticated = true
+    clearError: (state) => {
       state.error = null
-      state.isLoading = false
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      // Login cases
+      .addCase(loginUser.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(loginUser.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
+        state.isLoading = false
+        state.isAuthenticated = true
+        state.user = action.payload.user
+        state.studentProfile = action.payload.studentProfile
+        state.accessToken = action.payload.accessToken
+        state.refreshToken = action.payload.refreshToken
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
+      })
 
-      // Store in localStorage for persistence
-      if (typeof window !== "undefined") {
-        localStorage.setItem(
-          "auth",
-          JSON.stringify({
-            user,
-            accessToken,
-            refreshToken,
-          }),
-        )
-      }
-    },
-    setLoading: (state, action: PayloadAction<boolean>) => {
-      state.isLoading = action.payload
-    },
-    setError: (state, action: PayloadAction<string | null>) => {
-      state.error = action.payload
-      state.isLoading = false
-    },
-    logout: (state) => {
-      state.user = null
-      state.accessToken = null
-      state.refreshToken = null
-      state.isAuthenticated = false
-      state.error = null
-      state.isLoading = false
+      // Logout cases
+      .addCase(logoutUser.fulfilled, (state) => {
+        return initialState
+      })
 
-      // Clear from localStorage
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("auth")
-      }
-    },
+      // Restore auth state cases
+      .addCase(restoreAuthState.fulfilled, (state, action) => {
+        if (action.payload) {
+          state.isAuthenticated = true
+          state.user = action.payload.user
+          state.studentProfile = action.payload.studentProfile
+          state.accessToken = action.payload.accessToken
+          state.refreshToken = action.payload.refreshToken
+        }
+      })
+
+      // Forgot password cases
+      .addCase(forgotPassword.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.isLoading = false
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
+      })
+
+      // Reset password cases
+      .addCase(resetPassword.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.isLoading = false
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload as string
+      })
   },
 })
 
-export const { setCredentials, setLoading, setError, logout } = authSlice.actions
-
+export const { clearError } = authSlice.actions
 export default authSlice.reducer

@@ -1,295 +1,222 @@
+"use client"
+
+import { useEffect } from "react"
+import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks"
+import { fetchAssessments } from "@/lib/redux/slices/assessmentSlice"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, Calendar, Clock, FileText, GraduationCap } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { Calendar, Clock, FileText, CheckCircle, AlertCircle } from "lucide-react"
+import { formatDate, formatTime } from "@/lib/utils/date-utils"
 import Link from "next/link"
-import { Progress } from "@/components/ui/progress"
+import { MainLayout } from "@/components/main-layout"
 
 export default function AssessmentsPage() {
-  const upcomingAssessments = [
-    {
-      id: 1,
-      title: "JavaScript Fundamentals Quiz",
-      course: "Web Development Fundamentals",
-      type: "Quiz",
-      date: "May 20, 2023",
-      time: "2:00 PM",
-      duration: "45 minutes",
-      questions: 25,
-      status: "Not Started",
-    },
-    {
-      id: 2,
-      title: "Midterm Exam",
-      course: "Data Structures and Algorithms",
-      type: "Exam",
-      date: "June 1, 2023",
-      time: "10:00 AM",
-      duration: "2 hours",
-      questions: 50,
-      status: "Not Started",
-    },
-    {
-      id: 3,
-      title: "Neural Networks Paper",
-      course: "Introduction to Machine Learning",
-      type: "Paper",
-      date: "May 25, 2023",
-      time: "11:59 PM",
-      duration: "N/A",
-      questions: null,
-      status: "Not Started",
-    },
-  ]
+  const dispatch = useAppDispatch()
+  const { assessments, isLoading, error } = useAppSelector((state) => state.assessment)
+  const { accessToken } = useAppSelector((state) => state.auth)
 
-  const completedAssessments = [
-    {
-      id: 4,
-      title: "Data Structure Basics Quiz",
-      course: "Data Structures and Algorithms",
-      type: "Quiz",
-      date: "May 10, 2023",
-      score: 85,
-      totalScore: 100,
-      grade: "B",
-      feedback: "Good understanding of basic concepts. Review linked lists.",
-    },
-    {
-      id: 5,
-      title: "HTML and CSS Quiz",
-      course: "Web Development Fundamentals",
-      type: "Quiz",
-      date: "May 5, 2023",
-      score: 92,
-      totalScore: 100,
-      grade: "A",
-      feedback: "Excellent work! Great understanding of CSS selectors.",
-    },
-    {
-      id: 6,
-      title: "Introduction to AI Paper",
-      course: "Introduction to Machine Learning",
-      type: "Paper",
-      date: "April 28, 2023",
-      score: 88,
-      totalScore: 100,
-      grade: "B+",
-      feedback: "Well-researched paper. Could improve on technical depth.",
-    },
-  ]
+  useEffect(() => {
+    if (accessToken) {
+      dispatch(fetchAssessments(accessToken))
+    }
+  }, [dispatch, accessToken])
 
-  return (
-    <div className="flex flex-col min-h-screen">
-      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b">
-        <div className="container flex items-center justify-between h-16 px-4">
-          <h1 className="text-xl font-semibold md:text-2xl">Assessments</h1>
+  const now = new Date()
+
+  // Filter assessments by type and status
+  const quizzes = assessments.filter((assessment) => assessment.type === "quiz")
+  const assignments = assessments.filter((assessment) => assessment.type === "assignment")
+  const exams = assessments.filter((assessment) => assessment.type === "exam")
+
+  const upcoming = assessments.filter((assessment) => new Date(assessment.dueDate) > now)
+  const past = assessments.filter((assessment) => new Date(assessment.dueDate) <= now)
+
+  const content = (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">Assessments</h1>
+        <p className="text-muted-foreground">View and complete your assessments</p>
+      </div>
+
+      {isLoading ? (
+        <div className="flex h-64 w-full items-center justify-center">
+          <LoadingSpinner size="lg" />
         </div>
-      </header>
-
-      <div className="container px-4 py-6 flex-1">
-        <Tabs defaultValue="upcoming" className="w-full">
-          <TabsList className="mb-6">
+      ) : error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : assessments.length === 0 ? (
+        <Alert>
+          <AlertDescription>No assessments available at this time.</AlertDescription>
+        </Alert>
+      ) : (
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
+            <TabsTrigger value="assignments">Assignments</TabsTrigger>
+            <TabsTrigger value="exams">Exams</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="upcoming" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {upcomingAssessments.map((assessment) => (
-                <Card key={assessment.id} className="flex flex-col card-hover-effect">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <Badge
-                        variant="outline"
-                        className={
-                          assessment.type === "Quiz"
-                            ? "bg-blue-50 text-blue-700 border-blue-200"
-                            : assessment.type === "Exam"
-                              ? "bg-purple-50 text-purple-700 border-purple-200"
-                              : "bg-green-50 text-green-700 border-green-200"
-                        }
-                      >
-                        {assessment.type}
-                      </Badge>
-                      {new Date(assessment.date) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) && (
-                        <Badge className="bg-yellow-500 hover:bg-yellow-600">Soon</Badge>
-                      )}
-                    </div>
-                    <CardTitle className="mt-2">{assessment.title}</CardTitle>
-                    <CardDescription>{assessment.course}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>
-                          {assessment.date} at {assessment.time}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>{assessment.duration}</span>
-                      </div>
-                      {assessment.questions && (
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span>{assessment.questions} questions</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    {assessment.type === "Paper" ? (
-                      <Button className="w-full" asChild>
-                        <Link href={`/assessments/${assessment.id}`}>Submit Paper</Link>
-                      </Button>
-                    ) : (
-                      <Button className="w-full" asChild>
-                        <Link href={`/assessments/${assessment.id}`}>Start {assessment.type}</Link>
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
+          <TabsContent value="all" className="mt-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {assessments.map((assessment) => (
+                <AssessmentCard key={assessment.id} assessment={assessment} />
               ))}
             </div>
           </TabsContent>
 
-          <TabsContent value="completed" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {completedAssessments.map((assessment) => (
-                <Card key={assessment.id} className="flex flex-col card-hover-effect">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <Badge
-                        variant="outline"
-                        className={
-                          assessment.type === "Quiz"
-                            ? "bg-blue-50 text-blue-700 border-blue-200"
-                            : assessment.type === "Exam"
-                              ? "bg-purple-50 text-purple-700 border-purple-200"
-                              : "bg-green-50 text-green-700 border-green-200"
-                        }
-                      >
-                        {assessment.type}
-                      </Badge>
-                      <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
-                        Completed
-                      </Badge>
-                    </div>
-                    <CardTitle className="mt-2">{assessment.title}</CardTitle>
-                    <CardDescription>{assessment.course}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Score</span>
-                        <span className="font-medium">
-                          {assessment.score}/{assessment.totalScore}
-                        </span>
-                      </div>
-                      <Progress value={(assessment.score / assessment.totalScore) * 100} className="h-2" />
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Grade</span>
-                        <span
-                          className={`font-bold ${
-                            assessment.grade.startsWith("A")
-                              ? "text-green-600"
-                              : assessment.grade.startsWith("B")
-                                ? "text-blue-600"
-                                : assessment.grade.startsWith("C")
-                                  ? "text-yellow-600"
-                                  : "text-red-600"
-                          }`}
-                        >
-                          {assessment.grade}
-                        </span>
-                      </div>
-                      <div className="text-sm">
-                        <p className="font-medium mb-1">Feedback:</p>
-                        <p className="text-muted-foreground">{assessment.feedback}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button className="w-full" variant="outline" asChild>
-                      <Link href={`/assessments/${assessment.id}`}>View Details</Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+          <TabsContent value="upcoming" className="mt-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {upcoming.length > 0 ? (
+                upcoming.map((assessment) => <AssessmentCard key={assessment.id} assessment={assessment} />)
+              ) : (
+                <div className="col-span-full text-center py-12 text-muted-foreground">No upcoming assessments.</div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="quizzes" className="mt-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {quizzes.length > 0 ? (
+                quizzes.map((assessment) => <AssessmentCard key={assessment.id} assessment={assessment} />)
+              ) : (
+                <div className="col-span-full text-center py-12 text-muted-foreground">No quizzes available.</div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="assignments" className="mt-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {assignments.length > 0 ? (
+                assignments.map((assessment) => <AssessmentCard key={assessment.id} assessment={assessment} />)
+              ) : (
+                <div className="col-span-full text-center py-12 text-muted-foreground">No assignments available.</div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="exams" className="mt-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {exams.length > 0 ? (
+                exams.map((assessment) => <AssessmentCard key={assessment.id} assessment={assessment} />)
+              ) : (
+                <div className="col-span-full text-center py-12 text-muted-foreground">No exams available.</div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
+      )}
+    </div>
+  )
 
-        <div className="mt-12">
-          <h2 className="text-xl font-semibold mb-6">Study Resources</h2>
-          <div className="grid gap-6 md:grid-cols-3">
-            <Card className="card-hover-effect">
-              <CardHeader>
-                <div className="p-2 w-10 h-10 rounded-md bg-blue-100 flex items-center justify-center mb-2">
-                  <BookOpen className="h-5 w-5 text-blue-700" />
-                </div>
-                <CardTitle>Practice Quizzes</CardTitle>
-                <CardDescription>Test your knowledge with practice quizzes for all your courses</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Access over 500 practice questions across all your enrolled courses to prepare for upcoming
-                  assessments.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full" variant="outline">
-                  Browse Practice Quizzes
-                </Button>
-              </CardFooter>
-            </Card>
+  return <MainLayout>{content}</MainLayout>
+}
 
-            <Card className="card-hover-effect">
-              <CardHeader>
-                <div className="p-2 w-10 h-10 rounded-md bg-purple-100 flex items-center justify-center mb-2">
-                  <FileText className="h-5 w-5 text-purple-700" />
-                </div>
-                <CardTitle>Study Guides</CardTitle>
-                <CardDescription>Comprehensive study materials for all courses</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Access detailed study guides, summaries, and review materials to help you prepare for exams and
-                  quizzes.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full" variant="outline">
-                  View Study Guides
-                </Button>
-              </CardFooter>
-            </Card>
+function AssessmentCard({ assessment }) {
+  const now = new Date()
+  const dueDate = new Date(assessment.dueDate)
+  const isPast = now > dueDate
+  const isSubmitted = assessment.status === "submitted" || assessment.status === "graded"
 
-            <Card className="card-hover-effect">
-              <CardHeader>
-                <div className="p-2 w-10 h-10 rounded-md bg-green-100 flex items-center justify-center mb-2">
-                  <GraduationCap className="h-5 w-5 text-green-700" />
-                </div>
-                <CardTitle>Tutoring Sessions</CardTitle>
-                <CardDescription>Get help from expert tutors in your field</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Schedule one-on-one or group tutoring sessions with experienced tutors to help you prepare for
-                  assessments.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full" variant="outline">
-                  Schedule Tutoring
-                </Button>
-              </CardFooter>
-            </Card>
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle>{assessment.title}</CardTitle>
+            <CardDescription className="mt-1">
+              {assessment.course.name} ({assessment.course.code})
+            </CardDescription>
+          </div>
+          <Badge
+            className={
+              assessment.type === "quiz"
+                ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-none"
+                : assessment.type === "assignment"
+                  ? "bg-purple-100 text-purple-800 hover:bg-purple-200 border-none"
+                  : "bg-red-100 text-red-800 hover:bg-red-200 border-none"
+            }
+          >
+            {assessment.type.charAt(0).toUpperCase() + assessment.type.slice(1)}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Due: {formatDate(assessment.dueDate)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Time: {formatTime(assessment.dueDate)}</span>
+          </div>
+          {assessment.timeLimit && (
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">Time Limit: {assessment.timeLimit} minutes</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">
+              {assessment.totalPoints} points{" "}
+              {assessment.totalQuestions ? `• ${assessment.totalQuestions} questions` : ""}
+            </span>
           </div>
         </div>
-      </div>
-    </div>
+
+        <div className="flex items-center gap-2">
+          {isSubmitted ? (
+            <div className="flex items-center text-green-600">
+              <CheckCircle className="h-4 w-4 mr-1" />
+              <span className="text-sm font-medium">
+                {assessment.status === "graded" ? `Graded: ${assessment.score}/${assessment.totalPoints}` : "Submitted"}
+              </span>
+            </div>
+          ) : isPast ? (
+            <div className="flex items-center text-red-600">
+              <AlertCircle className="h-4 w-4 mr-1" />
+              <span className="text-sm font-medium">Missed</span>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">Not submitted</div>
+          )}
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button
+          className="w-full"
+          variant={isPast && !isSubmitted ? "outline" : "default"}
+          disabled={isPast && !isSubmitted && assessment.type !== "assignment"}
+          asChild
+        >
+          <Link
+            href={
+              assessment.type === "quiz"
+                ? `/assessments/quiz/${assessment.id}`
+                : assessment.type === "assignment"
+                  ? `/assessments/assignment/${assessment.id}`
+                  : `/assessments/exam/${assessment.id}`
+            }
+          >
+            {isSubmitted
+              ? assessment.status === "graded"
+                ? "View Results"
+                : "View Submission"
+              : isPast
+                ? "View Details"
+                : "Start Now"}
+          </Link>
+        </Button>
+      </CardFooter>
+    </Card>
   )
 }
