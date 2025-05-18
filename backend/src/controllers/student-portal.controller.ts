@@ -49,10 +49,9 @@ export class StudentPortalController {
   // Courses
   getEnrolledCourses = async (req: Request, res: Response) => {
     try {
-      const { studentId } = req.params
-      const { semesterId } = req.query
+      const { studentId, semesterId } = req.params
 
-      const courses = await this.studentPortalService.getEnrolledCourses(studentId, semesterId as string | undefined)
+      const courses = await this.studentPortalService.getEnrolledCourses(studentId, semesterId )
       return res.status(200).json(courses)
     } catch (error: any) {
       return res.status(500).json({ message: "Error fetching enrolled courses", error: error.message })
@@ -172,12 +171,10 @@ export class StudentPortalController {
   // Performance
   getPerformance = async (req: Request, res: Response) => {
     try {
-      const { studentId } = req.params
-      const { courseId, semesterId, assessmentType } = req.query
+      const { studentId, courseId, semesterId, } = req.params
+      const { assessmentType } = req.query
 
-      const performance = await this.studentPortalService.getPerformance(studentId, {
-        courseId: courseId as string | undefined,
-        semesterId: semesterId as string | undefined,
+      const performance = await this.studentPortalService.getPerformance(studentId, courseId, semesterId, {
         assessmentType: assessmentType as string | undefined,
       })
       return res.status(200).json(performance)
@@ -257,7 +254,7 @@ export class StudentPortalController {
     try {
       const { courseId, semesterId } = req.params
 
-      const topics = await this.courseTopicService.getCourseTopics(courseId, semesterId)
+      const topics = await this.studentPortalService.getCourseTopics(courseId, semesterId)
       return res.status(200).json(topics)
     } catch (error: any) {
       return res.status(500).json({ message: "Error fetching course topics", error: error.message })
