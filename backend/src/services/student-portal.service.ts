@@ -23,6 +23,7 @@ import { TeachingMaterial } from "../models/TeachingMaterial"
 import { User } from "../models/User"
 import { VirtualClass } from "../models/VirtualClass"
 import { VirtualClassAttendance } from "../models/VirtualClassAttendance"
+import { CourseTopic } from "../models/CourseTopic"
 
 export class StudentPortalService {
   private storageService: StorageService
@@ -89,7 +90,7 @@ export class StudentPortalService {
 
     // Get upcoming virtual classes
     const virtualClassWhereClause: any = {
-      startTime: {
+      scheduledStartTime: {
         [Op.gte]: now,
       },
     }
@@ -303,7 +304,7 @@ export class StudentPortalService {
       where: {
         courseId,
         semesterId,
-        isPublished: true,
+        isActive: true,
       },
       include: [
         {
@@ -316,7 +317,7 @@ export class StudentPortalService {
           ],
         },
       ],
-      order: [["dueDate", "ASC"]],
+      order: [["endDate", "ASC"]],
     })
 
     // Get student's quiz attempts
@@ -353,7 +354,7 @@ export class StudentPortalService {
           ],
         },
       ],
-      order: [["startTime", "DESC"]],
+      order: [["scheduledStartTime", "DESC"]],
     })
 
     // Get student's attendance
@@ -618,7 +619,7 @@ export class StudentPortalService {
           ],
         },
       ],
-      order: [["startTime", "DESC"]],
+      order: [["scheduledStartTime", "DESC"]],
     })
 
     // Get student's attendance
@@ -750,38 +751,45 @@ export class StudentPortalService {
     })
   }
 
-  // Performance methods
-  async getPerformance(studentProfileId: string, filters?: StudentPerformanceFilterDto) {
-    const whereClause: any = { studentProfileId }
+  async getPerformance(studentProfileId: string, courseId: string, semesterId: string, filters?: StudentPerformanceFilterDto) {
+  const whereClause: any = { studentProfileId }
 
-    if (filters?.courseId) {
-      whereClause.courseId = filters.courseId
-    }
+  if (courseId) {
+    whereClause.courseId = courseId
+  }
 
-    if (filters?.semesterId) {
-      whereClause.semesterId = filters.semesterId
-    }
+  if (semesterId) {
+    whereClause.semesterId = semesterId
+  }
 
-    if (filters?.assessmentType) {
-      whereClause.assessmentType = filters.assessmentType
-    }
+  if (filters?.assessmentType) {
+    whereClause.assessmentType = filters.assessmentType
+  }
 
-    return StudentPerformance.findAll({
+  try {
+    return await StudentPerformance.findAll({
       where: whereClause,
       include: [
         {
           model: Course,
+          as: 'course'
         },
         {
           model: Semester,
+          as: 'semester'
         },
       ],
       order: [
-        [Semester, "startDate", "DESC"],
-        [Course, "code", "ASC"],
+        ['semester', 'startDate', 'DESC'],
+        ['course', 'code', 'ASC'],
       ],
     })
+  } catch (error) {
+    console.error('Error fetching student performance:', error)
+    throw error
   }
+}
+
 
   // Attendance methods
   async getAttendance(studentProfileId: string, filters?: StudentAttendanceFilterDto) {
@@ -823,16 +831,32 @@ export class StudentPortalService {
     })
   }
 
-  // Academic records methods
-  async getAcademicRecords(studentProfileId: string) {
-    return AcademicRecord.findAll({
+async getAcademicRecords(studentProfileId: string) {
+  try {
+    return await AcademicRecord.findAll({
       where: { studentProfileId },
       include: [
         {
           model: Semester,
+          as: 'semester'
         },
       ],
-      order: [[Semester, "startDate", "DESC"]],
-    })
+      order: [['semester', 'startDate', 'DESC']],
+    });
+  } catch (error) {
+    console.error('Error fetching academic records:', error);
+    throw error;
   }
+}
+
+    async getCourseTopics(courseId: string, semesterId: string): Promise<CourseTopic[]> {
+      return CourseTopic.findAll({
+        where: {
+          courseId,
+          semesterId,
+        },
+        order: [["orderIndex", "ASC"]],
+      })
+    }
+  
 }
