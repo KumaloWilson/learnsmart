@@ -236,52 +236,39 @@ export class QuizService {
     })
   }
 
-  async getAttemptsByStudent(studentId: string, isProfileId: boolean = true) {
-    let whereClause: any = {}
-    
-    if (isProfileId) {
-      // If the provided ID is a studentProfile ID
-      whereClause.studentProfileId = studentId
-    } else {
-      // If the provided ID is a User ID, we need to find the student profile first
-      const studentProfile = await StudentProfile.findOne({
-        where: { userId: studentId }
-      })
-      
-      if (!studentProfile) {
-        throw new Error("Student profile not found for the given user ID")
-      }
-      
-      whereClause.studentProfileId = studentProfile.id
-    }
   
-    return QuizAttempt.findAll({
-      where: whereClause,
-      include: [
-        {
-          model: Quiz,
-          include: [
-            {
-              model: Course,
-            },
-            {
-              model: Semester,
-            }
-          ],
-        },
-        {
-          model: StudentProfile,
-          include: [
-            {
-              model: User,
-              attributes: ["firstName", "lastName", "email"],
-            },
-          ],
-        },
-      ],
-      order: [["startTime", "DESC"]],
-    })
+  async getQuizAttemptsByStudentId(studentProfileId: string) {
+  const whereClause: any = {
+    studentProfileId: studentProfileId // Filter by the studentProfileId parameter
   }
+
+  return QuizAttempt.findAll({
+    where: whereClause,
+    include: [
+      {
+        model: Quiz,
+        include: [
+          {
+            model: Course,
+          },
+        ],
+      },
+      {
+        model: StudentProfile,
+        include: [
+          {
+            model: User,
+            attributes: ["firstName", "lastName", "email"],
+          },
+        ],
+      },
+    ],
+    order: [["startTime", "DESC"]],
+  });
+}
+  
+
+
 
   async startQuizAttempt(data: StartQuizAttemptDto) {
     // Check if quiz exists and is active

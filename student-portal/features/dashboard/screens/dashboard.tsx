@@ -12,6 +12,7 @@ import { CurrentCourses } from "@/features/dashboard/components/current-courses"
 import { AcademicSummary } from "@/features/dashboard/components/academic-summary"
 import { UpcomingClasses } from "@/features/dashboard/components/upcoming-classes"
 import { AttendanceOverview } from "@/features/dashboard/components/attendance-overview"
+import { AIRecommendationsPreview } from "@/features/dashboard/components/ai-recommendations-preview"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PerformanceInsights } from "../components/perfomance-insights"
 
@@ -117,61 +118,69 @@ export function Dashboard() {
         </div>
       )}
 
-      <Tabs defaultValue="courses" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="courses" className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
-            <span>Current Courses</span>
-          </TabsTrigger>
-          <TabsTrigger value="recommendations" className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4" />
-            <span>Recommendations</span>
-          </TabsTrigger>
-          <TabsTrigger value="academic" className="flex items-center gap-2">
-            <GraduationCap className="h-4 w-4" />
-            <span>Academic Summary</span>
-          </TabsTrigger>
-          {dashboardData?.performanceSummary && dashboardData.performanceSummary.length > 0 && (
-            <TabsTrigger value="performance" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              <span>Performance</span>
-            </TabsTrigger>
-          )}
-          {dashboardData?.attendanceSummary && dashboardData.attendanceSummary.length > 0 && (
-            <TabsTrigger value="attendance" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              <span>Attendance</span>
-            </TabsTrigger>
-          )}
-        </TabsList>
+      <div className="grid gap-6 md:grid-cols-3">
+        <div className="md:col-span-2">
+          <Tabs defaultValue="courses" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="courses" className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                <span>Current Courses</span>
+              </TabsTrigger>
+              <TabsTrigger value="recommendations" className="flex items-center gap-2">
+                <Lightbulb className="h-4 w-4" />
+                <span>Recommendations</span>
+              </TabsTrigger>
+              <TabsTrigger value="academic" className="flex items-center gap-2">
+                <GraduationCap className="h-4 w-4" />
+                <span>Academic Summary</span>
+              </TabsTrigger>
+              {dashboardData?.performanceSummary && dashboardData.performanceSummary.length > 0 && (
+                <TabsTrigger value="performance" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Performance</span>
+                </TabsTrigger>
+              )}
+              {dashboardData?.attendanceSummary && dashboardData.attendanceSummary.length > 0 && (
+                <TabsTrigger value="attendance" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span>Attendance</span>
+                </TabsTrigger>
+              )}
+            </TabsList>
 
-        <TabsContent value="courses" className="space-y-4">
-          <CurrentCourses enrollments={studentProfile.currentEnrollments} />
-        </TabsContent>
+            <TabsContent value="courses" className="space-y-4">
+              <CurrentCourses enrollments={studentProfile.currentEnrollments} />
+            </TabsContent>
 
-        <TabsContent value="recommendations" className="space-y-4">
-          <RecommendedResources recommendations={studentProfile.learningRecommendations} />
-        </TabsContent>
+            <TabsContent value="recommendations" className="space-y-4">
+              <RecommendedResources recommendations={studentProfile.learningRecommendations} />
+            </TabsContent>
 
-        <TabsContent value="academic" className="space-y-4">
-          <AcademicSummary
-            academicRecords={studentProfile.academicRecords}
-            currentPerformance={studentProfile.currentSemesterPerformance}
-          />
-        </TabsContent>
+            <TabsContent value="academic" className="space-y-4">
+              <AcademicSummary
+                academicRecords={studentProfile.academicRecords}
+                currentPerformance={studentProfile.currentSemesterPerformance}
+              />
+            </TabsContent>
 
-        {dashboardData?.performanceSummary && dashboardData.performanceSummary.length > 0 && (
-          <TabsContent value="performance" className="space-y-4">
-            <PerformanceInsights performanceSummary={dashboardData.performanceSummary} />
-          </TabsContent>
-        )}
+            {dashboardData?.performanceSummary && dashboardData.performanceSummary.length > 0 && (
+              <TabsContent value="performance" className="space-y-4">
+                <PerformanceInsights performanceSummary={dashboardData.performanceSummary} />
+              </TabsContent>
+            )}
 
-        {dashboardData?.attendanceSummary && dashboardData.attendanceSummary.length > 0 && (
-          <TabsContent value="attendance" className="space-y-4">
-            <AttendanceOverview attendanceRecords={dashboardData.attendanceSummary} />
-          </TabsContent>
-        )}
-      </Tabs>
+            {dashboardData?.attendanceSummary && dashboardData.attendanceSummary.length > 0 && (
+              <TabsContent value="attendance" className="space-y-4">
+                <AttendanceOverview attendanceRecords={dashboardData.attendanceSummary} />
+              </TabsContent>
+            )}
+          </Tabs>
+        </div>
+
+        <div className="space-y-6">
+          <AIRecommendationsPreview />
+        </div>
+      </div>
     </div>
   )
 }
