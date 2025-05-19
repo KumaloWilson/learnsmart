@@ -432,7 +432,7 @@ export const useVirtualClasses = () => {
   const [error, setError] = useState<string | null>(null)
   const [virtualClasses, setVirtualClasses] = useState<VirtualClass[]>([])
 
-  const getUpcomingVirtualClasses = async (lecturerId: string) => {
+  const getUpcomingVirtualClasses = useCallback(async (lecturerId: string) => {
     setIsLoading(true)
     setError(null)
     try {
@@ -446,9 +446,9 @@ export const useVirtualClasses = () => {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, []) // Empty dependency array since it doesn't depend on any changing values
 
-  const getVirtualClassesByCourseAndSemester = async (courseId: string, semesterId: string) => {
+  const getVirtualClassesByCourseAndSemester = useCallback(async (courseId: string, semesterId: string) => {
     setIsLoading(true)
     setError(null)
     try {
@@ -463,7 +463,7 @@ export const useVirtualClasses = () => {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, []) // Empty dependency array since it doesn't depend on any changing values
 
   return {
     getUpcomingVirtualClasses,
@@ -769,15 +769,19 @@ export const useQuizStatistics = () => {
 
 // Course Topics hooks
 export const useCourseTopics = (courseId: string, semesterId: string) => {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true) // Start with loading true
   const [error, setError] = useState<string | null>(null)
   const [topics, setTopics] = useState<CourseTopic[]>([])
-
+  
   const fetchTopics = async () => {
-    if (!courseId || !semesterId) return
-
+    if (!courseId || !semesterId) {
+      setIsLoading(false)
+      return []
+    }
+    
     setIsLoading(true)
     setError(null)
+    
     try {
       const data = await authApi.getCourseTopics(courseId, semesterId)
       setTopics(data)
@@ -794,6 +798,11 @@ export const useCourseTopics = (courseId: string, semesterId: string) => {
     }
   }
 
+  // Use useEffect to fetch topics when the component mounts or when dependencies change
+  useEffect(() => {
+    fetchTopics()
+  }, [courseId, semesterId]) // Re-fetch when courseId or semesterId changes
+  
   return { topics, loading: isLoading, error, refetch: fetchTopics }
 }
 

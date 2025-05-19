@@ -1,4 +1,4 @@
-// File: /home/watkay/ReactProjects/learn-smart/lecturer/app/layout.tsx
+// File: C:\Users\chant\Desktop\learnsmart\lecturer\app\layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

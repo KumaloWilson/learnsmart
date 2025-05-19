@@ -333,9 +333,9 @@ export function CreateQuizDialog({
                                   </SelectItem>
                                 ))
                               ) : (
-                                <SelectItem value="" disabled>
+                                <div className="flex items-center justify-center p-2 text-muted-foreground">
                                   Select a course first
-                                </SelectItem>
+                                </div>
                               )}
                             </SelectContent>
                           </Select>

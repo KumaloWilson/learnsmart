@@ -19,6 +19,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import type { AttendanceRecord } from "@/lib/auth/types"
+import { getCourseAttendanceStatistics } from "@/lib/auth/auth-api"
 
 export default function AttendancePage() {
   const router = useRouter()
@@ -70,25 +71,22 @@ export default function AttendancePage() {
   }, [lecturerId, selectedCourseId, semesterId, selectedDate, getAttendanceRecords])
 
   useEffect(() => {
-    const fetchStats = async () => {
-      if (selectedCourseId && semesterId) {
-        setIsStatsLoading(true)
-        try {
-          const response = await fetch(`/api/attendance/statistics/course/${selectedCourseId}/semester/${semesterId}`)
-          if (response.ok) {
-            const data = await response.json()
-            setAttendanceStats(data)
-          }
-        } catch (error) {
-          console.error("Failed to fetch attendance statistics:", error)
-        } finally {
-          setIsStatsLoading(false)
-        }
+  const fetchStats = async () => {
+    if (selectedCourseId && semesterId) {
+      setIsStatsLoading(true)
+      try {
+        const data = await getCourseAttendanceStatistics(selectedCourseId, semesterId)
+        setAttendanceStats(data)
+      } catch (error) {
+        console.error("Failed to fetch attendance statistics:", error)
+      } finally {
+        setIsStatsLoading(false)
       }
     }
+  }
 
-    fetchStats()
-  }, [selectedCourseId, semesterId])
+  fetchStats()
+}, [selectedCourseId, semesterId])
 
   const handleCourseChange = (courseId: string) => {
     setSelectedCourseId(courseId)

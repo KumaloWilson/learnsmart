@@ -32,11 +32,11 @@ export default function StudentDetailsPage() {
   const [isAttendanceLoading, setIsAttendanceLoading] = useState(false)
   const [semesterId, setSemesterId] = useState<string>("")
 
-  // Fetch student data
+  // Fetch student data   
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
-      try {
+      try {  
         // Fetch student details
         const studentResponse = await axiosInstance.get(`/students/${studentId}`)
         setStudent(studentResponse.data)

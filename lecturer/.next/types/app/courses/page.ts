@@ -1,4 +1,4 @@
-// File: /home/watkay/ReactProjects/learn-smart/lecturer/app/courses/page.tsx
+// File: C:\Users\chant\Desktop\learnsmart\lecturer\app\courses\page.tsx
 import * as entry from '../../../../app/courses/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

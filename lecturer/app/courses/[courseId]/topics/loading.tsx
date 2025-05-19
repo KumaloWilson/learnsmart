@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function CourseTopicsLoading() {
   return (
-    <PageContainer title="Course Topics" loading={true}>
+    <PageContainer title="Course Topicssss" loading={true}>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>

@@ -18,7 +18,7 @@ export function StudentTopicProgress({ studentProfileId, courseId, semesterId }:
 
   useEffect(() => {
     if (studentProfileId && courseId && semesterId) {
-      refetch()
+      // refetch()
     }
   }, [studentProfileId, courseId, semesterId, refetch])
 

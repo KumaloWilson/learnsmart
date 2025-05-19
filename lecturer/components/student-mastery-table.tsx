@@ -22,7 +22,7 @@ export function StudentMasteryTable({ courseId, semesterId }: StudentMasteryTabl
 
   useEffect(() => {
     if (courseId && semesterId) {
-      refetch()
+      // refetch()
     }
   }, [courseId, semesterId, refetch])
 

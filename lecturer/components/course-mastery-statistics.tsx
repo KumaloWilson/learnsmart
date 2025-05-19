@@ -17,7 +17,7 @@ export function CourseMasteryStatistics({ courseId, semesterId }: CourseMasteryS
 
   useEffect(() => {
     if (courseId && semesterId) {
-      refetch()
+      // refetch()
     }
   }, [courseId, semesterId, refetch])
 

@@ -163,7 +163,7 @@ export const createVirtualClass = async (data: CreateVirtualClassRequest): Promi
 }
 
 export const updateVirtualClass = async (id: string, data: UpdateVirtualClassRequest): Promise<VirtualClass> => {
-  const response = await axiosInstance.patch<VirtualClass>(`/virtual-classes/${id}`, data)
+  const response = await axiosInstance.put<VirtualClass>(`/virtual-classes/${id}`, data)
   return response.data
 }
 
@@ -213,7 +213,7 @@ export const createQuiz = async (data: CreateQuizRequest): Promise<Quiz> => {
 }
 
 export const updateQuiz = async (id: string, data: UpdateQuizRequest): Promise<Quiz> => {
-  const response = await axiosInstance.patch<Quiz>(`/quizzes/${id}`, data)
+  const response = await axiosInstance.put<Quiz>(`/quizzes/${id}`, data)
   return response.data
 }
 
@@ -263,7 +263,7 @@ export const createCourseTopic = async (data: CreateTopicPayload): Promise<Cours
 }
 
 export const updateCourseTopic = async (topicId: string, data: UpdateTopicPayload): Promise<CourseTopic> => {
-  const response = await axiosInstance.patch<CourseTopic>(`/lecturer-portal/course-topic/${topicId}`, data)
+  const response = await axiosInstance.put<CourseTopic>(`/lecturer-portal/course-topic/${topicId}`, data)
   return response.data
 }
 
@@ -345,7 +345,7 @@ export const createBulkAttendance = async (data: BulkCreateAttendanceRequest): P
 }
 
 export const updateAttendance = async (id: string, data: UpdateAttendanceRequest): Promise<AttendanceRecord> => {
-  const response = await axiosInstance.patch<AttendanceRecord>(`/attendance/${id}`, data)
+  const response = await axiosInstance.put<AttendanceRecord>(`/attendance/${id}`, data)
   return response.data
 }
 
@@ -360,6 +360,16 @@ export const getStudentAttendanceStatistics = async (
 ): Promise<AttendanceStatistics> => {
   const response = await axiosInstance.get<AttendanceStatistics>(
     `/attendance/statistics/student/${studentProfileId}/course/${courseId}/semester/${semesterId}`,
+  )
+  return response.data
+}
+
+export const getCourseAttendanceStatistics = async (
+  courseId: string,
+  semesterId: string,
+): Promise<AttendanceStatistics> => {
+  const response = await axiosInstance.get<AttendanceStatistics>(
+    `/attendance/statistics/course/${courseId}/semester/${semesterId}`,
   )
   return response.data
 }

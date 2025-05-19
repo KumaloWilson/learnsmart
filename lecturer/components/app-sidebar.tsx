@@ -57,7 +57,7 @@ export function AppSidebar() {
     return null
   }
 
-  const activeCourseId = "123" // Replace with actual course ID retrieval logic
+  const activeCourseId = "d7b74b44-b58e-4b24-887d-24f59b9285f0" // Replace with actual course ID retrieval logic
 
   const menuItems = [
     { name: "Dashboard", href: "/", icon: Home },
@@ -72,12 +72,12 @@ export function AppSidebar() {
     { name: "Notifications", href: "/notifications", icon: Bell },
     {
       name: "Course Topics",
-      href: `/courses/${activeCourseId}/topics`,
+      href: `/courses/${activeCourseId}/topics`,   
       icon: BookOpen,
       current: pathname.includes(`/courses/${activeCourseId}/topics`),
       requiresCourseId: true,
     },
-  ]
+  ]   
 
   const getInitials = () => {
     if (!user) return "U"

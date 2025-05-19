@@ -71,65 +71,74 @@ export default function EditQuizPage() {
   })
 
   useEffect(() => {
-    const fetchQuiz = async () => {
-      if (id) {
-        try {
-          const quizData = await getQuizById(id as string)
+  let isMounted = true
 
-          if (quizData) {
-            // Format dates for input fields
-            const startDate = new Date(quizData.startDate)
-            const endDate = new Date(quizData.endDate)
+  const fetchQuiz = async () => {
+    if (id && isMounted) {
+      try {
+        console.log('Fetching quiz data for editing, ID:', id)
+        const quizData = await getQuizById(id as string)
 
-            // Format to YYYY-MM-DDThh:mm
-            const formatDateForInput = (date: Date) => {
-              return date.toISOString().slice(0, 16)
-            }
+        if (quizData && isMounted) {
+          // Format dates for input fields
+          const startDate = new Date(quizData.startDate)
+          const endDate = new Date(quizData.endDate)
 
-            // Set form values
-            form.reset({
-              title: quizData.title,
-              description: quizData.description,
-              topic: quizData.topic,
-              numberOfQuestions: quizData.numberOfQuestions,
-              timeLimit: quizData.timeLimit,
-              startDate: formatDateForInput(startDate),
-              endDate: formatDateForInput(endDate),
-              totalMarks: quizData.totalMarks,
-              passingMarks: quizData.passingMarks,
-              isActive: quizData.isActive,
-              isRandomized: quizData.isRandomized,
-              difficulty: quizData.aiPrompt.difficulty,
-              focus: quizData.aiPrompt.focus,
-              questionType: quizData.questionType,
-              instructions: quizData.instructions,
-            })
+          // Format to YYYY-MM-DDThh:mm
+          const formatDateForInput = (date: Date) => {
+            return date.toISOString().slice(0, 16)
           }
-        } catch (err) {
-          console.error("Error fetching quiz:", err)
+
+          // Set form values
+          form.reset({
+            title: quizData.title,
+            description: quizData.description,
+            topic: quizData.topic,
+            numberOfQuestions: quizData.numberOfQuestions,
+            timeLimit: quizData.timeLimit,
+            startDate: formatDateForInput(startDate),
+            endDate: formatDateForInput(endDate),
+            totalMarks: quizData.totalMarks,
+            passingMarks: quizData.passingMarks,
+            isActive: quizData.isActive,
+            isRandomized: quizData.isRandomized,
+            difficulty: quizData.aiPrompt?.difficulty || 'medium',
+            focus: quizData.aiPrompt?.focus || '',
+            questionType: quizData.questionType,
+            instructions: quizData.instructions,
+          })
+          console.log('Form populated with quiz data')
         }
+      } catch (err) {
+        console.error("Error fetching quiz:", err)
       }
     }
+  }
 
-    fetchQuiz()
-  }, [id, getQuizById, form])
+  fetchQuiz()
 
-  useEffect(() => {
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error,
-      })
-    }
-    if (success) {
-      toast({
-        title: "Success",
-        description: success,
-      })
-      router.push(`/quizzes/${id}`)
-    }
-  }, [error, success, toast, router, id])
+  return () => {
+    isMounted = false
+  }
+}, [id]) // Only depend on ID
+
+// Separate effect for handling success/error states
+useEffect(() => {
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: error,
+    })
+  }
+  if (success) {
+    toast({
+      title: "Success",
+      description: success,
+    })
+    router.push(`/quizzes/${id}`)
+  }
+}, [error, success, toast, router, id])
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (new Date(values.endDate) <= new Date(values.startDate)) {

@@ -47,7 +47,7 @@ export default function CoursesPage() {
 
     fetchCourses()
   }, [lecturerProfile, getCourses, courses.length, isInitialLoading])
-
+  
   const filteredCourses = courses.filter(
     (course) =>
       course.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||

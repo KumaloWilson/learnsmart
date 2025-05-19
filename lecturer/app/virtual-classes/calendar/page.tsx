@@ -19,7 +19,7 @@ export default function VirtualClassCalendarPage() {
   const [calendarDays, setCalendarDays] = useState<Date[]>([])
   const [currentMonth, setCurrentMonth] = useState("")
   const [currentYear, setCurrentYear] = useState(0)
-
+ console.log(virtualClasses)
   useEffect(() => {
     const fetchData = async () => {
       if (lecturerProfile?.id) {
@@ -122,16 +122,16 @@ export default function VirtualClassCalendarPage() {
   }
 
   return (
-    <PageContainer
+    <PageContainer 
       title="Virtual Class Calendar"
       description="View and manage your virtual classes in a calendar view"
       actions={
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
+        <Button onClick={() => setIsCreateDialogOpen(true)} >
           <Plus className="mr-2 h-4 w-4" /> Create Virtual Class
         </Button>
       }
     >
-      <Card>
+      <Card >
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>
