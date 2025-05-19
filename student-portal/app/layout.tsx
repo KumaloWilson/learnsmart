@@ -1,27 +1,33 @@
 import type React from "react"
-import "./globals.css"
+import { Providers } from "@/redux/provider"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
+import "@/app/globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import { ThemeProvider } from "@/components/theme-provider"
-import { ReduxProvider } from "@/components/providers/redux-provider"
-import { AuthProvider } from "@/components/providers/auth-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: 'LearnSmart App',
-  description: 'AI-Powered Learning Platform',
+  title: "LearnSmart - AI-Powered Learning",
+  description: "An AI-powered e-learning system that facilitates self-learning",
+    generator: 'v0.dev'
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <ReduxProvider>
+        <Providers>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
             {children}
-          </ReduxProvider>
-        </ThemeProvider>
+            <Toaster />
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   )
