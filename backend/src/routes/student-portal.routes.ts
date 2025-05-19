@@ -59,6 +59,9 @@ router.post(
   studentPortalController.attemptQuiz,
 )
 
+router.get("/:studentId/quiz/attempts", authMiddleware, studentPortalController.getQuizAttempts)
+
+
 // Course Topics
 router.get("/:studentId/course-topics/course/:courseId/semester/:semesterId", authMiddleware, studentPortalController.getCourseTopics)
 // router.post(

@@ -21,14 +21,14 @@ export function PageContainer({
   actions,
 }: PageContainerProps) {
   return (
-    <div className="container py-6 md:py-8">
+    <div className="container py-6 md:py-8 p-8">
       {title && (
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
           {description && <p className="text-muted-foreground mt-1">{description}</p>}
         </div>
       )}
-      {actions && <div className="flex-shrink-0">{actions}</div>}
+      {actions && <div className="flex-shrink-0 mb-6">{actions}</div>}
       <div className={cn("", className)}>{children}</div>
     </div>
   )

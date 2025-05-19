@@ -29,7 +29,7 @@ export default function Dashboard() {
   const { lecturerProfile } = useAuth()
   const { getDashboard, dashboardData, isLoading, error } = useDashboard()
   const [isInitialLoading, setIsInitialLoading] = useState(true)
-
+console.log("dashboardData", dashboardData)
   useEffect(() => {
     const fetchDashboard = async () => {
       if (lecturerProfile?.id && !isInitialLoading && !dashboardData) {
@@ -50,7 +50,7 @@ export default function Dashboard() {
 
   if (isInitialLoading || isLoading) {
     return (
-      <div className="container py-8 flex items-center justify-center min-h-[80vh]">
+      <div className="container py-8 flex items-center justify-center min-h-[80vh] ">
         <div className="text-center">
           <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-lg">Loading your dashboard...</p>
@@ -70,7 +70,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="container py-8 space-y-8 animate-fade-in">
+    <div className="container py-8 space-y-8 animate-fade-in y p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome Back!</h1>
         <p className="text-muted-foreground">

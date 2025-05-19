@@ -1,9 +1,0 @@
-{
-  "/_not-found/page": "app/_not-found/page.js",
-  "/virtual-classes/page": "app/virtual-classes/page.js",
-  "/attendance/page": "app/attendance/page.js",
-  "/students/page": "app/students/page.js",
-  "/performance-analytics/page": "app/performance-analytics/page.js",
-  "/virtual-classes/[id]/page": "app/virtual-classes/[id]/page.js",
-  "/progress/page": "app/progress/page.js"
-}

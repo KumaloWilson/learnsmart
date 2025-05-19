@@ -1,7 +1,7 @@
 import axios from "axios"
 import { DashboardData } from "../types"
 
-const API_URL = "http://localhost:5000/api"
+const API_URL = "https://learnsmart-6i9q.onrender.com/api"
 
 export const dashboardService = {
   async getDashboardData(studentProfileId: string, token: string): Promise<DashboardData> {

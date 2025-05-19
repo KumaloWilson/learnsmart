@@ -29,6 +29,16 @@ export default function VirtualClassesPage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
+  const refreshVirtualClasses = async () => {
+  if (lecturerProfile?.id) {
+    try {
+      await getUpcomingVirtualClasses(lecturerProfile.id)
+    } catch (err) {
+      console.error("Error refreshing virtual classes:", err)
+    }
+  }
+}
+
   useEffect(() => {
     const fetchVirtualClasses = async () => {
       if (lecturerProfile?.id && !isInitialLoading && virtualClasses.length === 0) {
@@ -116,10 +126,11 @@ export default function VirtualClassesPage() {
 
   return (
     <PageContainer title="Virtual Classes" description="Manage your online classes and lectures" actions={actions}>
-      <div className="flex flex-wrap gap-4 mb-6">
+      <div className="flex flex-wrap gap-4 mb-6 p-2">
         <Button variant="outline" className="gap-2">
           <Calendar className="h-4 w-4" /> Schedule
         </Button>
+     
         <Button variant="outline" className="gap-2">
           <MonitorPlay className="h-4 w-4" /> Recordings
         </Button>
@@ -410,6 +421,7 @@ export default function VirtualClassesPage() {
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         lecturerId={lecturerProfile?.id || ""}
+        // refreshVirtualClasses={refreshVirtualClasses}
       />
     </PageContainer>
   )

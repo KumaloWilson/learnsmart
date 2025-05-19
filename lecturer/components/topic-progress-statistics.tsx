@@ -17,7 +17,7 @@ export function TopicProgressStatistics({ courseId, semesterId }: TopicProgressS
   const { progressStats, loading, error, refetch } = useTopicProgressStatistics(courseId, semesterId)
 
   useEffect(() => {
-    refetch()
+    // refetch()
   }, [courseId, semesterId, refetch])
 
   if (loading) {

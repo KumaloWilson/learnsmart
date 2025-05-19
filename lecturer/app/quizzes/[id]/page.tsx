@@ -44,37 +44,51 @@ export default function QuizDetailsPage() {
   } = useQuizStatistics()
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
-  useEffect(() => {
-    let isMounted = true
+ useEffect(() => {
+  let isMounted = true
 
-    const fetchData = async () => {
-      if (id && isMounted) {
-        try {
-          // Fetch quiz details
-          await getQuizById(id as string)
-
-          // Only fetch statistics and attempts if quiz is loaded successfully
-          if (quiz && isMounted) {
-            try {
-              await getQuizStatistics(id as string)
-              await getQuizAttempts(id as string)
-            } catch (err) {
-              console.error("Error fetching quiz statistics or attempts:", err)
-              // Continue showing the quiz details even if statistics fail
-            }
-          }
-        } catch (err) {
-          console.error("Error fetching quiz data:", err)
-        }
+  const fetchData = async () => {
+    if (id && isMounted) {
+      try {
+        console.log('Fetching quiz data for ID:', id)
+        await getQuizById(id as string)
+        console.log('Quiz data fetched successfully')
+      } catch (err) {
+        console.error("Error fetching quiz data:", err)
       }
     }
+  }
 
-    fetchData()
+  fetchData()
 
-    return () => {
-      isMounted = false
+  return () => {
+    isMounted = false
+  }
+}, [id]) // Remove getQuizById from dependencies
+
+// Separate effect for statistics/attempts after quiz is loaded
+useEffect(() => {
+  let isMounted = true
+
+  const fetchStatistics = async () => {
+    if (quiz && quiz.id && isMounted) {
+      try {
+        console.log('Fetching statistics for quiz:', quiz.id)
+        await getQuizStatistics(quiz.id)
+        await getQuizAttempts(quiz.id)
+        console.log('Statistics fetched successfully')
+      } catch (err) {
+        console.error("Error fetching quiz statistics or attempts:", err)
+      }
     }
-  }, [id, getQuizById])
+  }
+
+  fetchStatistics()
+
+  return () => {
+    isMounted = false
+  }
+}, [quiz?.id]) // Only run when quiz.id changes
 
   useEffect(() => {
     if (error) {

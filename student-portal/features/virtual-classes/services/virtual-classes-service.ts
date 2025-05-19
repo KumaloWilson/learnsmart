@@ -1,7 +1,7 @@
 import axios from "axios"
 import type { VirtualClass, JoinVirtualClassResponse } from "@/features/virtual-classes/types"
 
-const API_URL = "http://localhost:5000/api"
+const API_URL = "https://learnsmart-6i9q.onrender.com/api"
 
 export const virtualClassesService = {
   async getVirtualClasses(studentProfileId: string, token: string): Promise<VirtualClass[]> {

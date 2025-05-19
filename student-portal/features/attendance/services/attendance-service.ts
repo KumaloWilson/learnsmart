@@ -1,7 +1,7 @@
 import axios from "axios"
 import type { AttendanceRecord } from "@/features/attendance/types"
 
-const API_URL = "http://localhost:5000/api"
+const API_URL = "https://learnsmart-6i9q.onrender.com/api"
 
 export const attendanceService = {
   async getAttendanceRecords(studentProfileId: string, token: string): Promise<AttendanceRecord[]> {

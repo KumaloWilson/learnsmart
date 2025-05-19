@@ -2,7 +2,7 @@ import axios from "axios"
 
 // Create an Axios instance with custom configuration
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://learnsmart-6i9q.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -48,7 +48,7 @@ axiosInstance.interceptors.response.use(
         }
 
         // Call refresh token endpoint
-        const response = await axios.post("http://localhost:5000/api/auth/refresh-token", {
+        const response = await axios.post("https://learnsmart-6i9q.onrender.com/api/auth/refresh-token", {
           refreshToken,
         })
 

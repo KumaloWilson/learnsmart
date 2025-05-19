@@ -1,7 +1,7 @@
 import axios from "axios"
 import type { LoginRequest, LoginResponse } from "@/features/auth/types"
 
-const API_URL = "http://localhost:5000/api"
+const API_URL = "https://learnsmart-6i9q.onrender.com/api"
 
 // Helper to check if we're in a browser environment
 const isBrowser = typeof window !== "undefined"

@@ -93,7 +93,8 @@ export default function PerformanceAnalyticsPage() {
     }
 
     fetchPerformances()
-  }, [lecturerProfile, selectedCourse, selectedSemester, selectedCategory, performanceRange, getStudentPerformances])
+  }, [lecturerProfile, selectedCourse, selectedSemester, selectedCategory, performanceRange])
+  // getStudentPerformances
 
   useEffect(() => {
     if (performances) {

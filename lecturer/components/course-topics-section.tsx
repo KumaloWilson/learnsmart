@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -17,12 +17,16 @@ interface CourseTopicsSectionProps {
 
 export function CourseTopicsSection({ courseId, semesterId }: CourseTopicsSectionProps) {
   const router = useRouter()
+  // Added state to track if data fetching has been attempted
+  const [hasFetched, setHasFetched] = useState(false)
+  
   const {
     topics,
     loading: topicsLoading,
     error: topicsError,
     refetch: refetchTopics,
   } = useCourseTopics(courseId, semesterId)
+  
   const {
     progressStats,
     loading: progressLoading,
@@ -30,48 +34,28 @@ export function CourseTopicsSection({ courseId, semesterId }: CourseTopicsSectio
   } = useTopicProgressStatistics(courseId, semesterId)
 
   useEffect(() => {
-    let isMounted = true
+    // Guard against empty strings or undefined values
+    if (!courseId || !semesterId || hasFetched) return;
 
     const fetchData = async () => {
-      if (courseId && semesterId) {
-        try {
-          await refetchTopics()
-        } catch (err) {
-          console.error("Error fetching topics:", err)
-        }
+      try {
+        await Promise.all([
+          refetchTopics(),
+          refetchProgress()
+        ]);
+        setHasFetched(true);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setHasFetched(true); // Mark as fetched even on error to prevent infinite loops
       }
-    }
+    };
 
-    fetchData()
+    fetchData();
+  }, [courseId, semesterId, refetchTopics, refetchProgress, hasFetched]);
 
-    return () => {
-      isMounted = false
-    }
-  }, [courseId, semesterId, refetchTopics])
+  const loading = topicsLoading || progressLoading;
 
-  useEffect(() => {
-    let isMounted = true
-
-    const fetchProgressData = async () => {
-      if (courseId && semesterId) {
-        try {
-          await refetchProgress()
-        } catch (err) {
-          console.error("Error fetching progress:", err)
-        }
-      }
-    }
-
-    fetchProgressData()
-
-    return () => {
-      isMounted = false
-    }
-  }, [courseId, semesterId, refetchProgress])
-
-  const loading = topicsLoading || progressLoading
-
-  if (loading) {
+  if (loading && !hasFetched) {
     return (
       <Card>
         <CardHeader>
@@ -89,6 +73,7 @@ export function CourseTopicsSection({ courseId, semesterId }: CourseTopicsSectio
     )
   }
 
+  // Added error handling for both data sources
   if (topicsError) {
     return (
       <Card>
@@ -99,6 +84,13 @@ export function CourseTopicsSection({ courseId, semesterId }: CourseTopicsSectio
         <CardContent>
           <div className="p-4 text-center text-muted-foreground">
             <p>Failed to load course topics. Please try again later.</p>
+            <Button onClick={() => {
+              setHasFetched(false);
+              refetchTopics();
+              refetchProgress();
+            }} className="mt-4">
+              Retry
+            </Button>
           </div>
         </CardContent>
       </Card>

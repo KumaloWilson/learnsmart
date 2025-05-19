@@ -92,7 +92,7 @@ export default function AttendanceDetailPage() {
         isPresent,
       }
 
-      await axiosInstance.patch(`/attendance/${attendanceId}`, payload)
+      await axiosInstance.put(`/attendance/${attendanceId}`, payload)
 
       toast({
         title: "Success",

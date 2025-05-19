@@ -10,7 +10,7 @@ import { useRouter, useParams } from "next/navigation"
 import { CourseTopicsSection } from "@/components/course-topics-section"
 import { useAuth } from "@/lib/auth/auth-context"
 import { useCourseDetail } from "@/lib/auth/hooks"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 
 export default function CoursePage() {
   const router = useRouter()
@@ -22,28 +22,24 @@ export default function CoursePage() {
   // Default semester ID to use until we get the course details
   const defaultSemesterId = "bbfc180e-11ce-48a5-adb6-95b197339bae"
   const [semesterId, setSemesterId] = useState(defaultSemesterId)
-
-  // Use the new API endpoint to get detailed course information
-  const { courseDetail, isLoading: loading, error, refetch } = useCourseDetail(lecturerId, courseId, semesterId)
-
-  // Update semesterId if we get it from courseDetail
+  
+  // Track if we've already updated the semester ID to prevent loops
+  const semesterUpdated = useRef(false)
+  
+  // Prevent auto-refetching behavior by not destructuring refetch
+  const { courseDetail, isLoading: loading, error } = useCourseDetail(lecturerId, courseId, semesterId)
+console.log("courseDetail", courseDetail)
+  // Update semesterId if we get it from courseDetail, but only once
   useEffect(() => {
-    if (courseDetail?.semester?.id) {
+    if (
+      courseDetail?.semester?.id && 
+      courseDetail.semester.id !== semesterId && 
+      !semesterUpdated.current
+    ) {
+      semesterUpdated.current = true
       setSemesterId(courseDetail.semester.id)
     }
-  }, [courseDetail])
-
-  useEffect(() => {
-    if (lecturerId && courseId) {
-      refetch()
-    }
-  }, [lecturerId, courseId, refetch])
-
-  // Add debugging to see what's happening
-  console.log("Course page params:", { courseId, lecturerId, semesterId })
-  console.log("Course detail:", courseDetail)
-  console.log("Loading:", loading)
-  console.log("Error:", error)
+  }, [courseDetail, semesterId])
 
   if (loading) {
     return (

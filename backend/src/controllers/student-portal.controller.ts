@@ -20,6 +20,7 @@ export class StudentPortalController {
   private aiRecommendationService: AIRecommendationService
 
   constructor() {
+    this.quizService = new QuizService()
     this.studentPortalService = new StudentPortalService()
     this.storageService = new StorageService()
     this.aiRecommendationService = new AIRecommendationService()
@@ -229,9 +230,8 @@ export class StudentPortalController {
   getQuizAttempts = async (req: Request, res: Response) => {
     try {
       const { studentId } = req.params
-      const { isStudentID } = req.query
 
-      const attempts = await this.quizService.getAttemptsByStudent(studentId, isStudentID === 'true')
+      const attempts = await this.quizService.getQuizAttemptsByStudentId(studentId)
       return res.status(200).json(attempts)
     } catch (error: any) {
       return res.status(500).json({ message: "Error fetching quiz attempts", error: error.message })

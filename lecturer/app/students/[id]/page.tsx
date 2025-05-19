@@ -134,7 +134,7 @@ export default function StudentProfilePage() {
     if (student && selectedCourse && selectedSemester && activeTab === "performance") {
       getStudentCoursePerformance(student.id, selectedCourse, selectedSemester)
     }
-  }, [student, selectedCourse, selectedSemester, activeTab, getStudentCoursePerformance])
+  }, [student, selectedCourse, selectedSemester, activeTab])
 
   const handleGenerateAnalysis = async () => {
     if (!student || !selectedCourse || !selectedSemester) return

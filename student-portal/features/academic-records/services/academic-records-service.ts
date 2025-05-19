@@ -1,7 +1,7 @@
 import axios from "axios"
 import type { AcademicRecord } from "@/features/academic-records/types"
 
-const API_URL = "http://localhost:5000/api"
+const API_URL = "https://learnsmart-6i9q.onrender.com/api"
 
 export const academicRecordsService = {
   async getAcademicRecords(studentProfileId: string, token: string): Promise<AcademicRecord[]> {
