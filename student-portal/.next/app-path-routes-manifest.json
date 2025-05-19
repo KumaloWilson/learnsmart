@@ -1,0 +1,15 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/academic-records/page": "/academic-records",
+  "/ai-recommendations/page": "/ai-recommendations",
+  "/assessments/page": "/assessments",
+  "/attendance/page": "/attendance",
+  "/course-materials/page": "/course-materials",
+  "/courses/[courseId]/page": "/courses/[courseId]",
+  "/courses/page": "/courses",
+  "/login/page": "/login",
+  "/page": "/",
+  "/performance/page": "/performance",
+  "/quiz-history/page": "/quiz-history",
+  "/virtual-classes/page": "/virtual-classes"
+}

@@ -1,6 +1,15 @@
 {
-  "/page": "app/page.js",
-  "/quiz-history/page": "app/quiz-history/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/academic-records/page": "app/academic-records/page.js",
+  "/ai-recommendations/page": "app/ai-recommendations/page.js",
+  "/assessments/page": "app/assessments/page.js",
+  "/attendance/page": "app/attendance/page.js",
+  "/course-materials/page": "app/course-materials/page.js",
+  "/courses/[courseId]/page": "app/courses/[courseId]/page.js",
   "/courses/page": "app/courses/page.js",
-  "/courses/[courseId]/page": "app/courses/[courseId]/page.js"
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/performance/page": "app/performance/page.js",
+  "/quiz-history/page": "app/quiz-history/page.js",
+  "/virtual-classes/page": "app/virtual-classes/page.js"
 }
