@@ -320,147 +320,160 @@ export class LecturerDashboardService {
     return result
   }
 
-  async getLecturerCourseDetails(lecturerProfileId: string, courseId: string, semesterId: string) {
-  // Verify that the lecturer is assigned to this course in this semester
-  const courseAssignment = await CourseAssignment.findOne({
-    where: { 
-      lecturerProfileId,
-      courseId,
-      semesterId
-    },
-    include: [
-      { 
-        model: Course, 
-        as: "course",
-        include: [{ model: Program, as: "program" }]
+ async getLecturerCourseDetails(lecturerProfileId: string, courseId: string, semesterId: string) {
+  try {
+    // Validate that inputs are valid UUIDs
+    if (!this.isValidUUID(lecturerProfileId)) {
+      throw new Error("Invalid lecturerProfileId format");
+    }
+    if (!this.isValidUUID(courseId)) {
+      throw new Error("Invalid courseId format");
+    }
+    if (!this.isValidUUID(semesterId)) {
+      throw new Error("Invalid semesterId format");
+    }
+
+    // Verify that the lecturer is assigned to this course in this semester
+    const courseAssignment = await CourseAssignment.findOne({
+      where: { 
+        lecturerProfileId,
+        courseId,
+        semesterId
       },
-      { model: Semester, as: "semester" },
-      { 
-        model: LecturerProfile, 
-        as: "lecturerProfile",
-        include: [{ 
-          model: User, 
-          as: "user",
-          attributes: ['firstName', 'lastName', 'email'] 
-        }]
-      }
-    ],
-  });
+      include: [
+        { 
+          model: Course, 
+          as: "course",
+          include: [{ model: Program, as: "program" }]
+        },
+        { model: Semester, as: "semester" },
+        { 
+          model: LecturerProfile, 
+          as: "lecturerProfile",
+          include: [{ 
+            model: User, 
+            as: "user",
+            attributes: ['firstName', 'lastName', 'email'] 
+          }]
+        }
+      ],
+    });
 
-  if (!courseAssignment) {
-    throw new Error("Course assignment not found or you don't have access to this course");
-  }
+    if (!courseAssignment) {
+      throw new Error("Course assignment not found or you don't have access to this course");
+    }
 
-  // Get all student enrollments for this course in this semester
-  const enrollments = await CourseEnrollment.findAll({
-    where: {
-      courseId,
-      semesterId
-    },
-    include: [
-      { 
-        model: StudentProfile, 
-        as: "studentProfile",
-        include: [{ 
-          model: User, 
-          as: "user",
-          attributes: ['firstName', 'lastName', 'email'] 
-        }]
-      }
-    ],
-  });
+    // Rest of the function remains the same
+    const enrollments = await CourseEnrollment.findAll({
+      where: {
+        courseId,
+        semesterId
+      },
+      include: [
+        { 
+          model: StudentProfile, 
+          as: "studentProfile",
+          include: [{ 
+            model: User, 
+            as: "user",
+            attributes: ['firstName', 'lastName', 'email'] 
+          }]
+        }
+      ],
+    });
 
-  // Get statistics about course enrollment
-  const enrollmentStats = {
-    total: enrollments.length,
-    statusCounts: {
-      enrolled: enrollments.filter(e => e.status === "enrolled").length,
-      completed: enrollments.filter(e => e.status === "completed").length,
-      failed: enrollments.filter(e => e.status === "failed").length,
-      withdrawn: enrollments.filter(e => e.status === "withdrawn").length,
-    },
-    averageGrade: enrollments
-      .filter(e => e.grade !== null && e.grade !== undefined)
-      .reduce((sum, e) => sum + (e.grade || 0), 0) / 
-      (enrollments.filter(e => e.grade !== null && e.grade !== undefined).length || 1),
-  };
-
-  // Get other lecturers assigned to this course
-  const otherLecturers = await CourseAssignment.findAll({
-    where: { 
-      courseId,
-      semesterId,
-      lecturerProfileId: { [Op.ne]: lecturerProfileId }
-    },
-    include: [
-      { 
-        model: LecturerProfile, 
-        as: "lecturerProfile",
-        include: [{ 
-          model: User, 
-          as: "user",
-          attributes: ['firstName', 'lastName', 'email'] 
-        }]
-      }
-    ],
-  });
-
-  // Format the student data
-  const students = enrollments.map(enrollment => {
-    const student = enrollment.studentProfile;
-    return {
-      id: student?.id,
-      studentId: student?.studentId,
-      fullName: `${student?.user?.firstName || ''} ${student?.user?.lastName || ''}`.trim(),
-      email: student?.user?.email,
-      level: student?.currentLevel,
-      status: enrollment.status,
-      grade: enrollment.grade,
-      letterGrade: enrollment.letterGrade
+    const enrollmentStats = {
+      total: enrollments.length,
+      statusCounts: {
+        enrolled: enrollments.filter(e => e.status === "enrolled").length,
+        completed: enrollments.filter(e => e.status === "completed").length,
+        failed: enrollments.filter(e => e.status === "failed").length,
+        withdrawn: enrollments.filter(e => e.status === "withdrawn").length,
+      },
+      averageGrade: enrollments
+        .filter(e => e.grade !== null && e.grade !== undefined)
+        .reduce((sum, e) => sum + (e.grade || 0), 0) / 
+        (enrollments.filter(e => e.grade !== null && e.grade !== undefined).length || 1),
     };
-  });
 
-  return {
-    courseAssignment: {
-      id: courseAssignment.id,
-      role: courseAssignment.role,
-      isActive: courseAssignment.isActive,
-      assignedDate: courseAssignment.createdAt
-    },
-    course: {
-      id: courseAssignment.course?.id,
-      name: courseAssignment.course?.name,
-      code: courseAssignment.course?.code,
-      description: courseAssignment.course?.description,
-      creditHours: courseAssignment.course?.creditHours,
-      level: courseAssignment.course?.level,
-      program: {
-        id: courseAssignment.course?.program?.id,
-        name: courseAssignment.course?.program?.name
-      }
-    },
-    semester: {
-      id: courseAssignment.semester?.id,
-      name: courseAssignment.semester?.name,
-      startDate: courseAssignment.semester?.startDate,
-      endDate: courseAssignment.semester?.endDate,
-      isActive: courseAssignment.semester?.isActive,
-      academicYear: courseAssignment.semester?.academicYear
-    },
-    lecturer: {
-      id: courseAssignment.lecturerProfile?.id,
-      fullName: `${courseAssignment.lecturerProfile?.user?.firstName || ''} ${courseAssignment.lecturerProfile?.user?.lastName || ''}`.trim(),
-      email: courseAssignment.lecturerProfile?.user?.email
-    },
-    otherLecturers: otherLecturers.map(assignment => ({
-      id: assignment.lecturerProfile?.id,
-      fullName: `${assignment.lecturerProfile?.user?.firstName || ''} ${assignment.lecturerProfile?.user?.lastName || ''}`.trim(),
-      email: assignment.lecturerProfile?.user?.email,
-      role: assignment.role
-    })),
-    enrollmentStats,
-    students
-  };
+    const otherLecturers = await CourseAssignment.findAll({
+      where: { 
+        courseId,
+        semesterId,
+        lecturerProfileId: { [Op.ne]: lecturerProfileId }
+      },
+      include: [
+        { 
+          model: LecturerProfile, 
+          as: "lecturerProfile",
+          include: [{ 
+            model: User, 
+            as: "user",
+            attributes: ['firstName', 'lastName', 'email'] 
+          }]
+        }
+      ],
+    });
+
+    const students = enrollments.map(enrollment => {
+      const student = enrollment.studentProfile;
+      return {
+        id: student?.id,
+        studentId: student?.studentId,
+        fullName: `${student?.user?.firstName || ''} ${student?.user?.lastName || ''}`.trim(),
+        email: student?.user?.email,
+        level: student?.currentLevel,
+        status: enrollment.status,
+        grade: enrollment.grade,
+        letterGrade: enrollment.letterGrade
+      };
+    });
+
+    return {
+      courseAssignment: {
+        id: courseAssignment.id,
+        role: courseAssignment.role,
+        isActive: courseAssignment.isActive,
+        assignedDate: courseAssignment.createdAt
+      },
+      course: {
+        id: courseAssignment.course?.id,
+        name: courseAssignment.course?.name,
+        code: courseAssignment.course?.code,
+        description: courseAssignment.course?.description,
+        creditHours: courseAssignment.course?.creditHours,
+        level: courseAssignment.course?.level,
+        program: {
+          id: courseAssignment.course?.program?.id,
+          name: courseAssignment.course?.program?.name
+        }
+      },
+      semester: {
+        id: courseAssignment.semester?.id,
+        name: courseAssignment.semester?.name,
+        startDate: courseAssignment.semester?.startDate,
+        endDate: courseAssignment.semester?.endDate,
+        isActive: courseAssignment.semester?.isActive,
+        academicYear: courseAssignment.semester?.academicYear
+      },
+      lecturer: {
+        id: courseAssignment.lecturerProfile?.id,
+        fullName: `${courseAssignment.lecturerProfile?.user?.firstName || ''} ${courseAssignment.lecturerProfile?.user?.lastName || ''}`.trim(),
+        email: courseAssignment.lecturerProfile?.user?.email
+      },
+      otherLecturers: otherLecturers.map(assignment => ({
+        id: assignment.lecturerProfile?.id,
+        fullName: `${assignment.lecturerProfile?.user?.firstName || ''} ${assignment.lecturerProfile?.user?.lastName || ''}`.trim(),
+        email: assignment.lecturerProfile?.user?.email,
+        role: assignment.role
+      })),
+      enrollmentStats,
+      students
+    };
+  } catch (error) {
+    console.error("Error in getLecturerCourseDetails:", error);
+    throw error;
+  }
 }
 
   async getLecturerCourses(lecturerProfileId: string) {
@@ -1266,4 +1279,11 @@ export class LecturerDashboardService {
       })),
     }
   }
+
+
+  // Helper method to validate UUID format
+private isValidUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+}
 }

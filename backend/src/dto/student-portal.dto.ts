@@ -68,14 +68,6 @@ export class StudentMaterialsFilterDto {
 // Performance filter DTO
 export class StudentPerformanceFilterDto {
   @IsOptional()
-  @IsUUID()
-  courseId?: string
-
-  @IsOptional()
-  @IsUUID()
-  semesterId?: string
-
-  @IsOptional()
   @IsString()
   assessmentType?: string
 }

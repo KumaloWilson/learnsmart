@@ -425,10 +425,12 @@ export class QuizService {
       const prompt = this.prepareQuestionGenerationPrompt(data, course.name)
 
       // Call OpenAI API
-      const response = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4o",
+     
+    const response = await axios.post(
+      "https://api.deepinfra.com/v1/openai/chat/completions",
+      {
+        model: "Qwen/Qwen3-30B-A3B",
+
           messages: [
             {
               role: "system",

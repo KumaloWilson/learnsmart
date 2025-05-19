@@ -20,8 +20,8 @@ const upload = multer({
 router.get("/:studentId/dashboard", authMiddleware, studentPortalController.getDashboard)
 
 // Courses
-router.get("/:studentId/courses", authMiddleware, studentPortalController.getEnrolledCourses)
-router.get("/:studentId/course/:courseId/:semesterId", authMiddleware, studentPortalController.getCourseDetails)
+router.get("/:studentId/courses/semester/:semesterId", authMiddleware, studentPortalController.getEnrolledCourses)
+router.get("/:studentId/course/:courseId/semester/:semesterId", authMiddleware, studentPortalController.getCourseDetails)
 
 // Assessments
 router.get("/:studentId/assessments", authMiddleware, studentPortalController.getAssessments)
@@ -44,7 +44,7 @@ router.post(
 router.get("/:studentId/materials", authMiddleware, studentPortalController.getMaterials)
 
 // Performance
-router.get("/:studentId/performance", authMiddleware, studentPortalController.getPerformance)
+router.get("/:studentId/performance/course/:courseId/semester/:semesterId", authMiddleware, studentPortalController.getPerformance)
 
 // Attendance
 router.get("/:studentId/attendance", authMiddleware, studentPortalController.getAttendance)
@@ -60,7 +60,7 @@ router.post(
 )
 
 // Course Topics
-router.get("/:studentId/course-topics/:courseId/:semesterId", authMiddleware, studentPortalController.getCourseTopics)
+router.get("/:studentId/course-topics/course/:courseId/semester/:semesterId", authMiddleware, studentPortalController.getCourseTopics)
 // router.post(
 //   "/:studentId/mark-topic-completed/:courseTopicId",
 //   authMiddleware,
