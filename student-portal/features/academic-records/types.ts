@@ -1,9 +1,25 @@
 export interface AcademicRecord {
   id: string
-  semester: string
-  year: string
-  courses: CourseRecord[]
+  studentProfileId: string
+  semesterId: string
   gpa: number
+  cgpa: number
+  totalCredits: number
+  earnedCredits: number
+  remarks: string
+  createdAt: string
+  updatedAt: string
+  semester: {
+    id: string
+    name: string
+    startDate: string
+    endDate: string
+    isActive: boolean
+    academicYear: number
+    createdAt: string
+    updatedAt: string
+  }
+  courses?: CourseRecord[]
 }
 
 export interface CourseRecord {
