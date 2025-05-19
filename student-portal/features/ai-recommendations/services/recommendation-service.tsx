@@ -1,7 +1,7 @@
 import axios from "axios"
 import type { Recommendation, GenerateRecommendationsRequest } from "@/features/ai-recommendations/types"
 
-const API_URL = "http://localhost:5000/api"
+const API_URL = "https://learnsmart-6i9q.onrender.com/api"
 
 export const recommendationsService = {
   async getRecommendations(studentProfileId: string, token: string): Promise<Recommendation[]> {

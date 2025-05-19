@@ -7,7 +7,6 @@ import userReducer from "@/features/user/redux/userSlice"
 import assessmentsReducer from "@/features/assessments/redux/assessmentsSlice"
 import performanceReducer from "@/features/performance/redux/performanceSlice"
 import courseMaterialsReducer from "@/features/course-materials/redux/courseMaterialsSlice"
-import quizHistoryReducer from "@/features/quiz-history/redux/quizHistorySlice"
 import attendanceReducer from "@/features/attendance/redux/attendanceSlice"
 import academicRecordsReducer from "@/features/academic-records/redux/academicRecordsSlice"
 import aiRecommendationsReducer from "@/features/ai-recommendations/redux/aiRecommendationsSlice"
@@ -23,7 +22,7 @@ export const store = configureStore({
     assessments: assessmentsReducer,
     performance: performanceReducer,
     courseMaterials: courseMaterialsReducer,
-    quizHistory: quizHistoryReducer,
+    // quizHistory: quizHistoryReducer,
     attendance: attendanceReducer,
     academicRecords: academicRecordsReducer,
     aiRecommendations: aiRecommendationsReducer,

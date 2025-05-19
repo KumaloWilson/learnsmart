@@ -1,8 +1,6 @@
 {
-  "/assessments/page": "app/assessments/page.js",
-  "/course-materials/page": "app/course-materials/page.js",
+  "/page": "app/page.js",
   "/quiz-history/page": "app/quiz-history/page.js",
-  "/ai-recommendations/page": "app/ai-recommendations/page.js",
-  "/academic-records/page": "app/academic-records/page.js",
-  "/page": "app/page.js"
+  "/courses/page": "app/courses/page.js",
+  "/courses/[courseId]/page": "app/courses/[courseId]/page.js"
 }
