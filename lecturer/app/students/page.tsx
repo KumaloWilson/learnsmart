@@ -32,7 +32,8 @@ export default function StudentsPage() {
   const [selectedCourseId, setSelectedCourseId] = useState<string>("")
   const [filteredStudents, setFilteredStudents] = useState<any[]>([])
   const [allStudents, setAllStudents] = useState<any[]>([])
-
+  
+console.log(allStudents)
   useEffect(() => {
     if (lecturerId) {
       getCourses(lecturerId)
@@ -236,10 +237,10 @@ export default function StudentsPage() {
                           >
                             <span className="flex items-center w-full">View Performance</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          {/* <DropdownMenuItem>
                             <span className="flex items-center w-full">Send Message</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          </DropdownMenuItem> */}
+                          <DropdownMenuItem  onClick={() => router.push(`/attendance/${student.id}`)}>
                             <span className="flex items-center w-full">View Attendance</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>

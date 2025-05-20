@@ -34,7 +34,7 @@ export default function NotificationsPage() {
     {
       id: "n3",
       title: "System Update",
-      description: "SmartLearn will be updated this weekend",
+      description: "LearnSmart will be updated this weekend",
       time: "Yesterday",
       type: "system",
       read: true,

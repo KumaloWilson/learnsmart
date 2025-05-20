@@ -32,7 +32,7 @@ export function Sidebar() {
   const learningNavItems = [
     { name: "Performance", href: "/performance", icon: BarChart },
     { name: "Course Materials", href: "/course-materials", icon: FileText },
-    //{ name: "Quiz History", href: "/quiz-history", icon: History },
+    { name: "Quiz History", href: "/quiz-history", icon: History },
     { name: "Attendance", href: "/attendance", icon: Calendar },
   ]
 

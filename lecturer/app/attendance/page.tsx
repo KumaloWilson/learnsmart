@@ -33,6 +33,8 @@ export default function AttendancePage() {
   const [attendanceStats, setAttendanceStats] = useState<any>(null)
   const [isStatsLoading, setIsStatsLoading] = useState(false)
 
+  console.log(attendanceRecords)
+
   useEffect(() => {
     if (lecturerId) {
       getCourses(lecturerId)
@@ -68,7 +70,7 @@ export default function AttendancePage() {
     }
 
     fetchAttendance()
-  }, [lecturerId, selectedCourseId, semesterId, selectedDate, getAttendanceRecords])
+  }, [lecturerId, selectedCourseId, semesterId, selectedDate])
 
   useEffect(() => {
   const fetchStats = async () => {
@@ -188,7 +190,7 @@ export default function AttendancePage() {
             ) : (
               <>
                 <div className="text-2xl font-bold">{attendanceStats ? attendanceStats.totalClasses : "0"}</div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground">Track and manage student attendance
                   {attendanceStats
                     ? `${attendanceStats.totalPhysicalClasses} physical, ${attendanceStats.totalVirtualClasses} virtual`
                     : "No classes recorded"}
@@ -253,6 +255,7 @@ export default function AttendancePage() {
                   </TableCell>
                   <TableCell>{record.notes || "No notes"}</TableCell>
                   <TableCell className="text-right">
+                    
                     <Button variant="ghost" size="sm" onClick={() => router.push(`/attendance/${record.id}`)}>
                       View
                     </Button>

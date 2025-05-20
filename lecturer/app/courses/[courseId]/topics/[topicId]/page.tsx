@@ -32,6 +32,7 @@ export default function TopicDetailsPage() {
 
   const { topic, loading, error, refetch } = useCourseTopic(topicId)
   const { updateTopic, loading: updateLoading, error: updateError } = useUpdateCourseTopic(topicId)
+  console.log("topic", topic)
 
   const [formData, setFormData] = useState<UpdateTopicPayload>({
     title: "",
@@ -114,7 +115,7 @@ export default function TopicDetailsPage() {
       learningObjectives: updatedObjectives,
     }))
     setIsDirty(true)
-  }
+  }  
 
   const addObjective = () => {
     if (newObjective.trim()) {

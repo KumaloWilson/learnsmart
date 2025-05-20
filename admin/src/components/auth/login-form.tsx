@@ -43,7 +43,7 @@ export function LoginForm() {
         <div className="flex items-center justify-center mb-4">
           <School className="h-10 w-10 text-primary" />
         </div>
-        <CardTitle className="text-2xl text-center">SmartLearn Admin</CardTitle>
+        <CardTitle className="text-2xl text-center">LearnSmart Admin</CardTitle>
         <CardDescription className="text-center">Enter your credentials to access your account</CardDescription>
       </CardHeader>
       <CardContent>

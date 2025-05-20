@@ -26,7 +26,7 @@ export const recommendationsService = {
   async generateRecommendations(request: GenerateRecommendationsRequest, token: string): Promise<Recommendation[]> {
     try {
       const response = await axios.post<Recommendation[]>(
-        `${API_URL}/student-portal/generate-recommendations`,
+        `${API_URL}/student-portal/${request.studentProfileId}/generate-recommendations`,
         request,
         {
           headers: {

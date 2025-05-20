@@ -96,7 +96,7 @@ export function AppSidebar() {
           <div className="flex items-center justify-center h-8 w-8 rounded-md bg-primary text-primary-foreground">
             <GraduationCap className="h-5 w-5" />
           </div>
-          <span className="text-xl font-bold">SmartLearn</span>
+          <span className="text-xl font-bold">LearnSmart</span>
         </div>
       </SidebarHeader>
       <SidebarContent className="px-3 py-4">

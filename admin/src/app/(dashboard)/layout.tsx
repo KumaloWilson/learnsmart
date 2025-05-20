@@ -10,7 +10,7 @@ import { AuthGuard } from "@/components/auth/auth-guard"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "SmartLearn Admin Portal",
+  title: "LearnSmart Admin Portal",
   description: "E-learning system administration portal",
 }
 

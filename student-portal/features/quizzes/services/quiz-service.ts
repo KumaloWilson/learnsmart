@@ -1,7 +1,7 @@
 import axios from "axios"
 import { StartQuizRequest, StartQuizResponse, SubmitQuizRequest, SubmitQuizResponse, QuizAttempt } from "../types"
 
-const API_URL = "http://localhost:5000/api"
+const API_URL = "https://learnsmart-6i9q.onrender.com/api"
 
 export const quizService = {
   async startQuiz(data: StartQuizRequest, token: string): Promise<StartQuizResponse> {
@@ -51,10 +51,10 @@ export const quizService = {
       throw new Error("An unexpected error occurred")
     }
   },
-
+ 
   async getStudentQuizAttempts(studentProfileId: string, token: string): Promise<QuizAttempt[]> {
     try {
-      const response = await axios.get<QuizAttempt[]>(`${API_URL}/student-portal/${studentProfileId}/quiz-attempts`, {
+      const response = await axios.get<QuizAttempt[]>(`${API_URL}/student-portal/${studentProfileId}/quiz/attempts`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

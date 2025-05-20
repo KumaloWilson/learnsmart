@@ -1,75 +1,32 @@
 "use client"
 
-import { useEffect } from "react"
-import { useAppSelector, useAppDispatch } from "@/redux/hooks"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertTriangle } from "lucide-react"
 import { QuizCard } from "@/features/quizzes/components/quiz-card"
-import { getStudentQuizAttempts } from "@/features/quizzes/redux/quizSlice"
 
-interface CourseQuizzesProps {
+interface Quiz {
+  id: string
   courseId: string
-  quizzes: any[]
+  // Add other quiz properties as needed
 }
 
-export function CourseQuizzes({ courseId, quizzes }: CourseQuizzesProps) {
-  const dispatch = useAppDispatch()
-  const { studentProfile, accessToken } = useAppSelector((state) => state.auth)
-  const { attempts, isLoading, error } = useAppSelector((state) => state.quiz)
+interface QuizAttempt {
+  id: string
+  quizId: string
+  status: string
+  score?: number
+  isPassed?: boolean
+  createdAt: string
+  // Add other attempt properties as needed
+}
 
-  useEffect(() => {
-    if (studentProfile?.id && accessToken) {
-      dispatch(
-        getStudentQuizAttempts({
-          studentProfileId: studentProfile.id,
-          token: accessToken,
-        }),
-      )
-    }
-  }, [dispatch, studentProfile?.id, accessToken])
+interface CourseQuizzesProps {
+  quizzes: Quiz[]
+  quizAttempts: QuizAttempt[]
+}
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-full max-w-md" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-4 w-64 mt-2" />
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {Array.from({ length: 3 }).map((_, j) => (
-                    <Skeleton key={j} className="h-4 w-full" />
-                  ))}
-                </div>
-                <Skeleton className="h-10 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    )
-  }
-
-  // Filter quizzes for this course
-  const courseQuizzes = quizzes.filter((quiz) => quiz.courseId === courseId)
-
-  if (courseQuizzes.length === 0) {
+export function CourseQuizzes({ quizzes, quizAttempts }: CourseQuizzesProps) {
+  if (quizzes.length === 0) {
     return (
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">Quizzes</h3>
@@ -84,12 +41,12 @@ export function CourseQuizzes({ courseId, quizzes }: CourseQuizzesProps) {
       <p className="text-muted-foreground">Complete these quizzes to test your knowledge and track your progress.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        {courseQuizzes.map((quiz) => {
+        {quizzes.map((quiz) => {
           // Find the most recent attempt for this quiz
-          const quizAttempts = attempts.filter((attempt) => attempt.quizId === quiz.id)
+          const quizAttemptsList = quizAttempts.filter((attempt) => attempt.quizId === quiz.id)
           const latestAttempt =
-            quizAttempts.length > 0
-              ? quizAttempts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+            quizAttemptsList.length > 0
+              ? quizAttemptsList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
               : null
 
           const isCompleted = latestAttempt?.status === "completed" || latestAttempt?.status === "timed_out"

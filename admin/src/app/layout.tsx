@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "SmartLearn Admin Portal",
+  title: "LearnSmart Admin Portal",
   description: "E-learning system administration portal",
     generator: 'v0.dev'
 }

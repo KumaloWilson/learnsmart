@@ -4,12 +4,18 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 import type { Enrollment } from "@/features/auth/types"
+import Link from "next/link"
+import { useAppSelector } from "@/redux/hooks"
 
 interface CurrentCoursesProps {
   enrollments: Enrollment[]
 }
 
 export function CurrentCourses({ enrollments }: CurrentCoursesProps) {
+    const { studentProfile } = useAppSelector((state) => state.auth)
+    console.log(enrollments)
+
+  
   if (!enrollments.length) {
     return (
       <Card>
@@ -52,10 +58,14 @@ export function CurrentCourses({ enrollments }: CurrentCoursesProps) {
 
               <div className="flex items-center justify-between">
                 <Progress value={course.grade ? 100 : 0} className="w-2/3" />
-                <Button size="sm" variant="ghost" className="gap-1">
+                <Link href={`/courses/${course.courseId}?semesterId=${studentProfile?.activeSemester?.id}`}>
+                
+                 <Button size="sm" variant="ghost" className="gap-1">
                   <span>View Course</span>
                   <ArrowRight className="h-3 w-3" />
                 </Button>
+                </Link>
+               
               </div>
             </div>
           ))}

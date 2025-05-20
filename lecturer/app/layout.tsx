@@ -13,7 +13,7 @@ import { AppHeader } from "@/components/app-header"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "SmartLearn - Lecturer Portal",
+  title: "LearnSmart - Lecturer Portal",
   description: "E-learning system for lecturers",
     generator: 'v0.dev'
 }

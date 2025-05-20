@@ -74,7 +74,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mb-4">
               <GraduationCap className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold">SmartLearn</h1>
+            <h1 className="text-3xl font-bold">LearnSmart</h1>
             <p className="mt-2 text-muted-foreground">Welcome back to your Lecturer Portal</p>
           </div>
 
