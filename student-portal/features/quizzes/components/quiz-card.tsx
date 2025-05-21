@@ -24,7 +24,7 @@ export function QuizCard({ quiz, isCompleted = false, score = null, isPassed = n
   
   // Get attempts from Redux store to check if user has already attempted this quiz
   const { attempts } = useAppSelector((state) => state.quiz)
-  
+  console.log("attempts",attempts)
   // Check if the user has already attempted this specific quiz
   const hasAttemptedQuiz = attempts.some(attempt => 
     attempt.quizId === quiz.id && 
@@ -35,9 +35,35 @@ export function QuizCard({ quiz, isCompleted = false, score = null, isPassed = n
   const startDate = new Date(quiz.startDate)
   const endDate = new Date(quiz.endDate)
   
+  // Format times using the formatTime function
+  const formattedStartTime = formatTime(quiz.startDate) // e.g. "7:36 AM"
+  const formattedEndTime = formatTime(quiz.endDate)     // e.g. "8:33 AM"
+  
+  // Parse the formatted times back to Date objects for calculations
+  const parseTimeString = (timeStr: string, dateObj: Date): Date => {
+    const [time, period] = timeStr.split(" ");
+    let [hours, minutes] = time.split(":").map(Number);
+    
+    // Convert to 24-hour format
+    if (period === "PM" && hours !== 12) {
+      hours += 12;
+    } else if (period === "AM" && hours === 12) {
+      hours = 0;
+    }
+    
+    // Create a new Date object with the date from dateObj but time from timeStr
+    const newDate = new Date(dateObj);
+    newDate.setHours(hours, minutes, 0, 0);
+    return newDate;
+  };
+  
+  // Create Date objects based on the formatted times
+  // These will be used for calculations
+  const calculatedStartDate = parseTimeString(formattedStartTime, startDate);
+  const calculatedEndDate = parseTimeString(formattedEndTime, endDate);
   
   // Allow entry 5 minutes before the start time
-  const earlyAccessTime = new Date(startDate.getTime() - 5 * 60 * 1000)
+  const earlyAccessTime = new Date(calculatedStartDate.getTime() - 5 * 60 * 1000)
 
   useEffect(() => {
     // Function to check availability based on current time
@@ -46,16 +72,16 @@ export function QuizCard({ quiz, isCompleted = false, score = null, isPassed = n
       
       // Quiz is available if:
       // 1. It's active AND
-      // 2. Current time is within 5 minutes before start time and end time AND
+      // 2. Current time is within formatted time range AND
       // 3. User hasn't completed it yet (unless viewing results)
-      const isTimeAvailable = now >= earlyAccessTime && now <= endDate && quiz.isActive
+      const isTimeAvailable = now >= calculatedStartDate && now <= calculatedEndDate && quiz.isActive
       const canAccess = isTimeAvailable && (!hasAttemptedQuiz || isCompleted)
       
       setIsAvailable(canAccess)
 
       // Calculate time remaining if quiz is ending soon (within 1 hour)
-      if (now < endDate && endDate.getTime() - now.getTime() < 60 * 60 * 1000) {
-        const minutesRemaining = Math.floor((endDate.getTime() - now.getTime()) / (60 * 1000))
+      if (now < calculatedEndDate && calculatedEndDate.getTime() - now.getTime() < 60 * 60 * 1000) {
+        const minutesRemaining = Math.floor((calculatedEndDate.getTime() - now.getTime()) / (60 * 1000))
         setTimeRemaining(`${minutesRemaining} minutes remaining`)
       } else {
         setTimeRemaining(null)
@@ -67,7 +93,7 @@ export function QuizCard({ quiz, isCompleted = false, score = null, isPassed = n
     const intervalId = setInterval(checkAvailability, 60000) // Check every minute
     
     return () => clearInterval(intervalId)
-  }, [quiz.isActive, quiz.id, earlyAccessTime, endDate, hasAttemptedQuiz, isCompleted])
+  }, [quiz.isActive, quiz.id, calculatedStartDate, calculatedEndDate, earlyAccessTime, hasAttemptedQuiz, isCompleted])
 
   // Format date ranges
   const dateOptions: Intl.DateTimeFormatOptions = {
@@ -79,12 +105,6 @@ export function QuizCard({ quiz, isCompleted = false, score = null, isPassed = n
 
   const formattedStartDate = startDate.toLocaleDateString(undefined, dateOptions)
   const formattedEndDate = endDate.toLocaleDateString(undefined, dateOptions)
-  
-  // Format times
-  const formattedStartTime = formatTime(quiz.startDate)
-  const formattedEndTime = formatTime(quiz.endDate)
-
-  console.log(endDate)
 
   // Get status badge
   const getBadgeStatus = () => {
@@ -96,7 +116,7 @@ export function QuizCard({ quiz, isCompleted = false, score = null, isPassed = n
     }
     
     const now = new Date()
-    if (now > endDate) {
+    if (now > calculatedEndDate) {
       return { variant: "secondary", text: "Expired" }
     }
     if (now < earlyAccessTime) {
@@ -116,7 +136,7 @@ export function QuizCard({ quiz, isCompleted = false, score = null, isPassed = n
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle>{quiz.title}</CardTitle>
+              <CardTitle>{quiz.title} </CardTitle>
               <CardDescription>{quiz.description}</CardDescription>
             </div>
             <Badge variant={badgeStatus.variant as any}>{badgeStatus.text}</Badge>
@@ -142,7 +162,7 @@ export function QuizCard({ quiz, isCompleted = false, score = null, isPassed = n
               <div className="flex items-center mt-1 ml-6">
                 <Clock className="mr-2 h-3 w-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">
-                  {formattedStartTime} - {formattedEndTime} 
+                  {formattedStartTime} - {formattedEndTime}
                 </span>
               </div>
             </div>

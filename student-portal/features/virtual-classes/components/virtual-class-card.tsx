@@ -18,6 +18,22 @@ interface VirtualClassCardProps {
   showCourse?: boolean
 }
 
+// Helper function to parse time string like "8:35 AM" into hours and minutes
+function parseTimeString(timeStr: string): { hours: number; minutes: number } {
+  // Expected format: "8:35 AM" or "08:35 AM"
+  const [time, period] = timeStr.split(" ");
+  let [hours, minutes] = time.split(":").map(Number);
+  
+  // Convert to 24-hour format
+  if (period === "PM" && hours < 12) {
+    hours += 12;
+  } else if (period === "AM" && hours === 12) {
+    hours = 0;
+  }
+  
+  return { hours, minutes };
+}
+
 export function VirtualClassCard({ virtualClass, showCourse = false }: VirtualClassCardProps) {
   const dispatch = useAppDispatch()
   const { studentProfile, accessToken } = useAppSelector((state) => state.auth)
@@ -26,84 +42,93 @@ export function VirtualClassCard({ virtualClass, showCourse = false }: VirtualCl
   const [classStatus, setClassStatus] = useState<VirtualClassStatus>(VirtualClassStatus.UPCOMING)
   const [timeRemaining, setTimeRemaining] = useState<string>("")
 
-  const startDate = new Date(virtualClass.scheduledStartTime)
-  const endDate = new Date(virtualClass.scheduledEndTime)
-  const now = new Date()
+  // Format the date for display
+  const formattedDate = formatDate(virtualClass.scheduledStartTime)
+  
+  // Format times for display
+  const formattedStartTime = formatTime(virtualClass.scheduledStartTime)
+  const formattedEndTime = formatTime(virtualClass.scheduledEndTime)
 
-  // Format date and time
-  const dateOptions: Intl.DateTimeFormatOptions = { weekday: "long", month: "short", day: "numeric" }
-  const timeOptions: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" }
-
-  // const formattedDate = startDate.toLocaleDateString(undefined, dateOptions)
-  // const formattedStartTime = startDate.toLocaleTimeString(undefined, timeOptions)
-  // const formattedEndTime = endDate.toLocaleTimeString(undefined, timeOptions)
-
-  const formattedDate = formatDate(virtualClass.scheduledEndTime)
-    
-    // Format times
-    const formattedStartTime = formatTime(virtualClass.scheduledStartTime)
-    const formattedEndTime = formatTime(virtualClass.scheduledEndTime)
-
-  // Calculate time until class starts
   useEffect(() => {
-    const updateStatus = () => {
-      const now = new Date()
-      const startDate = new Date(virtualClass.scheduledStartTime)
-      const endDate = new Date(virtualClass.scheduledEndTime)
+    const updateTimeRemaining = () => {
+      const now = new Date();
+      
+      // Parse the formatted start and end times (which should be displaying correctly)
+      const startTimeParsed = parseTimeString(formattedStartTime);
+      const endTimeParsed = parseTimeString(formattedEndTime);
+      
+      // Create today's date with these times
+      const startDate = new Date();
+      startDate.setHours(startTimeParsed.hours, startTimeParsed.minutes, 0, 0);
+      
+      const endDate = new Date();
+      endDate.setHours(endTimeParsed.hours, endTimeParsed.minutes, 0, 0);
+      
+      console.log("Current time:", now.toLocaleTimeString());
+      console.log("Start time today:", startDate.toLocaleTimeString());
+      console.log("End time today:", endDate.toLocaleTimeString());
 
-      // Time difference in milliseconds
-      const timeDiff = startDate.getTime() - now.getTime()
+      // Class duration in minutes
+      const classDurationMinutes = Math.round((endDate.getTime() - startDate.getTime()) / 60000);
+      console.log("Class duration in minutes:", classDurationMinutes);
+      
+      // Time until start/end in minutes
+      const minutesUntilStart = Math.max(0, Math.round((startDate.getTime() - now.getTime()) / 60000));
+      const minutesUntilEnd = Math.max(0, Math.round((endDate.getTime() - now.getTime()) / 60000));
+      
+      console.log("Minutes until start:", minutesUntilStart);
+      console.log("Minutes until end:", minutesUntilEnd);
 
-      // Calculate minutes before class starts
-      const minutesBeforeStart = Math.floor(timeDiff / (1000 * 60))
-
+      // Determine class status
       if (now > endDate) {
-        // Class is over
-        setClassStatus(VirtualClassStatus.PAST)
-        setTimeRemaining("")
-      } else if (now >= startDate) {
-        // Class is ongoing
-        setClassStatus(VirtualClassStatus.ONGOING)
-
-        // Calculate time remaining in class
-        const endTimeDiff = endDate.getTime() - now.getTime()
-        const hoursRemaining = Math.floor(endTimeDiff / (1000 * 60 * 60))
-        const minutesRemaining = Math.floor((endTimeDiff % (1000 * 60 * 60)) / (1000 * 60))
-
-        setTimeRemaining(`${hoursRemaining}h ${minutesRemaining}m remaining`)
-      } else if (minutesBeforeStart <= 5) {
-        // Within 5 minutes of start time
-        setClassStatus(VirtualClassStatus.JOINABLE)
-        setTimeRemaining(`Starts in ${minutesBeforeStart}m`)
-      } else {
-        // More than 5 minutes before start time
-        setClassStatus(VirtualClassStatus.UPCOMING)
-
-        // Format time remaining
-        if (minutesBeforeStart < 60) {
-          // Less than an hour
-          setTimeRemaining(`Starts in ${minutesBeforeStart}m`)
-        } else if (minutesBeforeStart < 1440) {
-          // Less than a day
-          const hoursBeforeStart = Math.floor(minutesBeforeStart / 60)
-          const remainingMinutes = minutesBeforeStart % 60
-          setTimeRemaining(`Starts in ${hoursBeforeStart}h ${remainingMinutes}m`)
+        console.log("Class is PAST");
+        setClassStatus(VirtualClassStatus.PAST);
+        setTimeRemaining("");
+      } 
+      else if (now >= startDate) {
+        console.log("Class is ONGOING");
+        setClassStatus(VirtualClassStatus.ONGOING);
+        
+        // Ensure remaining time doesn't exceed class duration
+        const remainingMins = Math.min(minutesUntilEnd, classDurationMinutes);
+        
+        if (remainingMins < 60) {
+          setTimeRemaining(`${remainingMins}m remaining`);
         } else {
-          // More than a day
-          const daysBeforeStart = Math.floor(minutesBeforeStart / 1440)
-          setTimeRemaining(`Starts in ${daysBeforeStart} day${daysBeforeStart > 1 ? "s" : ""}`)
+          const hoursRemaining = Math.floor(remainingMins / 60);
+          const minutesRemaining = remainingMins % 60;
+          setTimeRemaining(`${hoursRemaining}h ${minutesRemaining}m remaining`);
+        }
+      } 
+      else if (minutesUntilStart <= 5) {
+        console.log("Class is JOINABLE");
+        setClassStatus(VirtualClassStatus.JOINABLE);
+        setTimeRemaining(`Starts in ${minutesUntilStart}m`);
+      } 
+      else {
+        console.log("Class is UPCOMING");
+        setClassStatus(VirtualClassStatus.UPCOMING);
+        
+        if (minutesUntilStart < 60) {
+          setTimeRemaining(`Starts in ${minutesUntilStart}m`);
+        } else if (minutesUntilStart < 1440) {
+          const hoursUntilStart = Math.floor(minutesUntilStart / 60);
+          const minutesRemaining = minutesUntilStart % 60;
+          setTimeRemaining(`Starts in ${hoursUntilStart}h ${minutesRemaining}m`);
+        } else {
+          const daysUntilStart = Math.floor(minutesUntilStart / 1440);
+          setTimeRemaining(`Starts in ${daysUntilStart} day${daysUntilStart > 1 ? "s" : ""}`);
         }
       }
-    }
+    };
 
-    // Update immediately
-    updateStatus()
-
+    // Run initially
+    updateTimeRemaining();
+    
     // Update every minute
-    const interval = setInterval(updateStatus, 60000)
-
-    return () => clearInterval(interval)
-  }, [virtualClass.scheduledStartTime, virtualClass.scheduledEndTime])
+    const interval = setInterval(updateTimeRemaining, 60000);
+    return () => clearInterval(interval);
+  }, [formattedStartTime, formattedEndTime]);
 
   const handleJoinClass = async () => {
     if (!studentProfile?.id || !accessToken) {
