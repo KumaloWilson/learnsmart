@@ -62,8 +62,11 @@ export default function StudentForm({ studentId }: StudentFormProps) {
         currentLevel: 1,
         status: "active" as const,
         enrollmentDate: new Date(),
+        dateOfBirth: new Date(),
       },
   })
+
+  // console.log("form errors", form.getValues())
 
   useEffect(() => {
     loadPrograms()
@@ -112,8 +115,9 @@ export default function StudentForm({ studentId }: StudentFormProps) {
         programId: data.programId,
         enrollmentDate: format(data.enrollmentDate, "yyyy-MM-dd"),
         currentLevel: data.currentLevel,
-        status: data.status,
+        // status: data.status,
       }
+      console.log("studentData", studentData)
 
       if (studentId) {
         await updateStudent(studentId, studentData)
@@ -210,38 +214,64 @@ export default function StudentForm({ studentId }: StudentFormProps) {
             </div>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="dateOfBirth"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Date of Birth</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                          >
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+             <FormField
+  control={form.control}
+  name="dateOfBirth"
+  render={({ field }) => (
+    <FormItem className="flex flex-col">
+      <FormLabel>Date of Birth</FormLabel>
+      <Popover>
+        <PopoverTrigger asChild>
+          <FormControl>
+            <Button
+              variant={"outline"}
+              className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+            >
+              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+            </Button>
+          </FormControl>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <div className="p-2 flex items-center justify-between">
+            <Select
+              onValueChange={(year) => {
+                // Create a date object safely
+                const currentDate = field.value instanceof Date ? field.value : new Date();
+                const newDate = new Date(currentDate);
+                newDate.setFullYear(parseInt(year));
+                field.onChange(newDate);
+              }}
+              value={field.value instanceof Date ? field.value.getFullYear().toString() : new Date().getFullYear().toString()}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 126 }, (_, i) => (
+                  <SelectItem key={i} value={(new Date().getFullYear() - i).toString()}>
+                    {new Date().getFullYear() - i}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={() => field.onChange(new Date())}>
+              Today
+            </Button>
+          </div>
+          <Calendar
+            mode="single"
+            selected={field.value}
+            onSelect={(date) => field.onChange(date || new Date())}
+            disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
               <FormField
                 control={form.control}
                 name="gender"

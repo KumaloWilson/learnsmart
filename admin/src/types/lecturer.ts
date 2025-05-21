@@ -1,3 +1,4 @@
+// Suggested type updates to match the backend validation
 import type { User } from "./auth"
 import type { Department } from "./department"
 import type { Course } from "./course"
@@ -34,7 +35,7 @@ export interface CreateLecturerDto {
   bio?: string
   officeLocation?: string
   officeHours?: string
-  status?: "active" | "inactive" | "on_leave"
+  // status field removed from CreateLecturerDto
   joinDate?: string
 }
 

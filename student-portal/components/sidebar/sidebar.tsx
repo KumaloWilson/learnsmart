@@ -25,7 +25,7 @@ export function Sidebar() {
   const mainNavItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Courses", href: "/courses", icon: BookOpen },
-    { name: "Assessments", href: "/assessments", icon: ClipboardCheck },
+    // { name: "Assessments", href: "/assessments", icon: ClipboardCheck },
     { name: "Virtual Classes", href: "/virtual-classes", icon: Video },
   ]
 

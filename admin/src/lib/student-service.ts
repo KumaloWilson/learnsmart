@@ -30,7 +30,7 @@ export const getStudentByStudentId = async (studentId: string): Promise<Student>
 }
 
 export const createStudent = async (data: StudentFormData): Promise<Student> => {
-  const response = await api.post("/students", data)
+  const response = await api.post("/students/", data)
   return response.data
 }
 

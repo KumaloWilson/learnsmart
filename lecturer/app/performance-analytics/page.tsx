@@ -184,30 +184,41 @@ export default function PerformanceAnalyticsPage() {
 
   const averages = calculateAverages()
 
-  const getCategoryDistribution = () => {
-    if (!filteredPerformances || filteredPerformances.length === 0) {
-      return {
-        excellent: 0,
-        good: 0,
-        average: 0,
-        poor: 0,
-        failing: 0,
-      }
+type PerformanceCategory = 'excellent' | 'good' | 'average' | 'poor' | 'failing';
+
+const getCategoryDistribution = () => {
+  if (!filteredPerformances || filteredPerformances.length === 0) {
+    return {
+      excellent: 0,
+      good: 0,
+      average: 0,
+      poor: 0,
+      failing: 0,
+    }
+  }
+
+  const distribution = filteredPerformances.reduce((acc, curr) => {
+    const category = curr.performanceCategory.toLowerCase() as PerformanceCategory;
+
+    if (acc[category] !== undefined) {
+      acc[category] += 1;
     }
 
-    const distribution = filteredPerformances.reduce(
-      (acc, curr) => {
-        const category = curr.performanceCategory.toLowerCase()
-        return {
-          ...acc,
-          [category]: (acc[category] || 0) + 1,
-        }
-      },
-      { excellent: 0, good: 0, average: 0, poor: 0, failing: 0 },
-    )
+    return acc;
+  }, {
+    excellent: 0,
+    good: 0,
+    average: 0,
+    poor: 0,
+    failing: 0,
+  } as Record<PerformanceCategory, number>);
 
-    return distribution
-  }
+  return distribution;
+}
+
+  
+
+  
 
   const categoryDistribution = getCategoryDistribution()
 
@@ -254,7 +265,7 @@ export default function PerformanceAnalyticsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Semesters</SelectItem>
-                    {semesters.map((semester) => (
+                    {semesters?.map((semester) => (
                       <SelectItem key={semester.id} value={semester.id}>
                         {semester.name}
                       </SelectItem>
@@ -455,7 +466,7 @@ export default function PerformanceAnalyticsPage() {
                               </tr>
                             </thead>
                             <tbody>
-                              {filteredPerformances.map((performance) => (
+                              {filteredPerformances?.map((performance) => (
                                 <tr key={performance.id} className="border-t hover:bg-muted/50">
                                   <td className="px-4 py-3 text-sm">
                                     <div>
@@ -575,42 +586,42 @@ export default function PerformanceAnalyticsPage() {
                                 <div className="text-center">
                                   <div className="text-xs text-muted-foreground mb-1">Excellent</div>
                                   <div className="text-lg font-semibold">
-                                    {classAnalysis.performanceDistribution.excellent}
+                                    {classAnalysis.performanceDistribution?.excellent}
                                   </div>
                                 </div>
                                 <div className="text-center">
                                   <div className="text-xs text-muted-foreground mb-1">Good</div>
                                   <div className="text-lg font-semibold">
-                                    {classAnalysis.performanceDistribution.good}
+                                    {classAnalysis.performanceDistribution?.good}
                                   </div>
                                 </div>
                                 <div className="text-center">
                                   <div className="text-xs text-muted-foreground mb-1">Average</div>
                                   <div className="text-lg font-semibold">
-                                    {classAnalysis.performanceDistribution.average}
+                                    {classAnalysis.performanceDistribution?.average}
                                   </div>
                                 </div>
                                 <div className="text-center">
                                   <div className="text-xs text-muted-foreground mb-1">Poor</div>
                                   <div className="text-lg font-semibold">
-                                    {classAnalysis.performanceDistribution.poor}
+                                    {classAnalysis.performanceDistribution?.poor}
                                   </div>
                                 </div>
                                 <div className="text-center">
                                   <div className="text-xs text-muted-foreground mb-1">Failing</div>
                                   <div className="text-lg font-semibold">
-                                    {classAnalysis.performanceDistribution.failing}
+                                    {classAnalysis.performanceDistribution?.failing}
                                   </div>
                                 </div>
                               </div>
                               <div className="h-[150px]">
                                 <PerformanceCategoryChart
                                   distribution={{
-                                    excellent: classAnalysis.performanceDistribution.excellent,
-                                    good: classAnalysis.performanceDistribution.good,
-                                    average: classAnalysis.performanceDistribution.average,
-                                    poor: classAnalysis.performanceDistribution.poor,
-                                    failing: classAnalysis.performanceDistribution.failing,
+                                    excellent: classAnalysis.performanceDistribution?.excellent,
+                                    good: classAnalysis.performanceDistribution?.good,
+                                    average: classAnalysis.performanceDistribution?.average,
+                                    poor: classAnalysis.performanceDistribution?.poor,
+                                    failing: classAnalysis.performanceDistribution?.failing,
                                   }}
                                 />
                               </div>
@@ -623,7 +634,7 @@ export default function PerformanceAnalyticsPage() {
                             </CardHeader>
                             <CardContent>
                               <ul className="list-disc pl-5 space-y-2">
-                                {classAnalysis.recommendations.map((recommendation, index) => (
+                                {classAnalysis?.recommendations?.map((recommendation, index) => (
                                   <li key={index} className="text-sm">
                                     {recommendation}
                                   </li>
@@ -649,7 +660,7 @@ export default function PerformanceAnalyticsPage() {
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {classAnalysis.topPerformers.map((student) => (
+                                    {classAnalysis?.topPerformers?.map((student) => (
                                       <tr key={student.studentId} className="border-t">
                                         <td className="px-4 py-2 text-sm">{student.studentName}</td>
                                         <td className="px-4 py-2 text-sm">{student.overallPerformance}%</td>
@@ -681,7 +692,7 @@ export default function PerformanceAnalyticsPage() {
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {classAnalysis.strugglingStudents.map((student) => (
+                                    {classAnalysis.strugglingStudents?.map((student) => (
                                       <tr key={student.studentId} className="border-t">
                                         <td className="px-4 py-2 text-sm">{student.studentName}</td>
                                         <td className="px-4 py-2 text-sm">{student.overallPerformance}%</td>

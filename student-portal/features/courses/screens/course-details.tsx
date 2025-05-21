@@ -124,50 +124,72 @@ export function CourseDetails({ courseId, semesterId }: CourseDetailsProps) {
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
-            <span>Overview</span>
-          </TabsTrigger>
-          <TabsTrigger value="topics" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            <span>Topics</span>
-          </TabsTrigger>
-          <TabsTrigger value="quizzes" className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
-            <span>Quizzes</span>
-          </TabsTrigger>
-          <TabsTrigger value="classes" className="flex items-center gap-2">
-            <Video className="h-4 w-4" />
-            <span>Classes</span>
-          </TabsTrigger>
-          <TabsTrigger value="attendance" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span>Attendance</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* Modified tabs section to display horizontally */}
+      <div className="border rounded-lg overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="border-b">
+            <TabsList className="flex h-auto w-full bg-transparent p-0">
+              <TabsTrigger 
+                value="overview"
+                className="flex-1 flex items-center justify-center gap-2 rounded-none border-r border-b-2 px-4 py-3 data-[state=active]:border-b-primary data-[state=active]:border-b-2 data-[state=active]:bg-background data-[state=active]:shadow-none"
+              >
+                <BookOpen className="h-4 w-4" />
+                <span>Overview</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="topics"
+                className="flex-1 flex items-center justify-center gap-2 rounded-none border-r border-b-2 px-4 py-3 data-[state=active]:border-b-primary data-[state=active]:border-b-2 data-[state=active]:bg-background data-[state=active]:shadow-none"
+              >
+                <FileText className="h-4 w-4" />
+                <span>Topics</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="quizzes"
+                className="flex-1 flex items-center justify-center gap-2 rounded-none border-r border-b-2 px-4 py-3 data-[state=active]:border-b-primary data-[state=active]:border-b-2 data-[state=active]:bg-background data-[state=active]:shadow-none"
+              >
+                <CheckCircle className="h-4 w-4" />
+                <span>Quizzes</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="classes"
+                className="flex-1 flex items-center justify-center gap-2 rounded-none border-r border-b-2 px-4 py-3 data-[state=active]:border-b-primary data-[state=active]:border-b-2 data-[state=active]:bg-background data-[state=active]:shadow-none"
+              >
+                <Video className="h-4 w-4" />
+                <span>Classes</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="attendance"
+                className="flex-1 flex items-center justify-center gap-2 rounded-none border-b-2 px-4 py-3 data-[state=active]:border-b-primary data-[state=active]:border-b-2 data-[state=active]:bg-background data-[state=active]:shadow-none"
+              >
+                <Calendar className="h-4 w-4" />
+                <span>Attendance</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-        <TabsContent value="overview" className="space-y-4">
-          <CourseOverview courseDetails={currentCourseDetails} />
-        </TabsContent>
+          <div className="p-4">
+            <TabsContent value="overview" className="mt-0">
+              <CourseOverview courseDetails={currentCourseDetails} />
+            </TabsContent>
 
-        <TabsContent value="topics" className="space-y-4">
-          <CourseTopics topics={currentCourseTopics} />
-        </TabsContent>
+            <TabsContent value="topics" className="mt-0">
+              <CourseTopics topics={currentCourseTopics} />
+            </TabsContent>
 
-        <TabsContent value="quizzes" className="space-y-4">
-          <CourseQuizzes quizzes={quizzes} quizAttempts={currentCourseDetails.quizAttempts} />
-        </TabsContent>
+            <TabsContent value="quizzes" className="mt-0">
+              <CourseQuizzes quizzes={quizzes} quizAttempts={currentCourseDetails.quizAttempts  } courseId={courseId} />
+            </TabsContent>
 
-        <TabsContent value="classes" className="space-y-4">
-          <CourseVirtualClasses virtualClasses={virtualClasses} />
-        </TabsContent>
+            <TabsContent value="classes" className="mt-0">
+              <CourseVirtualClasses virtualClasses={virtualClasses} />
+            </TabsContent>
 
-        <TabsContent value="attendance" className="space-y-4">
-          <CourseAttendance attendanceRecords={attendance} />
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="attendance" className="mt-0">
+              <CourseAttendance attendanceRecords={attendance} />
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
     </div>
   )
 }
@@ -197,19 +219,28 @@ function CourseDetailsSkeletonLoader() {
         ))}
       </div>
 
-      <div className="space-y-4">
-        <Skeleton className="h-10 w-full" />
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-64" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
+      {/* Skeleton for horizontal tabs */}
+      <div className="border rounded-lg overflow-hidden">
+        <div className="border-b">
+          <div className="flex w-full">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="flex-1 h-12 rounded-none" />
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+        <div className="p-4">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full" />
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )

@@ -13,7 +13,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Calendar, Clock, Loader2, ArrowLeft, Edit, Trash2, Users, CheckCircle, XCircle, BarChart } from "lucide-react"
 import { useAuth } from "@/lib/auth/auth-context"
 import { useQuiz, useQuizActions, useQuizStatistics } from "@/lib/auth/hooks"
-import { formatDate } from "@/lib/utils"
+import { formatDate , formatTime } from "@/lib/utils"
 import Link from "next/link"
 import {
   AlertDialog,
@@ -192,7 +192,7 @@ useEffect(() => {
       </PageContainer>
     )
   }
-
+// console.log("quiz",quiz)
   return (
     <PageContainer title={quiz.title} description="Quiz details and management">
       <div className="flex items-center justify-between mb-6">
@@ -243,17 +243,17 @@ useEffect(() => {
             <CardTitle className="text-sm font-medium">Schedule</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center text-lg font-medium">
-              <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-              <span>
-                {formatDate(quiz.startDate)} - {formatDate(quiz.endDate)}
-              </span>
-            </div>
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Clock className="mr-2 h-4 w-4" />
-              <span>{quiz.timeLimit} minutes</span>
-            </div>
-          </CardContent>
+  <div className="flex items-center text-lg font-medium">
+    <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+    <span>
+      {formatDate(quiz.startDate)} {formatTime(quiz.startDate)} - {formatDate(quiz.endDate)} {formatTime(quiz.endDate)}
+    </span>
+  </div>
+  <div className="flex items-center text-sm text-muted-foreground">
+    <Clock className="mr-2 h-4 w-4" />
+    <span>{quiz.timeLimit} minutes</span>
+  </div>
+</CardContent>
         </Card>
 
         <Card>

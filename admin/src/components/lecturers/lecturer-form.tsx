@@ -26,7 +26,8 @@ export function LecturerForm({ lecturer, isEdit = false }: LecturerFormProps) {
   const { addLecturer, editLecturer, error, isLoading } = useLecturers()
   const { departments, loadDepartments } = useDepartments()
 
-  const [formData, setFormData] = useState<CreateLecturerDto | UpdateLecturerDto>({
+  // Separate state for create and update to properly handle field differences
+  const [createFormData, setCreateFormData] = useState<CreateLecturerDto>({
     title: "",
     firstName: "",
     lastName: "",
@@ -37,15 +38,26 @@ export function LecturerForm({ lecturer, isEdit = false }: LecturerFormProps) {
     bio: "",
     officeLocation: "",
     officeHours: "",
+    // joinDate: new Date().toISOString().split("T")[0],
+    // status removed from creation form
+  })
+
+  const [updateFormData, setUpdateFormData] = useState<UpdateLecturerDto>({
+    title: "",
+    specialization: "",
+    bio: "",
+    officeLocation: "",
+    officeHours: "",
+    phoneNumber: "",
     status: "active",
-    joinDate: new Date().toISOString().split("T")[0],
+    departmentId: "",
   })
 
   useEffect(() => {
     loadDepartments()
 
     if (isEdit && lecturer) {
-      setFormData({
+      setUpdateFormData({
         title: lecturer.title,
         specialization: lecturer.specialization,
         bio: lecturer.bio || "",
@@ -58,13 +70,22 @@ export function LecturerForm({ lecturer, isEdit = false }: LecturerFormProps) {
     }
   }, [isEdit, lecturer, loadDepartments])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleCreateChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setCreateFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
+  const handleUpdateChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setUpdateFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleCreateSelectChange = (name: string, value: string) => {
+    setCreateFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleUpdateSelectChange = (name: string, value: string) => {
+    setUpdateFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,16 +93,21 @@ export function LecturerForm({ lecturer, isEdit = false }: LecturerFormProps) {
 
     try {
       if (isEdit && lecturer) {
-        await editLecturer(lecturer.id, formData as UpdateLecturerDto)
+        await editLecturer(lecturer.id, updateFormData)
         router.push(`/lecturers/${lecturer.id}`)
       } else {
-        const newLecturer = await addLecturer(formData as CreateLecturerDto)
+        const newLecturer = await addLecturer(createFormData)
         router.push(`/lecturers/${newLecturer.id}`)
       }
     } catch (err) {
       console.error("Error saving lecturer:", err)
     }
   }
+
+  // Use the appropriate form data based on the form mode
+  const formData = isEdit ? updateFormData : createFormData
+  const handleChange = isEdit ? handleUpdateChange : handleCreateChange
+  const handleSelectChange = isEdit ? handleUpdateSelectChange : handleCreateSelectChange
 
   return (
     <Card>
@@ -126,7 +152,7 @@ export function LecturerForm({ lecturer, isEdit = false }: LecturerFormProps) {
                   <Input
                     id="firstName"
                     name="firstName"
-                    value={(formData as CreateLecturerDto).firstName || ""}
+                    value={createFormData.firstName || ""}
                     onChange={handleChange}
                     placeholder="John"
                     required={!isEdit}
@@ -138,7 +164,7 @@ export function LecturerForm({ lecturer, isEdit = false }: LecturerFormProps) {
                   <Input
                     id="lastName"
                     name="lastName"
-                    value={(formData as CreateLecturerDto).lastName || ""}
+                    value={createFormData.lastName || ""}
                     onChange={handleChange}
                     placeholder="Doe"
                     required={!isEdit}
@@ -155,7 +181,7 @@ export function LecturerForm({ lecturer, isEdit = false }: LecturerFormProps) {
                 id="email"
                 name="email"
                 type="email"
-                value={(formData as CreateLecturerDto).email || ""}
+                value={createFormData.email || ""}
                 onChange={handleChange}
                 placeholder="john.doe@example.com"
                 required={!isEdit}
@@ -235,13 +261,14 @@ export function LecturerForm({ lecturer, isEdit = false }: LecturerFormProps) {
               </Select>
             </div>
 
+            {/* Status field only shown in edit mode */}
             {isEdit && (
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
                   name="status"
-                  value={formData.status || "active"}
-                  onValueChange={(value) => handleSelectChange("status", value)}
+                  value={updateFormData.status || "active"}
+                  onValueChange={(value) => handleUpdateSelectChange("status", value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a status" />
@@ -257,18 +284,18 @@ export function LecturerForm({ lecturer, isEdit = false }: LecturerFormProps) {
               </div>
             )}
 
-            {!isEdit && (
+            {/* {!isEdit && (
               <div className="space-y-2">
                 <Label htmlFor="joinDate">Join Date</Label>
                 <Input
                   id="joinDate"
                   name="joinDate"
                   type="date"
-                  value={(formData as CreateLecturerDto).joinDate || ""}
+                  value={createFormData.joinDate || ""}
                   onChange={handleChange}
                 />
               </div>
-            )}
+            )} */}
           </div>
 
           <div className="space-y-2">

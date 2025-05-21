@@ -22,12 +22,14 @@ import { formatDate, formatTime } from "@/lib/utils"
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CreateVirtualClassDialog } from "@/components/create-virtual-class-dialog"
+import { time } from "console"
 
 export default function VirtualClassesPage() {
   const { lecturerProfile } = useAuth()
   const { getUpcomingVirtualClasses, virtualClasses, isLoading, error } = useVirtualClasses()
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+
 
   const refreshVirtualClasses = async () => {
   if (lecturerProfile?.id) {
@@ -56,6 +58,8 @@ export default function VirtualClassesPage() {
 
     fetchVirtualClasses()
   }, [lecturerProfile, getUpcomingVirtualClasses, virtualClasses.length, isInitialLoading])
+
+  console.log(virtualClasses.map((time => time.scheduledStartTime)))
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -126,7 +130,7 @@ export default function VirtualClassesPage() {
 
   return (
     <PageContainer title="Virtual Classes" description="Manage your online classes and lectures" actions={actions}>
-      <div className="flex flex-wrap gap-4 mb-6 p-2">
+      {/* <div className="flex flex-wrap gap-4 mb-6 p-2">
         <Button variant="outline" className="gap-2">
           <Calendar className="h-4 w-4" /> Schedule
         </Button>
@@ -134,7 +138,7 @@ export default function VirtualClassesPage() {
         <Button variant="outline" className="gap-2">
           <MonitorPlay className="h-4 w-4" /> Recordings
         </Button>
-      </div>
+      </div> */}
 
       <Tabs defaultValue="upcoming" className="w-full">
         <TabsList className="mb-6">

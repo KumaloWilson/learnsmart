@@ -9,6 +9,15 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Video, Calendar, Clock, AlertTriangle } from "lucide-react"
 import { VirtualClassCard } from "@/features/virtual-classes/components/virtual-class-card"
+import { time } from "console"
+
+// Fixed helper function to correctly handle timezone issues
+const parseDate = (dateString: string): Date => {
+  return new Date(dateString); // Converts to local time
+};
+
+
+
 
 export function VirtualClasses() {
   const dispatch = useAppDispatch()
@@ -57,31 +66,32 @@ export function VirtualClasses() {
     )
   }
 
-  // Categorize classes
+ 
   const now = new Date()
+
   const joinableClasses = virtualClasses.filter((vc) => {
-    const startDate = new Date(vc.scheduledStartTime)
-    const endDate = new Date(vc.scheduledEndTime)
+    const startDate = parseDate(vc.scheduledStartTime)
+    const endDate = parseDate(vc.scheduledEndTime)
     const minutesBeforeStart = Math.floor((startDate.getTime() - now.getTime()) / (1000 * 60))
 
     return (minutesBeforeStart <= 5 && minutesBeforeStart >= 0) || (now >= startDate && now <= endDate)
   })
-
+console.log(joinableClasses)
   const upcomingClasses = virtualClasses
     .filter((vc) => {
-      const startDate = new Date(vc.scheduledStartTime)
+      const startDate = parseDate(vc.scheduledStartTime)
       const minutesBeforeStart = Math.floor((startDate.getTime() - now.getTime()) / (1000 * 60))
 
       return minutesBeforeStart > 5
     })
-    .sort((a, b) => new Date(a.scheduledStartTime).getTime() - new Date(b.scheduledStartTime).getTime())
+    .sort((a, b) => parseDate(a.scheduledStartTime).getTime() - parseDate(b.scheduledStartTime).getTime())
 
   const pastClasses = virtualClasses
     .filter((vc) => {
-      const endDate = new Date(vc.scheduledEndTime)
+      const endDate = parseDate(vc.scheduledEndTime)
       return now > endDate
     })
-    .sort((a, b) => new Date(b.scheduledStartTime).getTime() - new Date(a.scheduledStartTime).getTime())
+    .sort((a, b) => parseDate(b.scheduledStartTime).getTime() - parseDate(a.scheduledStartTime).getTime())
 
   return (
     <div className="space-y-6">

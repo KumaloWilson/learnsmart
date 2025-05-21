@@ -95,10 +95,10 @@ export default function CourseStudentsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button>
+            {/* <Button>
               <UserPlus className="mr-2 h-4 w-4" />
               Add Student
-            </Button>
+            </Button> */}
           </div>
         </div>
 

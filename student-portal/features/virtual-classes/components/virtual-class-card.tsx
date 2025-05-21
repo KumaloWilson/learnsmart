@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import type { VirtualClass } from "@/features/virtual-classes/types"
 import { VirtualClassStatus } from "@/features/virtual-classes/types"
+import { formatDate, formatTime } from "@/lib/utils"
 
 interface VirtualClassCardProps {
   virtualClass: VirtualClass
@@ -33,9 +34,15 @@ export function VirtualClassCard({ virtualClass, showCourse = false }: VirtualCl
   const dateOptions: Intl.DateTimeFormatOptions = { weekday: "long", month: "short", day: "numeric" }
   const timeOptions: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" }
 
-  const formattedDate = startDate.toLocaleDateString(undefined, dateOptions)
-  const formattedStartTime = startDate.toLocaleTimeString(undefined, timeOptions)
-  const formattedEndTime = endDate.toLocaleTimeString(undefined, timeOptions)
+  // const formattedDate = startDate.toLocaleDateString(undefined, dateOptions)
+  // const formattedStartTime = startDate.toLocaleTimeString(undefined, timeOptions)
+  // const formattedEndTime = endDate.toLocaleTimeString(undefined, timeOptions)
+
+  const formattedDate = formatDate(virtualClass.scheduledEndTime)
+    
+    // Format times
+    const formattedStartTime = formatTime(virtualClass.scheduledStartTime)
+    const formattedEndTime = formatTime(virtualClass.scheduledEndTime)
 
   // Calculate time until class starts
   useEffect(() => {

@@ -36,22 +36,31 @@ export function QuizModal({ quizId, isOpen, onClose }: QuizModalProps) {
   const [isExitWarningOpen, setIsExitWarningOpen] = useState(false)
   const [isSubmitWarningOpen, setIsSubmitWarningOpen] = useState(false)
   const [attemptedNavigation, setAttemptedNavigation] = useState<string | null>(null)
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   // Start the quiz when the modal opens
   useEffect(() => {
-    if (isOpen && !currentAttempt && !isLoading && studentProfile?.id && accessToken) {
+    if (isOpen && !currentAttempt && !isLoading && studentProfile?.id && accessToken && !hasInitialized) {
+      setHasInitialized(true)
       dispatch(
         startQuiz({
           quizId,
           studentProfileId: studentProfile.id,
           token: accessToken,
         }),
-      )
+      ).then(() => {
+        dispatch(setQuizActive(true))
+      })
     }
-  }, [isOpen, currentAttempt, isLoading, quizId, studentProfile?.id, accessToken, dispatch])
+  }, [isOpen, currentAttempt, isLoading, quizId, studentProfile?.id, accessToken, dispatch, hasInitialized])
 
   // Prevent navigation away from the quiz
   useEffect(() => {
+    // Only set up navigation guards if the quiz is actually active
+    if (!isQuizActive || showResults) {
+      return
+    }
+
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isQuizActive && !showResults) {
         e.preventDefault()
@@ -63,40 +72,52 @@ export function QuizModal({ quizId, isOpen, onClose }: QuizModalProps) {
     // Add event listeners for browser navigation (refresh, close tab)
     window.addEventListener("beforeunload", handleBeforeUnload)
 
-    // Proxy the router.push method to intercept navigation
-    // This is a workaround since App Router doesn't have events like Pages Router
+    // Store original router methods
     const originalPush = router.push.bind(router)
     const originalReplace = router.replace.bind(router)
     
-    // @ts-ignore - we're intentionally modifying the router methods
-    router.push = (href: string, options?: any) => {
-      if (isQuizActive && !showResults) {
+    // Override router methods to intercept navigation
+    const wrapRouterMethod = (
+      originalMethod: (href: string, options?: any) => any,
+      methodName: string
+    ) => {
+      // @ts-ignore - we're intentionally modifying the router methods
+      router[methodName] = (href: string, options?: any) => {
+        // Don't intercept navigation if we're on the results page or quiz isn't active
+        if (!isQuizActive || showResults) {
+          return originalMethod(href, options)
+        }
+        
+        // Don't intercept navigation to the same page
+        if (href === pathname) {
+          return originalMethod(href, options)
+        }
+        
         setAttemptedNavigation(href)
         setIsExitWarningOpen(true)
         return Promise.resolve(false)
       }
-      return originalPush(href, options)
     }
-    
-    // @ts-ignore - we're intentionally modifying the router methods
-    router.replace = (href: string, options?: any) => {
-      if (isQuizActive && !showResults) {
-        setAttemptedNavigation(href)
-        setIsExitWarningOpen(true)
-        return Promise.resolve(false)
-      }
-      return originalReplace(href, options)
-    }
+
+    wrapRouterMethod(originalPush, "push")
+    wrapRouterMethod(originalReplace, "replace")
 
     // Clean up event listeners and router overrides
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload)
-      // @ts-ignore - restore original methods
-      router.push = originalPush
-      // @ts-ignore - restore original methods
-      router.replace = originalReplace
+      
+      // Only restore if we actually modified them
+      if (router.push !== originalPush) {
+        // @ts-ignore - restore original methods
+        router.push = originalPush
+      }
+      
+      if (router.replace !== originalReplace) {
+        // @ts-ignore - restore original methods
+        router.replace = originalReplace
+      }
     }
-  }, [isQuizActive, showResults, router])
+  }, [isQuizActive, showResults, router, pathname])
 
   // Handle quiz timeout
   const handleTimeExpired = useCallback(() => {
@@ -147,6 +168,7 @@ export function QuizModal({ quizId, isOpen, onClose }: QuizModalProps) {
       }),
     ).then(() => {
       setShowResults(true)
+      dispatch(setQuizActive(false))
     })
   }, [currentAttempt, accessToken, answers, dispatch])
 
@@ -168,7 +190,7 @@ export function QuizModal({ quizId, isOpen, onClose }: QuizModalProps) {
     if (!currentAttempt || !accessToken) return
 
     // Check if all questions are answered
-    const answeredQuestions = answers.length
+    const answeredQuestions = new Set(answers.map(a => a.questionIndex)).size
     const totalQuestions = currentAttempt.questions.length
 
     if (answeredQuestions < totalQuestions) {
@@ -226,26 +248,37 @@ export function QuizModal({ quizId, isOpen, onClose }: QuizModalProps) {
     ).then(() => {
       setShowResults(true)
       setIsSubmitWarningOpen(false)
+      dispatch(setQuizActive(false))
     })
   }
 
   // Handle modal close
   const handleModalClose = () => {
-    if (isQuizActive && !showResults) {
+    // Only show the exit warning if the quiz is active and not showing results
+    if (isQuizActive && !showResults && currentAttempt) {
       setIsExitWarningOpen(true)
       return
     }
 
+    // Otherwise, clean up and close
     dispatch(clearCurrentQuiz())
     dispatch(setQuizActive(false))
     setShowResults(false)
     setCurrentQuestionIndex(0)
+    setHasInitialized(false)
     onClose()
   }
 
   // Handle exit confirmation
   const handleExitConfirm = () => {
-    handleTimeExpired() // Submit with random answers
+    if (currentAttempt && accessToken) {
+      handleTimeExpired() // Submit with random answers
+    } else {
+      // If no attempt is available, just clean up
+      dispatch(clearCurrentQuiz())
+      dispatch(setQuizActive(false))
+    }
+    
     setIsExitWarningOpen(false)
     
     // If this was triggered by router navigation, continue to that route after submission
@@ -253,7 +286,9 @@ export function QuizModal({ quizId, isOpen, onClose }: QuizModalProps) {
       const destination = attemptedNavigation
       setAttemptedNavigation(null)
       // Need to use setTimeout to ensure state updates before navigation
-      setTimeout(() => router.push(destination), 0)
+      setTimeout(() => router.push(destination), 100)
+    } else {
+      onClose()
     }
   }
 
@@ -300,8 +335,10 @@ export function QuizModal({ quizId, isOpen, onClose }: QuizModalProps) {
   if (showResults && currentAttempt) {
     return (
       <Dialog open={isOpen} onOpenChange={handleModalClose}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <QuizResults attempt={currentAttempt} onClose={handleModalClose} />
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden">
+          <div className="max-h-[calc(90vh-4rem)] overflow-y-auto pr-2">
+            <QuizResults attempt={currentAttempt} onClose={handleModalClose} />
+          </div>
         </DialogContent>
       </Dialog>
     )

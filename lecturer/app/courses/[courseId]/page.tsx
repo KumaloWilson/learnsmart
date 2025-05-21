@@ -166,7 +166,7 @@ console.log("courseDetail", courseDetail)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription>Create and manage quizzes for this course</CardDescription>
+                <CardDescription>Create and manage quizzes forrr this course</CardDescription>
               </CardContent>
             </Card>
           </Link>

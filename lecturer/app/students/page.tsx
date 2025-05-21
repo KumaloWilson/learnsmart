@@ -118,9 +118,9 @@ console.log(allStudents)
       <Button variant="outline" size="sm" className="gap-1">
         <Download className="h-4 w-4" /> Export
       </Button>
-      <Button size="sm" className="gap-1">
+      {/* <Button size="sm" className="gap-1">
         <Plus className="h-4 w-4" /> Add Student
-      </Button>
+      </Button> */}
     </div>
   )
 

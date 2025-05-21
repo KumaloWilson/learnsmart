@@ -113,9 +113,9 @@ export default function CoursesPage() {
           List
         </Button>
       </div>
-      <Button size="sm" className="gap-1">
+      {/* <Button size="sm" className="gap-1">
         <Plus className="h-4 w-4" /> Add Course
-      </Button>
+      </Button> */}
     </div>
   )
 

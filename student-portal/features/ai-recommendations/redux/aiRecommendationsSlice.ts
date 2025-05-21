@@ -37,9 +37,11 @@ export const generateRecommendations = createAsyncThunk<
 >("aiRecommendations/generate", async ({ request, token }, { rejectWithValue }) => {
   try {
     const data = await recommendationsService.generateRecommendations(request, token)
+    console.log(data)
     return data
   } catch (error) {
     if (error instanceof Error) {
+      console.log(error)
       return rejectWithValue(error.message)
     }
     return rejectWithValue("An unexpected error occurred")

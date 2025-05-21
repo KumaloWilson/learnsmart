@@ -51,7 +51,6 @@ export function GenerateRecommendations() {
       })
     }
   }
-
   return (
     <Card> 
       <CardHeader>
