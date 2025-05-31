@@ -1,4 +1,3 @@
-Here's a comprehensive overview of the "learnsmart" project based on the available data:
 
 ---
 
